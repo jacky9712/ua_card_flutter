@@ -8,10 +8,13 @@ class CardState {
   final bool isLoading;
   final String searchQuery;
   final Map<int, int> deckMap;
-
-  // 🔥 1. 這裡必須宣告這兩個新的變數
   final List<String> availableSeries;
   final String selectedSeries;
+
+  // 🔥 秘密武器：卡片快取記憶體
+  // 當卡片被加入牌組時，把「卡片實體」存在這裡。
+  // 這樣即使切換到別的系列，也能知道牌組裡的卡片價格是多少！
+  final Map<int, UACard> deckCardDetails;
 
   CardState({
     this.allCards = const [],
@@ -19,9 +22,9 @@ class CardState {
     this.isLoading = true,
     this.searchQuery = '',
     this.deckMap = const {},
-    // 🔥 2. 建構子也要給預設值
     this.availableSeries = const [],
     this.selectedSeries = '',
+    this.deckCardDetails = const {}, // 初始化
   });
 
   CardState copyWith({
@@ -30,9 +33,9 @@ class CardState {
     bool? isLoading,
     String? searchQuery,
     Map<int, int>? deckMap,
-    // 🔥 3. copyWith 也要接收這兩個參數
     List<String>? availableSeries,
     String? selectedSeries,
+    Map<int, UACard>? deckCardDetails,
   }) {
     return CardState(
       allCards: allCards ?? this.allCards,
@@ -40,14 +43,27 @@ class CardState {
       isLoading: isLoading ?? this.isLoading,
       searchQuery: searchQuery ?? this.searchQuery,
       deckMap: deckMap ?? this.deckMap,
-      // 🔥 4. 把新值傳進去
       availableSeries: availableSeries ?? this.availableSeries,
       selectedSeries: selectedSeries ?? this.selectedSeries,
+      deckCardDetails: deckCardDetails ?? this.deckCardDetails,
     );
   }
 
+  // 計算總張數
   int get totalDeckCount {
     return deckMap.values.fold(0, (sum, quantity) => sum + quantity);
+  }
+
+  // 🔥 計算總金額 (從我們的秘密快取裡抓價格)
+  int get totalDeckPrice {
+    int totalPrice = 0;
+    deckMap.forEach((cardId, quantity) {
+      final card = deckCardDetails[cardId];
+      if (card != null && card.price != null) {
+        totalPrice += card.price! * quantity;
+      }
+    });
+    return totalPrice;
   }
 }
 
@@ -56,56 +72,80 @@ class CardViewModel extends Notifier<CardState> {
 
   @override
   CardState build() {
-    fetchCards();
+    _initData();
     return CardState(isLoading: true);
   }
 
-  Future<void> fetchCards() async {
+  // 🔥 優化 1：初始化時，先去 series 資料表抓取「完整的」系列名單
+  Future<void> _initData() async {
     try {
-      final response = await _supabase
+      final seriesResponse = await _supabase.from('series').select('series_code').order('id');
+
+      // 取出 series_code (例如 cgh1, jjk1)，並轉成大寫作為標籤
+      final List<String> seriesList = seriesResponse
+          .map((s) => s['series_code'].toString().toUpperCase())
+          .toList();
+
+      state = state.copyWith(availableSeries: seriesList);
+
+      // 接著抓取卡片
+      fetchCards();
+    } catch (e) {
+      print('初始化系列失敗: $e');
+      fetchCards();
+    }
+  }
+
+  // 🔥 優化 2：伺服器端過濾
+  // 現在不是把 8000 張全抓下來了，而是請 Supabase 幫我們過濾好再送過來
+  Future<void> fetchCards() async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      // 1. 建立基本查詢 (此時狀態是 FilterBuilder，可以加過濾條件)
+      var query = _supabase
           .from('cards')
-          .select()
+          .select('*, latest_prices(price_jpy)');
+
+      // 2. 🔥 過濾條件必須在這裡先加！
+      if (state.selectedSeries.isNotEmpty) {
+        // 利用 ilike 尋找卡號開頭符合的
+        query = query.ilike('card_number', '${state.selectedSeries}%');
+      }
+
+      // 3. 最後加上變形條件 (order, limit) 並執行 await
+      final response = await query
           .order('card_number', ascending: true)
-          .limit(100); // 測試時可以抓多一點來看篩選效果
+          .limit(150);
 
       final cards = response.map((json) => UACard.fromJson(json)).toList();
 
-      // 🔥 萃取出所有不重複的系列名稱 (過濾掉 null)
-      final seriesSet = cards
-          .map((c) {
-        final parts = c.cardNumber.split('-');
-        return parts.isNotEmpty ? parts.first : '未分類';
-      })
-          .toSet()
-          .toList();
-
       state = state.copyWith(
         allCards: cards,
-        filteredCards: cards,
-        availableSeries: seriesSet, // 存入可選系列
         isLoading: false,
       );
+
+      // 觸發本地的字串搜尋過濾
+      _applyLocalSearch();
+
     } catch (e) {
       print('抓取失敗: $e');
       state = state.copyWith(isLoading: false);
     }
   }
 
-  // 🔥 統一的過濾邏輯：同時考慮「搜尋字串」與「選中系列」
-  void _applyFilters() {
+  // 本地文字搜尋 (因為已經被 Supabase 縮小範圍了，本地搜尋會非常順暢)
+  void _applyLocalSearch() {
     final lowerQuery = state.searchQuery.toLowerCase();
 
+    if (lowerQuery.isEmpty) {
+      state = state.copyWith(filteredCards: state.allCards);
+      return;
+    }
+
     final filtered = state.allCards.where((card) {
-      // 1. 判斷搜尋是否符合
-      final nameMatch = card.cardNumber.toLowerCase().contains(lowerQuery) ||
+      return card.cardNumber.toLowerCase().contains(lowerQuery) ||
           (card.name ?? '').toLowerCase().contains(lowerQuery);
-
-      // 🔥 2. 即時切割這張卡的卡號，拿來跟選中的標籤比對
-      final cardSeriesPrefix = card.cardNumber.split('-').first;
-      final seriesMatch = state.selectedSeries.isEmpty ||
-          cardSeriesPrefix == state.selectedSeries;
-
-      return nameMatch && seriesMatch;
     }).toList();
 
     state = state.copyWith(filteredCards: filtered);
@@ -113,13 +153,46 @@ class CardViewModel extends Notifier<CardState> {
 
   void updateSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
-    _applyFilters(); // 觸發過濾
+
+    // 🔥 如果關鍵字太短（例如只有 1 個字），就在本地搜就好，避免頻繁請求
+    if (query.length < 2 && query.isNotEmpty) {
+      _applyLocalSearch();
+      return;
+    }
+
+    // 🔥 如果有輸入關鍵字，就直接發動遠端搜尋
+    _remoteSearch(query);
   }
 
-  // 🔥 新增：更新選中的系列
+  Future<void> _remoteSearch(String query) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      var supabaseQuery = _supabase
+          .from('cards')
+          .select('*, latest_prices(price_jpy)');
+
+      if (query.isNotEmpty) {
+        // 同時搜尋卡號或名稱 (使用 or 語法)
+        supabaseQuery = supabaseQuery.or('card_number.ilike.%$query%,name.ilike.%$query%');
+      } else if (state.selectedSeries.isNotEmpty) {
+        // 如果清空搜尋，就回歸目前選中的系列
+        supabaseQuery = supabaseQuery.ilike('card_number', '${state.selectedSeries}%');
+      }
+
+      final response = await supabaseQuery.order('card_number', ascending: true).limit(100);
+      final cards = response.map((json) => UACard.fromJson(json)).toList();
+
+      state = state.copyWith(allCards: cards, filteredCards: cards, isLoading: false);
+    } catch (e) {
+      print('遠端搜尋失敗: $e');
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  // 🔥 當玩家點擊上面的系列標籤時，觸發重新去資料庫抓資料
   void updateSelectedSeries(String series) {
-    state = state.copyWith(selectedSeries: series);
-    _applyFilters(); // 觸發過濾
+    state = state.copyWith(selectedSeries: series, searchQuery: '');
+    fetchCards();
   }
 
   void updateCardQuantity(int cardId, int delta) {
@@ -127,13 +200,28 @@ class CardViewModel extends Notifier<CardState> {
     final newQty = (currentQty + delta).clamp(0, 4);
 
     final newDeckMap = Map<int, int>.from(state.deckMap);
+    final newDeckCardDetails = Map<int, UACard>.from(state.deckCardDetails);
+
     if (newQty == 0) {
       newDeckMap.remove(cardId);
+      newDeckCardDetails.remove(cardId); // 數量歸零，移出快取
     } else {
       newDeckMap[cardId] = newQty;
+
+      // 🔥 關鍵步驟：把卡片存進快取
+      // 因為 id 可能是字串，我們要轉型比對
+      try {
+        final card = state.allCards.firstWhere((c) => c.id == cardId);
+        newDeckCardDetails[cardId] = card;
+      } catch (e) {
+        // 如果卡片已經在快取裡就略過
+      }
     }
 
-    state = state.copyWith(deckMap: newDeckMap);
+    state = state.copyWith(
+      deckMap: newDeckMap,
+      deckCardDetails: newDeckCardDetails,
+    );
   }
 }
 

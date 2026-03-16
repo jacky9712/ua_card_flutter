@@ -17,9 +17,8 @@ class TestConnectionScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('組牌模式'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // 🔥 修改 PreferredSize 的高度，容納搜尋框 + 篩選列
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(110), // 高度從 60 增加到 110
+          preferredSize: const Size.fromHeight(110),
           child: Column(
             children: [
               // 🔍 搜尋框
@@ -32,7 +31,7 @@ class TestConnectionScreen extends ConsumerWidget {
                     fillColor: Colors.white,
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    isDense: true, // 讓搜尋框稍微扁一點
+                    isDense: true,
                   ),
                   onChanged: (text) => ref.read(cardViewModelProvider.notifier).updateSearchQuery(text),
                 ),
@@ -45,15 +44,11 @@ class TestConnectionScreen extends ConsumerWidget {
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    // +1 是為了在最前面加上「全部」的選項
                     itemCount: uiState.availableSeries.length + 1,
                     itemBuilder: (context, index) {
                       final isAll = index == 0;
-                      // 如果是「全部」，值就是空字串；否則從陣列取值
                       final seriesValue = isAll ? '' : uiState.availableSeries[index - 1];
                       final displayLabel = isAll ? '全部系列' : seriesValue;
-
-                      // 判斷目前這個標籤是否被選中
                       final isSelected = uiState.selectedSeries == seriesValue;
 
                       return Padding(
@@ -77,28 +72,43 @@ class TestConnectionScreen extends ConsumerWidget {
         ),
       ),
 
-      // 🔥 新增：底部統計與匯出列
       bottomNavigationBar: BottomAppBar(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '目前張數: ${uiState.totalDeckCount} / 50',
-              style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold,
-                color: uiState.totalDeckCount > 50 ? Colors.red : Colors.black,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // 讓高度剛好包住內容
+              children: [
+                Text(
+                  '目前張數: ${uiState.totalDeckCount} / 50',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: uiState.totalDeckCount > 50 ? Colors.red : Colors.black,
+                  ),
+                ),
+                Text(
+                  // 顯示剛剛算好的總價
+                  '總金額: ¥ ${uiState.totalDeckPrice}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.amber, // 用閃亮的金色
+                  ),
+                ),
+              ],
             ),
-            // 🔥 修改點：更新按鈕的 onPressed
+
+
             ElevatedButton.icon(
               onPressed: uiState.totalDeckCount > 0 ? () {
-                // 🔥 呼叫一鍵匯出與分享
                 DeckExporter.exportAndShareDeck(
                   context: context,
                   deckMap: uiState.deckMap,
                   allCards: uiState.allCards,
                 );
-              } : null, // 沒卡片時按鈕禁用
+              } : null,
               icon: const Icon(Icons.share),
               label: const Text('匯出牌組'),
             ),
@@ -115,14 +125,13 @@ class TestConnectionScreen extends ConsumerWidget {
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            childAspectRatio: 0.52, // 🔥 把比例改小 (拉長)，騰出空間放按鈕
+            childAspectRatio: 0.52,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
           ),
           itemCount: uiState.filteredCards.length,
           itemBuilder: (context, index) {
             final card = uiState.filteredCards[index];
-            // 取得這張卡目前的選取數量 (找不到就是 0)
             final quantity = uiState.deckMap[card.id] ?? 0;
 
             return Card(
@@ -137,12 +146,10 @@ class TestConnectionScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 🔥 修改點：把上面的 80% 空間 (圖片+文字) 包裝在一起，並加入 InkWell 點擊事件
                   Expanded(
                     flex: 80,
                     child: InkWell(
                       onTap: () {
-                        // 點擊後彈出詳細資料 Dialog
                         showDialog(
                           context: context,
                           builder: (context) => CardDetailDialog(card: card),
@@ -150,7 +157,7 @@ class TestConnectionScreen extends ConsumerWidget {
                       },
                       child: Column(
                         children: [
-                          // 🖼️ 圖片區塊 (改佔這 80% 裡面的 3 份)
+                          // 🖼️ 圖片區塊
                           Expanded(
                             flex: 3,
                             child: Stack(
@@ -165,6 +172,7 @@ class TestConnectionScreen extends ConsumerWidget {
                                 )
                                     : const Icon(Icons.image_not_supported),
 
+                                // 左上角的數量標籤
                                 if (quantity > 0)
                                   Positioned(
                                     top: 0, left: 0,
@@ -177,11 +185,38 @@ class TestConnectionScreen extends ConsumerWidget {
                                       child: Text('x$quantity', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
+
+                                if (card.price != null && card.price! > 0)
+                                  Positioned(
+                                    bottom: 6,
+                                    right: 6,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.8),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '¥${card.price}',
+                                            style: const TextStyle(
+                                              color: Colors.amberAccent,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
 
-                          // 📝 文字區塊 (改佔這 80% 裡面的 1 份)
+                          // 📝 文字區塊
                           Expanded(
                             flex: 1,
                             child: Container(
@@ -200,7 +235,7 @@ class TestConnectionScreen extends ConsumerWidget {
                     ),
                   ),
 
-                  // 🎛️ 加減按鈕控制區 (維持在最底部的 20%，這裡的點擊不會觸發 Dialog)
+                  // 🎛️ 加減按鈕控制區
                   Expanded(
                     flex: 20,
                     child: Container(
