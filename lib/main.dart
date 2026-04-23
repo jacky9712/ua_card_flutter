@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ua_card_flutter/screens/HomeScreen.dart';
 import 'package:ua_card_flutter/screens/test_connection_screen.dart';
 import 'models/ua_card.dart';
 
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const TestConnectionScreen(),
+      home: const HomeScreen(),
     );
   }
 }
