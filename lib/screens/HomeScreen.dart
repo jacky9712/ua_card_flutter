@@ -17,7 +17,8 @@ class HomeScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // 點擊後跳轉到你原本寫好的組牌畫面
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
+          Navigator.push(context, MaterialPageRoute(
+              builder: (context) => const TestConnectionScreen()));
         },
         backgroundColor: Colors.amber,
         shape: const CircleBorder(),
@@ -26,7 +27,9 @@ class HomeScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add, color: Colors.black, size: 20),
-            Text('出品', style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text('出品', style: TextStyle(color: Colors.black,
+                fontSize: 10,
+                fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -60,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
               _buildHeader(),
 
               // 2️⃣ 搜尋區 (整合你原本的 updateSearchQuery)
-              _buildSearchArea(ref),
+              _buildSearchArea(ref, context),
 
               // 3️⃣ 橫幅廣告
               _buildBanner(),
@@ -69,7 +72,7 @@ class HomeScreen extends ConsumerWidget {
               _buildQuickActions(context, uiState),
 
               // 5️⃣ 對戰環境排行榜 (數據展示)
-              _buildRankingSection(),
+              _buildRankingSection(uiState),
 
               const SizedBox(height: 100), // 給底部按鈕留白
             ],
@@ -86,11 +89,13 @@ class HomeScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const Text('トップ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('トップ',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(width: 10),
           Text('|', style: TextStyle(color: Colors.grey.shade300)),
           const SizedBox(width: 10),
-          const Text('投稿清單', style: TextStyle(color: Colors.grey, fontSize: 14)),
+          const Text(
+              '投稿清單', style: TextStyle(color: Colors.grey, fontSize: 14)),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -111,21 +116,27 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSearchArea(WidgetRef ref) {
+  Widget _buildSearchArea(WidgetRef ref, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Expanded(
             child: TextField(
-              onChanged: (text) => ref.read(cardViewModelProvider.notifier).updateSearchQuery(text),
+              onChanged: (text) {
+                // 🔥 修改這裡：傳入 context 讓它輸入後自動跳轉
+                ref.read(cardViewModelProvider.notifier).updateSearchQuery(
+                    text, context: context);
+              },
               decoration: InputDecoration(
                 hintText: '搜尋卡號或卡名...',
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
                 fillColor: Colors.grey.shade100,
                 contentPadding: EdgeInsets.zero,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none),
               ),
             ),
           ),
@@ -134,13 +145,16 @@ class HomeScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Colors.black, Color(0xFF421E91)]),
+              gradient: const LinearGradient(
+                  colors: [Colors.black, Color(0xFF421E91)]),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Column(
               children: [
                 Icon(Icons.camera_alt, color: Colors.white, size: 18),
-                Text('AI檢索', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                Text('AI檢索', style: TextStyle(color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold)),
               ],
             ),
           )
@@ -159,7 +173,8 @@ class HomeScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(15),
         // 這裡可以換成 Image.network 載入真實廣告圖
       ),
-      child: const Center(child: Text('熱門活動橫幅', style: TextStyle(fontWeight: FontWeight.bold))),
+      child: const Center(child: Text(
+          '熱門活動橫幅', style: TextStyle(fontWeight: FontWeight.bold))),
     );
   }
 
@@ -169,24 +184,33 @@ class HomeScreen extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _quickButton(Icons.style, '牌組廣場', Colors.pink.shade50, Colors.pink, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
+          _quickButton(
+              Icons.style, '牌組廣場', Colors.pink.shade50, Colors.pink, () {
+            Navigator.push(context, MaterialPageRoute(
+                builder: (context) => const TestConnectionScreen()));
           }),
-          _quickButton(Icons.grid_on, '我的卡片', Colors.blue.shade50, Colors.blue, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
+          _quickButton(
+              Icons.grid_on, '我的卡片', Colors.blue.shade50, Colors.blue, () {
+            Navigator.push(context, MaterialPageRoute(
+                builder: (context) => const TestConnectionScreen()));
           }),
-          _quickButton(Icons.card_giftcard, '抽獎活動', Colors.orange.shade50, Colors.orange, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
-          }),
-          _quickButton(Icons.edit_note, '首頁編輯', Colors.indigo.shade50, Colors.indigo, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
-          }),
+          _quickButton(Icons.card_giftcard, '抽獎活動', Colors.orange.shade50,
+              Colors.orange, () {
+                Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => const TestConnectionScreen()));
+              }),
+          _quickButton(Icons.edit_note, '首頁編輯', Colors.indigo.shade50,
+              Colors.indigo, () {
+                Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => const TestConnectionScreen()));
+              }),
         ],
       ),
     );
   }
 
-  Widget _quickButton(IconData icon, String label, Color bg, Color iconColor, VoidCallback onTap) {
+  Widget _quickButton(IconData icon, String label, Color bg, Color iconColor,
+      VoidCallback onTap) {
     return InkWell( // 讓按鈕可以點擊
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
@@ -194,17 +218,19 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Container(
             width: 55, height: 55,
-            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(15)),
+            decoration: BoxDecoration(
+                color: bg, borderRadius: BorderRadius.circular(15)),
             child: Icon(icon, color: iconColor, size: 30),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+          Text(label, style: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 
-  Widget _buildRankingSection() {
+  Widget _buildRankingSection(CardState uiState) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -217,15 +243,28 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Text('對戰環境排行', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('對戰環境排行',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const Spacer(),
-              Text('查看更多 >', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+              Text('查看更多 >',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 15),
-          _rankingRow('#1', '[紫] 阿米婭 & 陳', '3%', '201'),
-          _rankingRow('#2', '[青] 凱爾希', '2.8%', '191'),
-          _rankingRow('#3', '[黑] 塔露拉', '2.5%', '185'),
+
+          if (uiState.rankingList.isEmpty)
+            const Center(child: Text('暫無數據', style: TextStyle(color: Colors.grey)))
+          else
+            ...uiState.rankingList.asMap().entries.map((entry) {
+              int index = entry.key;
+              var item = entry.value;
+              return _rankingRow(
+                  '#${index + 1}',
+                  item['name_zh'] ?? '未知系列',
+                  '${item['share_rate']}%',
+                  '${item['use_count']}'
+              );
+            }).toList(),
         ],
       ),
     );
@@ -236,7 +275,8 @@ class HomeScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Text(rank, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+          Text(rank, style: const TextStyle(
+              fontWeight: FontWeight.bold, color: Colors.blueAccent)),
           const SizedBox(width: 15),
           Expanded(child: Text(title, style: const TextStyle(fontSize: 14))),
           Text(share, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -251,8 +291,10 @@ class HomeScreen extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: isActive ? Colors.amber.shade800 : Colors.grey, size: 28),
-        Text(label, style: TextStyle(fontSize: 10, color: isActive ? Colors.amber.shade800 : Colors.grey)),
+        Icon(icon, color: isActive ? Colors.amber.shade800 : Colors.grey,
+            size: 28),
+        Text(label, style: TextStyle(fontSize: 10,
+            color: isActive ? Colors.amber.shade800 : Colors.grey)),
       ],
     );
   }

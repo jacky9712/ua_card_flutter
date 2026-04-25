@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ua_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import '../screens/test_connection_screen.dart';
+import 'package:flutter/material.dart';
+import '../screens/test_connection_screen.dart';
 class CardState {
   final List<UACard> allCards;
   final List<UACard> filteredCards;
@@ -103,19 +105,16 @@ class CardViewModel extends Notifier<CardState> {
   // 假設你有一個 series_popularity 的 View 或直接算 deck_cards 的統計
   Future<void> fetchRanking() async {
     try {
-      // 這裡暫時模擬抓取邏輯，若你已建立 View，請改成你的 View 名稱
-      // final response = await _supabase.from('series_popularity').select().limit(5);
+      // 抓取我們之前在 Supabase 建立的 series_popularity View
+      final response = await _supabase
+          .from('series_popularity')
+          .select()
+          .limit(5); // 只顯示前 5 名
 
-      // 這裡先放一點 Mock Data 讓首頁有東西顯示，你可以隨時接上真實 SQL
-      final mockRanking = [
-        {'rank': '#1', 'title': '[紫] 阿米婭 & 陳', 'share': '12.5%', 'count': '201'},
-        {'rank': '#2', 'title': '[青] 凱爾希', 'share': '10.2%', 'count': '185'},
-        {'rank': '#3', 'title': '[紅] 曉歌', 'share': '8.7%', 'count': '156'},
-      ];
-
-      state = state.copyWith(rankingList: mockRanking);
+      final list = List<Map<String, dynamic>>.from(response);
+      state = state.copyWith(rankingList: list);
     } catch (e) {
-      print('排行抓取失敗: $e');
+      print('載入排行失敗: $e');
     }
   }
 
@@ -149,13 +148,19 @@ class CardViewModel extends Notifier<CardState> {
     state = state.copyWith(filteredCards: filtered);
   }
 
-  void updateSearchQuery(String query) {
+  void updateSearchQuery(String query, {BuildContext? context}) {
     state = state.copyWith(searchQuery: query);
-    if (query.length < 2 && query.isNotEmpty) {
-      _applyLocalSearch();
-      return;
-    }
+
+    // 執行原本的搜尋邏輯
     _remoteSearch(query);
+
+    // 🔥 優化：如果傳入了 context，代表在首頁輸入，自動跳轉到結果頁
+    if (context != null && query.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const TestConnectionScreen()),
+      );
+    }
   }
 
   Future<void> _remoteSearch(String query) async {
