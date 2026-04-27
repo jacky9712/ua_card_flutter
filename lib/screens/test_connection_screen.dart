@@ -112,6 +112,15 @@ class TestConnectionScreen extends ConsumerWidget {
               icon: const Icon(Icons.share),
               label: const Text('匯出牌組'),
             ),
+
+            ElevatedButton.icon(
+              onPressed: uiState.totalDeckCount == 50 ? () {
+                _showSaveDialog(context, ref);
+              } : null, // 滿 50 張才讓存，或是你自己定規則
+              icon: const Icon(Icons.save),
+              label: const Text('儲存牌組'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade100),
+            ),
           ],
         ),
       ),
@@ -264,6 +273,69 @@ class TestConnectionScreen extends ConsumerWidget {
           },
         ),
       ),
+    );
+  }
+
+  void _showSaveDialog(BuildContext context, WidgetRef ref) {
+    // 使用 TextEditingController 來抓取輸入框的文字
+    final TextEditingController nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('儲存牌組'),
+          content: TextField(
+            controller: nameController,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: '請輸入牌組名稱...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            // 取消按鈕
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消', style: TextStyle(color: Colors.grey)),
+            ),
+            // 儲存按鈕
+            ElevatedButton(
+              onPressed: () async {
+                final String deckName = nameController.text.trim();
+
+                if (deckName.isEmpty) {
+                  // 如果沒輸入名字，可以用簡單的提示，或者不讓它按
+                  return;
+                }
+
+                // 關閉 Dialog
+                Navigator.pop(context);
+
+                // 顯示「處理中」的提示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('正在儲存牌組...'), duration: Duration(seconds: 1)),
+                );
+
+                // 呼叫我們之前寫在 ViewModel 裡的儲存邏輯
+                await ref.read(cardViewModelProvider.notifier).saveCurrentDeck(deckName);
+
+                // 儲存完成後的反饋
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('牌組「$deckName」已儲存！'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+              child: const Text('確認儲存', style: TextStyle(color: Colors.black)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

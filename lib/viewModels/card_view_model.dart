@@ -181,6 +181,61 @@ class CardViewModel extends Notifier<CardState> {
     }
   }
 
+  Future<void> saveCurrentDeck(String deckName) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      print('請先登入！');
+      return;
+    }
+
+    try {
+      // 1. 插入牌組主表 (decks)
+      // 這裡我們拿第一張卡的 series_id 當作牌組的系列
+      final firstCardId = state.deckMap.keys.first;
+      final seriesId = state.deckCardDetails[firstCardId]?.id;
+
+      final deckResponse = await _supabase.from('decks').insert({
+        'user_id': user.id,
+        'name': deckName,
+        'series_id': seriesId,
+      }).select().single();
+
+      final int deckId = deckResponse['id'];
+
+      // 2. 準備牌組內容資料 (deck_cards)
+      final List<Map<String, dynamic>> deckCardsData = [];
+      state.deckMap.forEach((cardId, quantity) {
+        deckCardsData.add({
+          'deck_id': deckId,
+          'card_id': cardId,
+          'quantity': quantity,
+        });
+      });
+
+      // 3. 批量插入牌組內容表
+      await _supabase.from('deck_cards').insert(deckCardsData);
+
+      print('牌組儲存成功！');
+    } catch (e) {
+      print('儲存失敗: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPriceHistory(int cardId) async {
+    try {
+      final response = await _supabase
+          .from('price_history')
+          .select('price_jpy, created_at')
+          .eq('card_id', cardId)
+          .order('created_at', ascending: true)
+          .limit(30); // 抓最近 30 筆
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      return [];
+    }
+  }
+
   void updateSelectedSeries(String series) {
     state = state.copyWith(selectedSeries: series, searchQuery: '');
     fetchCards();
