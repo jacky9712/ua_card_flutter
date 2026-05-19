@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewmodels/card_view_model.dart';
+import 'meta_environment_screen.dart';
 import 'test_connection_screen.dart'; // 導向原本的組牌模式
 
 class HomeScreen extends ConsumerWidget {
@@ -197,7 +198,7 @@ class HomeScreen extends ConsumerWidget {
           _quickButton(Icons.card_giftcard, '抽獎活動', Colors.orange.shade50,
               Colors.orange, () {
                 Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => const TestConnectionScreen()));
+                    builder: (context) => const MetaEnvironmentScreen()));
               }),
           _quickButton(Icons.edit_note, '首頁編輯', Colors.indigo.shade50,
               Colors.indigo, () {

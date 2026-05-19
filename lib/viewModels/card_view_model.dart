@@ -16,6 +16,7 @@ class CardState {
   // 🔥 新增：首頁對戰環境排行數據
   final List<Map<String, dynamic>> rankingList;
   final String? errorMessage;
+  final List<Map<String, dynamic>> metaData;
 
   CardState({
     this.allCards = const [],
@@ -28,6 +29,7 @@ class CardState {
     this.deckCardDetails = const {},
     this.rankingList = const [], // 初始化
     this.errorMessage,
+    this.metaData = const [],
   });
 
   CardState copyWith({
@@ -41,6 +43,7 @@ class CardState {
     Map<int, UACard>? deckCardDetails,
     List<Map<String, dynamic>>? rankingList,
     String? errorMessage,
+    List<Map<String, dynamic>>? metaData,
   }) {
     return CardState(
       allCards: allCards ?? this.allCards,
@@ -53,6 +56,7 @@ class CardState {
       deckCardDetails: deckCardDetails ?? this.deckCardDetails,
       rankingList: rankingList ?? this.rankingList,
       errorMessage: errorMessage ?? this.errorMessage,
+      metaData: metaData ?? this.metaData,
     );
   }
 
@@ -95,6 +99,30 @@ class CardViewModel extends Notifier<CardState> {
       fetchCards();
     }
   }
+
+  Future<void> fetchMetaEnvironment() async {
+    try {
+      // 直接撈取你寫好的 View
+      final response = await _supabase
+          .from('series_popularity')
+          .select()
+          .order('share_rate', ascending: false); // 依據市占率降冪排序
+
+      //state = state.copyWith(metaData: List<Map<String, dynamic>>.from(response));
+
+      state = state.copyWith(metaData: [
+        {'name_zh': '咒術迴戰 第1彈', 'share_rate': 35.5, 'use_count': 142},
+        {'name_zh': 'HUNTER×HUNTER 獵人', 'share_rate': 28.0, 'use_count': 112},
+        {'name_zh': 'Code Geass 反叛的魯路修', 'share_rate': 15.2, 'use_count': 61},
+        {'name_zh': '偶像大師 閃耀色彩', 'share_rate': 10.8, 'use_count': 43},
+        {'name_zh': '鬼滅之刃', 'share_rate': 10.5, 'use_count': 42},
+      ]);
+    } catch (e) {
+      // 這裡可以使用你之前設定的錯誤狀態或 logger
+      state = state.copyWith(errorMessage: '無法載入對戰環境資料: $e');
+    }
+  }
+
 
   Future<void> _fetchSeriesList() async {
     final response = await _supabase.from('series').select('series_code').order('id');
