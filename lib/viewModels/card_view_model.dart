@@ -3,7 +3,6 @@ import '../models/ua_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../screens/test_connection_screen.dart';
 import 'package:flutter/material.dart';
-import '../screens/test_connection_screen.dart';
 class CardState {
   final List<UACard> allCards;
   final List<UACard> filteredCards;
@@ -16,6 +15,7 @@ class CardState {
 
   // 🔥 新增：首頁對戰環境排行數據
   final List<Map<String, dynamic>> rankingList;
+  final String? errorMessage;
 
   CardState({
     this.allCards = const [],
@@ -27,6 +27,7 @@ class CardState {
     this.selectedSeries = '',
     this.deckCardDetails = const {},
     this.rankingList = const [], // 初始化
+    this.errorMessage,
   });
 
   CardState copyWith({
@@ -39,6 +40,7 @@ class CardState {
     String? selectedSeries,
     Map<int, UACard>? deckCardDetails,
     List<Map<String, dynamic>>? rankingList,
+    String? errorMessage,
   }) {
     return CardState(
       allCards: allCards ?? this.allCards,
@@ -50,6 +52,7 @@ class CardState {
       selectedSeries: selectedSeries ?? this.selectedSeries,
       deckCardDetails: deckCardDetails ?? this.deckCardDetails,
       rankingList: rankingList ?? this.rankingList,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
@@ -119,19 +122,59 @@ class CardViewModel extends Notifier<CardState> {
   }
 
   Future<void> fetchCards() async {
-    state = state.copyWith(isLoading: true);
+    // 1. 初始化狀態，清空之前的錯誤訊息
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
     try {
-      var query = _supabase.from('cards').select('*, latest_prices(price_jpy)');
-      if (state.selectedSeries.isNotEmpty) {
+      // 2. 構建 Supabase 查詢
+      // 這裡的 '*, latest_prices(price_jpy)' 會自動將卡片與最新價格關聯起來
+      var query = _supabase.from('cards').select('''
+      *,
+      latest_prices(price_jpy)
+    ''');
+
+      // 3. 處理系列篩選 (例如：UA01BT)
+      if (state.selectedSeries.isNotEmpty && state.selectedSeries != '全部系列') {
         query = query.ilike('card_number', '${state.selectedSeries}%');
       }
-      final response = await query.order('card_number', ascending: true).limit(150);
-      final cards = response.map((json) => UACard.fromJson(json)).toList();
-      state = state.copyWith(allCards: cards, isLoading: false);
+
+      // 4. 執行查詢並限制數量 (避免一次撈 8000 張記憶體爆炸)
+      final response = await query
+          .order('card_number', ascending: true)
+          .limit(300);
+
+      // 5. 安全地解析 JSON
+      final List<UACard> parsedCards = [];
+
+      for (var json in response) {
+        try {
+          parsedCards.add(UACard.fromJson(json));
+        } catch (parseError) {
+          // 🔥 如果有單張卡片欄位填錯，只會跳過那張，不會讓整個畫面死掉
+          // 這裡因為 linter 規則，我們先註解 print，你可以用 logger 替換
+          // print('跳過解析失敗的卡片: ${json['card_number']} - $parseError');
+        }
+      }
+
+      // 6. 更新 UI 狀態
+      state = state.copyWith(
+        allCards: parsedCards,
+        isLoading: false,
+        // 🔥 暴力偵錯：如果撈出來是 0 筆，直接在畫面上印出提示
+        errorMessage: parsedCards.isEmpty
+            ? '資料庫連線成功，但裡面沒有卡片資料！(0 筆)\n請先執行 Python 爬蟲寫入資料。'
+            : null,
+      );
+
+      // 重新套用本地的搜尋框關鍵字過濾
       _applyLocalSearch();
-    } catch (e) {
-      print('抓取失敗: $e');
-      state = state.copyWith(isLoading: false);
+
+    } catch (e, stackTrace) {
+      // 7. 捕捉網路或 Supabase RLS 被擋住的嚴重錯誤
+      state = state.copyWith(
+          isLoading: false,
+          errorMessage: '🔥 資料庫請求崩潰啦：\n$e'
+      );
     }
   }
 
