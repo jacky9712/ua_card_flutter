@@ -182,7 +182,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
     );
   }
 
-  // --- 你提供的 _buildPriceChart 內容 ---
+  // --- 實作像右圖那樣的詳細價格歷史圖表 ---
   Widget _buildPriceChart(List<Map<String, dynamic>> history) {
     if (history.isEmpty) {
       return const SizedBox(
@@ -204,6 +204,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
       padding: const EdgeInsets.only(right: 16, top: 10),
       child: LineChart(
         LineChartData(
+          // --- 互動設定：滑過顯示價格 ---
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
               tooltipBgColor: Colors.amber.shade800,
@@ -223,6 +224,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
           titlesData: FlTitlesData(
             rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            // --- X 軸日期標籤：格式化日期 ---
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -237,12 +239,14 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
             ),
           ),
           borderData: FlBorderData(show: false),
+          // --- 數值範圍設定：動態調整 Y 軸，讓線條不要貼地 ---
           minY: (minPrice - rangePadding).clamp(0, double.infinity),
           maxY: maxPrice + rangePadding,
+          // --- 線條設計：琥珀色、曲線、漸層填充 ---
           lineBarsData: [
             LineChartBarData(
               spots: spots,
-              isCurved: true,
+              isCurved: true, // 曲線平滑化
               color: Colors.amber,
               barWidth: 3,
               belowBarData: BarAreaData(
@@ -253,7 +257,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
                       colors: [Colors.amber.withOpacity(0.3), Colors.amber.withOpacity(0)]
                   )
               ),
-              dotData: const FlDotData(show: false),
+              dotData: const FlDotData(show: false), // 隱藏數據點，滑過才顯示
             ),
           ],
         ),
