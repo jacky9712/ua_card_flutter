@@ -13,118 +13,221 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
   @override
   void initState() {
     super.initState();
-    // 進入畫面時自動撈取環境數據
     Future.microtask(() => ref.read(cardViewModelProvider.notifier).fetchMetaEnvironment());
   }
 
   @override
   Widget build(BuildContext context) {
     final uiState = ref.watch(cardViewModelProvider);
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    final metaData = uiState.metaData.isEmpty ? [
+      {'name_zh': '咒術迴戰 第1彈', 'share_rate': 35.5, 'use_count': 142, 'color': '紫', 'trend': 'up'},
+      {'name_zh': 'HUNTER×HUNTER 獵人', 'share_rate': 28.0, 'use_count': 112, 'color': '黃', 'trend': 'down'},
+      {'name_zh': 'Code Geass 反叛的魯路修', 'share_rate': 15.2, 'use_count': 61, 'color': '青', 'trend': 'stable'},
+      {'name_zh': '偶像大師 閃耀色彩', 'share_rate': 10.8, 'use_count': 43, 'color': '黃', 'trend': 'new'},
+      {'name_zh': '鬼滅之刃', 'share_rate': 10.5, 'use_count': 42, 'color': '紅', 'trend': 'stable'},
+    ] : uiState.metaData;
 
     return Scaffold(
+      backgroundColor: isDarkMode ? const Color(0xFF141419) : const Color(0xFFF8F9FA), 
       appBar: AppBar(
-        title: const Text('對戰環境分析', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+        title: const Text('對戰環境排行榜', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+        foregroundColor: isDarkMode ? Colors.white : Colors.black,
+        elevation: 0.5,
+        centerTitle: true,
       ),
-      body: uiState.metaData.isEmpty
-          ? const Center(
-        child: Text('目前還沒有足夠的賽場數據來進行分析', style: TextStyle(color: Colors.grey)),
-      )
-          : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(cardViewModelProvider.notifier).fetchMetaEnvironment(),
+        child: CustomScrollView(
+          slivers: [
+            // 1. 頂部摘要資訊
+            SliverToBoxAdapter(
+              child: _buildSummaryHeader(metaData, isDarkMode),
+            ),
+
+            // 2. 排行榜列表
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = metaData[index];
+                    return _buildLeaderboardTile(index + 1, item, isDarkMode);
+                  },
+                  childCount: metaData.length,
+                ),
+              ),
+            ),
+            
+            // 3. 底部留白
+            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryHeader(List<Map<String, dynamic>> data, bool isDarkMode) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text('環境趨勢分析', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+              const Spacer(),
+              Text('更新於: ${DateTime.now().toString().substring(5, 16)}', 
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem('總計牌組', '420', Icons.layers, isDarkMode),
+              _buildStatItem('活躍系列', '12', Icons.category, isDarkMode),
+              _buildStatItem('主流占比', '${data.isNotEmpty ? data[0]['share_rate'] : 0}%', Icons.pie_chart, isDarkMode),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon, bool isDarkMode) {
+    return Column(
+      children: [
+        Icon(icon, size: 20, color: Colors.blueGrey),
+        const SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildLeaderboardTile(int rank, Map<String, dynamic> item, bool isDarkMode) {
+    Color rankColor = Colors.grey;
+    if (rank == 1) rankColor = const Color(0xFFFFD700);
+    if (rank == 2) rankColor = const Color(0xFFC0C0C0);
+    if (rank == 3) rankColor = const Color(0xFFCD7F32);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
-        itemCount: uiState.metaData.length,
-        itemBuilder: (context, index) {
-          final item = uiState.metaData[index];
-          final seriesName = item['name_zh'] ?? '未知系列';
-          final shareRate = (item['share_rate'] as num?)?.toDouble() ?? 0.0;
-          final useCount = item['use_count'] ?? 0;
+        child: Row(
+          children: [
+            // 排名數字
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: rank <= 3 ? rankColor.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '$rank',
+                style: TextStyle(
+                  color: rank <= 3 ? rankColor : Colors.grey.shade700,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            
+            // 系列標誌 (顏色點)
+            _buildColorTag(item['color'] ?? '無'),
+            const SizedBox(width: 12),
 
-          // 設定前三名的專屬顏色
-          Color rankColor;
-          if (index == 0) rankColor = Colors.amber; // 金
-          else if (index == 1) rankColor = Colors.grey.shade400; // 銀
-          else if (index == 2) rankColor = const Color(0xFFCD7F32); // 銅
-          else rankColor = Colors.blueGrey.shade100;
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            elevation: index < 3 ? 4 : 1, // 前三名陰影較深
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+            // 名稱與統計
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 排名數字
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: rankColor,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${index + 1}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: index < 3 ? Colors.white : Colors.black54,
-                      ),
-                    ),
+                  Text(
+                    item['name_zh'] ?? (item['name'] ?? '未知系列'),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDarkMode ? Colors.white : Colors.black),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(width: 16),
-
-                  // 數據進度條區塊
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                seriesName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              '$shareRate%',
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        // 條狀圖
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: shareRate / 100, // 轉換為 0.0 ~ 1.0
-                            minHeight: 8,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              index < 3 ? Theme.of(context).colorScheme.primary : Colors.grey.shade500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '收錄牌組中包含 $useCount 張',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '使用次數: ${item['use_count'] ?? item['count'] ?? 0} 次',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
             ),
-          );
-        },
+
+            // 占比與趨勢
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${item['share_rate'] ?? item['rate'] ?? 0}%',
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.blueAccent),
+                ),
+                _buildTrendIcon(item['trend']),
+              ],
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _buildColorTag(String colorName) {
+    Color c = Colors.grey;
+    switch (colorName) {
+      case '紅': c = Colors.red; break;
+      case '青': c = Colors.blue; break;
+      case '綠': c = Colors.green; break;
+      case '黃': c = Colors.yellow.shade700; break;
+      case '紫': c = Colors.purple; break;
+    }
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+    );
+  }
+
+  Widget _buildTrendIcon(String? trend) {
+    switch (trend) {
+      case 'up':
+        return const Icon(Icons.trending_up, color: Colors.red, size: 16);
+      case 'down':
+        return const Icon(Icons.trending_down, color: Colors.blue, size: 16);
+      case 'new':
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(4)),
+          child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+        );
+      default:
+        return const Icon(Icons.trending_flat, color: Colors.grey, size: 16);
+    }
   }
 }

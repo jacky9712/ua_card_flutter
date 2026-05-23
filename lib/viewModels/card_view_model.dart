@@ -13,10 +13,12 @@ class CardState {
   final String selectedSeries;
   final Map<int, UACard> deckCardDetails;
 
-  // 🔥 新增：首頁對戰環境排行數據
+  // 首頁對戰環境排行數據
   final List<Map<String, dynamic>> rankingList;
   final String? errorMessage;
   final List<Map<String, dynamic>> metaData;
+  //卡組用
+  final List<Map<String, dynamic>> myDecks;
 
   CardState({
     this.allCards = const [],
@@ -30,6 +32,7 @@ class CardState {
     this.rankingList = const [], // 初始化
     this.errorMessage,
     this.metaData = const [],
+    this.myDecks = const [],
   });
 
   CardState copyWith({
@@ -44,6 +47,7 @@ class CardState {
     List<Map<String, dynamic>>? rankingList,
     String? errorMessage,
     List<Map<String, dynamic>>? metaData,
+    List<Map<String, dynamic>>? myDecks,
   }) {
     return CardState(
       allCards: allCards ?? this.allCards,
@@ -57,6 +61,7 @@ class CardState {
       rankingList: rankingList ?? this.rankingList,
       errorMessage: errorMessage ?? this.errorMessage,
       metaData: metaData ?? this.metaData,
+      myDecks: myDecks ?? this.myDecks,
     );
   }
 
@@ -97,6 +102,29 @@ class CardViewModel extends Notifier<CardState> {
     } catch (e) {
       print('初始化失敗: $e');
       fetchCards();
+    }
+  }
+
+  Future<void> fetchMyDecks() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      state = state.copyWith(isLoading: true);
+
+      // 多表關聯查詢：抓取牌組的同時，把所屬系列的中文名稱也順便 Select 出來
+      final response = await _supabase
+          .from('decks')
+          .select('*, series(name_zh, series_code)')
+          .eq('user_id', user.id)
+          .order('created_at', ascending: false);
+
+      state = state.copyWith(
+        myDecks: List<Map<String, dynamic>>.from(response),
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: '抓取我的牌組失敗: $e');
     }
   }
 
@@ -219,19 +247,11 @@ class CardViewModel extends Notifier<CardState> {
     state = state.copyWith(filteredCards: filtered);
   }
 
-  void updateSearchQuery(String query, {BuildContext? context}) {
+  void updateSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
 
     // 執行原本的搜尋邏輯
     _remoteSearch(query);
-
-    // 🔥 優化：如果傳入了 context，代表在首頁輸入，自動跳轉到結果頁
-    if (context != null && query.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const TestConnectionScreen()),
-      );
-    }
   }
 
   Future<void> _remoteSearch(String query) async {
@@ -252,43 +272,80 @@ class CardViewModel extends Notifier<CardState> {
     }
   }
 
-  Future<void> saveCurrentDeck(String deckName) async {
+  Future<bool> saveCurrentDeck(String deckName) async {
+    // 1. 檢查使用者登入狀態
     final user = _supabase.auth.currentUser;
     if (user == null) {
-      print('請先登入！');
-      return;
+      state = state.copyWith(errorMessage: '🚨 儲存失敗：請先確認匿名登入（Anon Key）連線成功！');
+      return false;
+    }
+
+    // 2. 前端基礎檢查（省下盲目發送請求的流量）
+    if (state.totalDeckCount != 50) {
+      state = state.copyWith(errorMessage: '🚨 儲存失敗：牌組必須剛好 50 張！(目前 ${state.totalDeckCount} 張)');
+      return false;
     }
 
     try {
-      // 1. 插入牌組主表 (decks)
-      // 這裡我們拿第一張卡的 series_id 當作牌組的系列
-      final firstCardId = state.deckMap.keys.first;
-      final seriesId = state.deckCardDetails[firstCardId]?.id;
+      state = state.copyWith(isLoading: true, errorMessage: null);
 
-      final deckResponse = await _supabase.from('decks').insert({
-        'user_id': user.id,
-        'name': deckName,
-        'series_id': seriesId,
-      }).select().single();
+      // 3. 自動偵測系列與封面
+      int? detectedSeriesId;
+      String? coverCardUrl;
+      if (state.deckMap.isNotEmpty) {
+        try {
+          final firstCardId = state.deckMap.keys.first;
+          // 優先從 deckCardDetails 快取中找，如果沒有再從 allCards 找
+          final firstCard = state.deckCardDetails[firstCardId] ?? 
+                           state.allCards.firstWhere((c) => c.id == firstCardId);
+          detectedSeriesId = firstCard.seriesId;
+          coverCardUrl = firstCard.imageUrl;
+        } catch (e) {
+          debugPrint('自動偵測封面失敗: $e');
+        }
+      }
 
-      final int deckId = deckResponse['id'];
-
-      // 2. 準備牌組內容資料 (deck_cards)
-      final List<Map<String, dynamic>> deckCardsData = [];
+      // 4. 🔥 把牌組記憶體結構打包成標準後端要求的 JSON 陣列
+      final List<Map<String, dynamic>> cardsJsonList = [];
       state.deckMap.forEach((cardId, quantity) {
-        deckCardsData.add({
-          'deck_id': deckId,
-          'card_id': cardId,
-          'quantity': quantity,
-        });
+        if (quantity > 0) {
+          cardsJsonList.add({
+            'card_id': cardId,
+            'quantity': quantity,
+          });
+        }
       });
 
-      // 3. 批量插入牌組內容表
-      await _supabase.from('deck_cards').insert(deckCardsData);
+      // 5. ✨ 呼叫 RPC 程序：一次請求，後端自動完成核對與雙表 Transaction 寫入
+      final response = await _supabase.rpc(
+        'save_complete_deck',
+        params: {
+          'p_name': deckName,
+          'p_series_id': detectedSeriesId,
+          'p_cover_card_url': coverCardUrl,
+          'p_cards': cardsJsonList, 
+        },
+      );
 
-      print('牌組儲存成功！');
+      debugPrint('🎉 牌組寫入成功！回傳結果: $response');
+      state = state.copyWith(isLoading: false, errorMessage: null);
+      return true;
+
     } catch (e) {
-      print('儲存失敗: $e');
+      debugPrint('儲存失敗詳情: $e');
+      // 這裡會精準捕獲 PostgreSQL 拋出的 'RAISE EXCEPTION'
+      String errorMsg = '🔥 資料庫同步失敗: $e';
+      if (e.toString().contains('50')) {
+        errorMsg = '伺服器校驗失敗：牌組必須剛好 50 張！';
+      } else if (e.toString().contains('JWT')) {
+        errorMsg = '登入過期，請重新登入';
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: errorMsg,
+      );
+      return false;
     }
   }
 
@@ -303,6 +360,37 @@ class CardViewModel extends Notifier<CardState> {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<UACard>> fetchCardsForDeck(int deckId) async {
+    try {
+      // 🌟 核心關聯查詢：從 deck_cards 查出數量，並順便把 cards 內容與最新價格 View 撈出來
+      final response = await _supabase
+          .from('deck_cards')
+          .select('quantity, cards(*, latest_prices(price_jpy))')
+          .eq('deck_id', deckId);
+
+      final List<UACard> expandedCards = [];
+
+      for (var item in response) {
+        final int quantity = item['quantity'] as int;
+        final cardJson = item['cards'] as Map<String, dynamic>;
+
+        // 使用我們之前寫好的 factory 轉換成物件
+        final card = UACard.fromJson(cardJson);
+
+        // 🔥 關鍵：根據數量（例如 x4），就把這張卡片重複加進 List 裡面 4 次
+        // 這樣進到詳情頁時，總數才會是精準的 50 張，圖表計算才會正確！
+        for (int i = 0; i < quantity; i++) {
+          expandedCards.add(card);
+        }
+      }
+
+      return expandedCards;
+    } catch (e) {
+      debugPrint('🚨 撈取牌組詳細卡片失敗: $e');
       return [];
     }
   }

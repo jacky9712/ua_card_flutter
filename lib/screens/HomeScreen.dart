@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewmodels/card_view_model.dart';
 import 'meta_environment_screen.dart';
-import 'test_connection_screen.dart'; // 導向原本的組牌模式
+import 'my_decks_screen.dart';
+import 'test_connection_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -11,9 +12,10 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final uiState = ref.watch(cardViewModelProvider);
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDarkMode ? const Color(0xFF141419) : Colors.white,
       // 🏆 中央凸起按鈕 (出品 / 產生牌組)
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -72,8 +74,8 @@ class HomeScreen extends ConsumerWidget {
               // 4️⃣ 四大快速功能按鈕
               _buildQuickActions(context, uiState),
 
-              // 5️⃣ 對戰環境排行榜 (數據展示)
-              _buildRankingSection(uiState),
+              // 5️⃣ 對戰環境預覽 (整合自原本的 RankingSection)
+              _buildHomeMetaPreview(context, uiState),
 
               const SizedBox(height: 100), // 給底部按鈕留白
             ],
@@ -93,7 +95,7 @@ class HomeScreen extends ConsumerWidget {
           const Text('トップ',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(width: 10),
-          Text('|', style: TextStyle(color: Colors.grey.shade300)),
+          Text('|', style: TextStyle(color: Colors.grey.shade600)),
           const SizedBox(width: 10),
           const Text(
               '投稿清單', style: TextStyle(color: Colors.grey, fontSize: 14)),
@@ -125,9 +127,13 @@ class HomeScreen extends ConsumerWidget {
           Expanded(
             child: TextField(
               onChanged: (text) {
-                // 🔥 修改這裡：傳入 context 讓它輸入後自動跳轉
-                ref.read(cardViewModelProvider.notifier).updateSearchQuery(
-                    text, context: context);
+                ref.read(cardViewModelProvider.notifier).updateSearchQuery(text);
+              },
+              onSubmitted: (text) {
+                if (text.isNotEmpty) {
+                  Navigator.push(context, MaterialPageRoute(
+                      builder: (context) => const TestConnectionScreen()));
+                }
               },
               decoration: InputDecoration(
                 hintText: '搜尋卡號或卡名...',
@@ -181,30 +187,56 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildQuickActions(BuildContext context, dynamic uiState) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          // 1. 對戰環境 (對應 Kadoraba 的 デッキ広場)
           _quickButton(
-              Icons.style, '牌組廣場', Colors.pink.shade50, Colors.pink, () {
-            Navigator.push(context, MaterialPageRoute(
-                builder: (context) => const TestConnectionScreen()));
-          }),
-          _quickButton(
-              Icons.grid_on, '我的卡片', Colors.blue.shade50, Colors.blue, () {
-            Navigator.push(context, MaterialPageRoute(
-                builder: (context) => const TestConnectionScreen()));
-          }),
-          _quickButton(Icons.card_giftcard, '抽獎活動', Colors.orange.shade50,
-              Colors.orange, () {
+              Icons.analytics_outlined,
+              '對戰環境',
+              Colors.purple.shade50,
+              const Color(0xFF8E24AA),
+                  () {
                 Navigator.push(context, MaterialPageRoute(
                     builder: (context) => const MetaEnvironmentScreen()));
-              }),
-          _quickButton(Icons.edit_note, '首頁編輯', Colors.indigo.shade50,
-              Colors.indigo, () {
+              }
+          ),
+
+          // 2. 智能組牌 (前往你的黑金組牌主戰場)
+          _quickButton(
+              Icons.dashboard_customize_outlined,
+              '智能組牌',
+              Colors.pink.shade50,
+              Colors.pink,
+                  () {
                 Navigator.push(context, MaterialPageRoute(
                     builder: (context) => const TestConnectionScreen()));
-              }),
+              }
+          ),
+
+          // 3. 我的牌組 (對應 Kadoraba 的 マイカード)
+          _quickButton(
+              Icons.style_outlined,
+              '我的牌組',
+              Colors.blue.shade50,
+              Colors.blue,
+                  () {
+                Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => const MyDecksScreen()));
+              }
+          ),
+
+          // 4. 抽獎/其他活動 (預留功能)
+          _quickButton(
+              Icons.card_giftcard,
+              '主題活動',
+              Colors.orange.shade50,
+              Colors.orange,
+                  () {
+                // 暫時留空或跳轉至活動
+              }
+          ),
         ],
       ),
     );
@@ -254,9 +286,13 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(height: 15),
 
           if (uiState.rankingList.isEmpty)
-            const Center(child: Text('暫無數據', style: TextStyle(color: Colors.grey)))
+            const Center(
+                child: Text('暫無數據', style: TextStyle(color: Colors.grey)))
           else
-            ...uiState.rankingList.asMap().entries.map((entry) {
+            ...uiState.rankingList
+                .asMap()
+                .entries
+                .map((entry) {
               int index = entry.key;
               var item = entry.value;
               return _rankingRow(
@@ -297,6 +333,97 @@ class HomeScreen extends ConsumerWidget {
         Text(label, style: TextStyle(fontSize: 10,
             color: isActive ? Colors.amber.shade800 : Colors.grey)),
       ],
+    );
+  }
+
+  Widget _buildHomeMetaPreview(BuildContext context, dynamic uiState) {
+    // 防呆：如果 ViewModel 還沒撈到環境數據，就顯示輕量 Loading
+    if (uiState.metaData.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(24.0),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    // 只取前三名塞在首頁當預覽簡報
+    final previewList = uiState.metaData.take(3).toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 標題列
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text('對戰環境', style: TextStyle(fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).textTheme.bodyLarge?.color)),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.circle, color: Colors.green, size: 8),
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(
+                      builder: (context) => const MetaEnvironmentScreen()));
+                },
+                child: const Text('查看更多 >',
+                    style: TextStyle(fontSize: 12, color: Colors.grey)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // 簡報白底卡片矩陣
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E24),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF2C2C35)),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: previewList.length,
+              separatorBuilder: (context, index) =>
+              const Divider(height: 1, color: Color(0xFF2C2C35)),
+              itemBuilder: (context, index) {
+                final item = previewList[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
+                  child: Row(
+                    children: [
+                      Text('#${index + 1}', style: TextStyle(
+                          fontWeight: FontWeight.w900, color: index == 0
+                          ? const Color(0xFFFFD700)
+                          : Colors.white70)),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          '${item['name_zh'] ?? '未知系列'}',
+                          style: const TextStyle(color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text('${item['share_rate']}%',
+                          style: const TextStyle(color: Color(0xFFFFD700),
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
