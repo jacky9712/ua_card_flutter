@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../viewmodels/card_view_model.dart';
+import '../viewModels/meta_view_model.dart';
 
 class MetaEnvironmentScreen extends ConsumerStatefulWidget {
   const MetaEnvironmentScreen({super.key});
@@ -13,21 +13,21 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(cardViewModelProvider.notifier).fetchMetaEnvironment());
+    Future.microtask(() => ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment());
   }
 
   @override
   Widget build(BuildContext context) {
-    final uiState = ref.watch(cardViewModelProvider);
+    final metaState = ref.watch(metaViewModelProvider);
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    final metaData = uiState.metaData.isEmpty ? [
+    final metaData = metaState.metaData.isEmpty ? [
       {'name_zh': '咒術迴戰 第1彈', 'share_rate': 35.5, 'use_count': 142, 'color': '紫', 'trend': 'up'},
       {'name_zh': 'HUNTER×HUNTER 獵人', 'share_rate': 28.0, 'use_count': 112, 'color': '黃', 'trend': 'down'},
       {'name_zh': 'Code Geass 反叛的魯路修', 'share_rate': 15.2, 'use_count': 61, 'color': '青', 'trend': 'stable'},
       {'name_zh': '偶像大師 閃耀色彩', 'share_rate': 10.8, 'use_count': 43, 'color': '黃', 'trend': 'new'},
       {'name_zh': '鬼滅之刃', 'share_rate': 10.5, 'use_count': 42, 'color': '紅', 'trend': 'stable'},
-    ] : uiState.metaData;
+    ] : metaState.metaData;
 
     return Scaffold(
       backgroundColor: isDarkMode ? const Color(0xFF141419) : const Color(0xFFF8F9FA), 
@@ -39,15 +39,12 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
         centerTitle: true,
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(cardViewModelProvider.notifier).fetchMetaEnvironment(),
+        onRefresh: () => ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment(),
         child: CustomScrollView(
           slivers: [
-            // 1. 頂部摘要資訊
             SliverToBoxAdapter(
               child: _buildSummaryHeader(metaData, isDarkMode),
             ),
-
-            // 2. 排行榜列表
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               sliver: SliverList(
@@ -60,8 +57,6 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                 ),
               ),
             ),
-            
-            // 3. 底部留白
             const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
         ),
@@ -130,20 +125,19 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
         color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.04), blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // 排名數字
             Container(
               width: 32,
               height: 32,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: rank <= 3 ? rankColor.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                color: rank <= 3 ? rankColor.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Text(
@@ -156,12 +150,8 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            
-            // 系列標誌 (顏色點)
             _buildColorTag(item['color'] ?? '無'),
             const SizedBox(width: 12),
-
-            // 名稱與統計
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,8 +170,6 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                 ],
               ),
             ),
-
-            // 占比與趨勢
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [

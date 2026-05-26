@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ua_card_flutter/screens/HomeScreen.dart';
-import 'screens/test_connection_screen.dart';
+import 'repositories/providers.dart';
 
 
 // 1. 初始化 Supabase
@@ -42,18 +42,19 @@ void main() async {
     anonKey: supabaseAnonKey,
   );
 
-  // 4. 訪客無感匿名登入
-  final supabaseClient = Supabase.instance.client;
-  if (supabaseClient.auth.currentUser == null) {
+  // 4. 訪客無感匿名登入 (使用 Repository 保持一致)
+  final container = ProviderContainer();
+  final authRepo = container.read(authRepositoryProvider);
+  if (authRepo.currentUser == null) {
     try {
-      await supabaseClient.auth.signInAnonymously();
-      debugPrint('✅ 訪客匿名登入成功！UUID: ${supabaseClient.auth.currentUser?.id}');
+      await authRepo.signInAnonymously();
+      debugPrint('✅ 訪客匿名登入成功');
     } catch (e) {
       debugPrint('❌ 匿名登入失敗: $e');
     }
   }
 
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {

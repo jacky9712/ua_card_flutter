@@ -1,6 +1,7 @@
 // lib/screens/deck_export_widget.dart
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../models/ua_card.dart';
 
 class DeckExportWidget extends StatelessWidget {
@@ -12,6 +13,16 @@ class DeckExportWidget extends StatelessWidget {
     required this.deckMap,
     required this.allCards,
   });
+
+  // 🧬 生成牌組字串以便掃描導入
+  String _generateDeckData() {
+    final List<String> parts = [];
+    deckMap.forEach((cardId, quantity) {
+      final card = allCards.firstWhere((c) => c.id == cardId);
+      parts.add('${card.cardNumber}:$quantity');
+    });
+    return 'UA_DECK|${parts.join(',')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +39,8 @@ class DeckExportWidget extends StatelessWidget {
     // 將卡片依照卡號排序，畫面更整齊
     groupedCards.sort((a, b) => a.key.cardNumber.compareTo(b.key.cardNumber));
 
+    final String deckData = _generateDeckData();
+
     return Container(
       width: 1000,
       color: Colors.white,
@@ -38,16 +51,40 @@ class DeckExportWidget extends StatelessWidget {
         children: [
           // 🏆 頂部標題區
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Union Arena 牌組分享',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Union Arena 牌組分享',
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '總張數: $totalCount / 50',
+                    style: const TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Text(
-                '總張數: $totalCount / 50',
-                style: const TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
+              // 右上角 QR Code
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    QrImageView(
+                      data: deckData,
+                      version: QrVersions.auto,
+                      size: 100.0,
+                    ),
+                    const Text('掃描導入牌組', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
             ],
           ),
