@@ -1,27 +1,32 @@
 // lib/screens/deck_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/ua_card.dart';
 import '../utils/deck_exporter.dart';
+import '../viewModels/deck_view_model.dart';
+import 'test_connection_screen.dart';
 
-class DeckDetailScreen extends StatefulWidget {
+class DeckDetailScreen extends ConsumerStatefulWidget {
+  final int? deckId; // 🔥 新增：牌組 ID，用於編輯模式
   final String deckName;
   final List<UACard> cardsInDeck; // 50張展開的卡片
   final VoidCallback? onSavePressed;
 
   const DeckDetailScreen({
     super.key,
+    this.deckId,
     required this.deckName,
     required this.cardsInDeck,
     this.onSavePressed,
   });
 
   @override
-  State<DeckDetailScreen> createState() => _DeckDetailScreenState();
+  ConsumerState<DeckDetailScreen> createState() => _DeckDetailScreenState();
 }
 
-class _DeckDetailScreenState extends State<DeckDetailScreen> {
+class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
   int _activeTabIndex = 0; // 0: 圖像, 1: 文字/QR
 
   Map<int, int> _getDeckMap() {
@@ -143,6 +148,20 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         backgroundColor: const Color(0xFF1E1E24),
         elevation: 0,
         actions: [
+          // 🔥 新增：編輯按鈕 (僅在非預覽模式顯示)
+          if (widget.onSavePressed == null)
+            IconButton(
+              icon: const Icon(Icons.edit_note, color: Colors.amber),
+              onPressed: () {
+                // 1. 將卡片載入 ViewModel，傳入 ID 以便編輯後取代舊牌組
+                ref.read(deckViewModelProvider.notifier).loadDeckForEditing(widget.deckId, widget.cardsInDeck);
+                // 2. 跳轉回組牌頁面
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TestConnectionScreen()),
+                );
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.ios_share, size: 20),
             onPressed: () {

@@ -39,34 +39,72 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                   itemCount: deckState.myDecks.length,
                   itemBuilder: (context, index) {
                     final deck = deckState.myDecks[index];
-                    final bool isLocal = deck['id'] < 0;
+                    final int deckId = deck['id'];
+                    final bool isLocal = deckId < 0;
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        leading: Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(isLocal ? Icons.smartphone : Icons.cloud_done, color: Colors.amber),
+                    return Dismissible(
+                      key: Key('deck_$deckId'),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        title: Text(deck['name'] ?? '未命名牌組', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(isLocal ? '儲存於此裝置' : '已同步至雲端', style: const TextStyle(fontSize: 12)),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () async {
-                          final expandedCards = await ref.read(deckViewModelProvider.notifier).fetchCardsForDeck(deck['id']);
-                          if (context.mounted) {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => DeckDetailScreen(
-                              deckName: deck['name'],
-                              cardsInDeck: expandedCards,
-                            )));
-                          }
-                        },
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (direction) async {
+                        return await showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('確認刪除'),
+                            content: Text('確定要刪除「${deck['name']}」嗎？'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('刪除', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      onDismissed: (direction) {
+                        ref.read(deckViewModelProvider.notifier).deleteDeck(deckId);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('已刪除牌組 ${deck['name']}')),
+                        );
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          leading: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(isLocal ? Icons.smartphone : Icons.cloud_done, color: Colors.amber),
+                          ),
+                          title: Text(deck['name'] ?? '未命名牌組', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text(isLocal ? '儲存於此裝置' : '已同步至雲端', style: const TextStyle(fontSize: 12)),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () async {
+                            final expandedCards = await ref.read(deckViewModelProvider.notifier).fetchCardsForDeck(deckId);
+                            if (context.mounted) {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => DeckDetailScreen(
+                                deckId: deckId,
+                                deckName: deck['name'],
+                                cardsInDeck: expandedCards,
+                              )));
+                            }
+                          },
+                        ),
                       ),
                     );
                   },

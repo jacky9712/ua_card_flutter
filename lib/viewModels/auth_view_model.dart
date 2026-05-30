@@ -9,7 +9,8 @@ class UserAuthState {
 
   UserAuthState({this.user, this.isLoading = false, this.errorMessage});
 
-  bool get isRealUser => user != null && user!.appMetadata['provider'] != 'anonymous';
+  // 🔥 修正：檢查是否為匿名使用者
+  bool get isRealUser => user != null && !user!.isAnonymous;
   bool get isLoggedIn => user != null;
 
   UserAuthState copyWith({User? user, bool? isLoading, String? errorMessage}) {
@@ -56,8 +57,16 @@ class AuthViewModel extends Notifier<UserAuthState> {
   }
 
   Future<void> signOut() async {
-    await ref.read(authRepositoryProvider).signOut();
-    await ref.read(authRepositoryProvider).signInAnonymously();
+    state = state.copyWith(isLoading: true);
+    final repo = ref.read(authRepositoryProvider);
+    try {
+      await repo.signOut();
+      // 登出後立即建立新的匿名階段，確保 App 核心功能（本地組牌）不中斷
+      await repo.signInAnonymously();
+      state = state.copyWith(isLoading: false, errorMessage: null);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: '登出發生異常: $e');
+    }
   }
 }
 

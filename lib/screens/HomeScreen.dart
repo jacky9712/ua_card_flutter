@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../viewModels/auth_view_model.dart';
+import '../viewModels/deck_view_model.dart';
 import '../viewModels/meta_view_model.dart';
 import 'login_screen.dart';
 import 'meta_environment_screen.dart';
+import 'qr_scanner_screen.dart';
 import 'my_decks_screen.dart';
 import 'test_connection_screen.dart';
 
@@ -12,31 +14,46 @@ class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   void _handleProfileClick(BuildContext context, UserAuthState authState, AuthViewModel authNotifier) {
-    if (authState.isRealUser) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('會員中心'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('帳號: ${authState.user?.email}'),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('登出帳號'),
-                onTap: () async {
-                  await authNotifier.signOut();
-                  if (context.mounted) Navigator.pop(context);
-                },
-              )
-            ],
-          ),
-        ),
-      );
-    } else {
+    // 🔥 如果不是真實使用者（包含未登入或匿名），則跳轉登入頁
+    if (!authState.isRealUser) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+      return;
     }
+
+    // 已登入（真實使用者）顯示會員中心
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('會員中心'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('帳號: ${authState.user?.email}'),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('登出帳號'),
+              onTap: () async {
+                // 1. 執行登出邏輯
+                await authNotifier.signOut();
+                if (context.mounted) {
+                  // 2. 關閉會員中心對話框
+                  Navigator.pop(context); 
+                  
+                  // 3. 立即跳轉至登入介面
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+                  
+                  // 4. 顯示提示
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('已成功登出'), backgroundColor: Colors.blueGrey),
+                  );
+                }
+              },
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -49,6 +66,8 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: isDarkMode ? const Color(0xFF141419) : Colors.white,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          // 每次點擊出品，先清空編輯器緩存，確保是「新牌組」
+          ref.read(deckViewModelProvider.notifier).clearEditor();
           Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
         },
         backgroundColor: Colors.amber,
@@ -160,7 +179,25 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
+          // QR 掃描導入按鈕
+          InkWell(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen())),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Colors.amber, Colors.orange]),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.qr_code_scanner, color: Colors.black, size: 18),
+                  Text('QR導入', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(

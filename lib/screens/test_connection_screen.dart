@@ -89,6 +89,15 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                       filled: true,
                       fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
                       prefixIcon: const Icon(Icons.search, size: 18),
+                      suffixIcon: _searchController.text.isNotEmpty 
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(cardLibraryViewModelProvider.notifier).updateSearchQuery('');
+                            },
+                          )
+                        : null,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -105,25 +114,32 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
         ),
       ),
       bottomNavigationBar: _buildBottomSettlement(deckState, isDarkMode),
-      body: libraryState.isLoading 
-          ? const Center(child: CircularProgressIndicator())
-          : libraryState.filteredCards.isEmpty
-              ? const Center(child: Text('找不到符合的卡片'))
-              : GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3, 
-                    childAspectRatio: 0.54, 
-                    crossAxisSpacing: 8, 
-                    mainAxisSpacing: 8
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300), // 平滑過渡
+        child: libraryState.isLoading 
+            ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator())
+            : libraryState.filteredCards.isEmpty
+                ? const Center(key: ValueKey('empty'), child: Text('找不到符合的卡片'))
+                : SizedBox.expand( // 強制填滿，避免高度變動
+                    key: const ValueKey('grid_container'),
+                    child: GridView.builder(
+                      padding: const EdgeInsets.all(10),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3, 
+                        childAspectRatio: 0.54, 
+                        crossAxisSpacing: 8, 
+                        mainAxisSpacing: 8
+                      ),
+                      itemCount: libraryState.filteredCards.length,
+                      itemBuilder: (context, index) {
+                        final card = libraryState.filteredCards[index];
+                        final qty = deckState.deckMap[card.id] ?? 0;
+                        return _buildCardItem(card, qty, isDarkMode);
+                      },
+                    ),
                   ),
-                  itemCount: libraryState.filteredCards.length,
-                  itemBuilder: (context, index) {
-                    final card = libraryState.filteredCards[index];
-                    final qty = deckState.deckMap[card.id] ?? 0;
-                    return _buildCardItem(card, qty, isDarkMode);
-                  },
-                ),
+      ),
     );
   }
 
@@ -132,7 +148,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white, 
-        border: Border(top: BorderSide(color: Colors.grey.withAlpha(50)))
+        border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.2)))
       ),
       child: SafeArea(
         child: Row(
@@ -174,10 +190,38 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                   onTap: () => showDialog(context: context, builder: (_) => CardDetailDialog(card: card)),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(imageUrl: card.imageUrl ?? '', fit: BoxFit.contain),
+                    child: CachedNetworkImage(
+                      imageUrl: card.imageUrl ?? '', 
+                      fit: BoxFit.contain,
+                      // 🔥 加入佔位符確保高度穩定
+                      placeholder: (context, url) => Container(
+                        color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                        child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 1))),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
+                    ),
                   ),
                 ),
                 if (qty > 0) Positioned(top: 0, left: 0, child: Container(padding: const EdgeInsets.all(4), color: color, child: Text('x$qty', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)))),
+                
+                // 💰 價格顯示
+                if (card.price != null && card.price! > 0)
+                  Positioned(
+                    bottom: 4,
+                    right: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.6), width: 0.8),
+                      ),
+                      child: Text(
+                        '¥${card.price}',
+                        style: const TextStyle(color: Color(0xFFFFE082), fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -220,21 +264,46 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
 
   void _showSaveDialog(bool isDarkMode) {
     final controller = TextEditingController();
-    showDialog(context: context, builder: (_) => AlertDialog(
-      title: const Text('儲存牌組'),
-      content: TextField(controller: controller, decoration: const InputDecoration(hintText: '輸入名稱')),
+    showDialog(context: context, builder: (ctx) => AlertDialog(
+      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      title: const Text('儲存牌組', style: TextStyle(fontWeight: FontWeight.bold)),
+      content: TextField(
+        controller: controller, 
+        autofocus: true,
+        decoration: const InputDecoration(hintText: '輸入牌組名稱...', border: OutlineInputBorder()),
+      ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
-        ElevatedButton(onPressed: () async {
-          final success = await ref.read(deckViewModelProvider.notifier).saveCurrentDeck(controller.text);
-          if (success && mounted) {
-            Navigator.pop(context); // 關閉 dialog
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context); // 關閉預覽
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+        ElevatedButton(
+          onPressed: () async {
+            final deckName = controller.text.trim();
+            if (deckName.isEmpty) return;
+
+            // 1. 呼叫 ViewModel 執行儲存
+            final success = await ref.read(deckViewModelProvider.notifier).saveCurrentDeck(deckName);
+            
+            if (success && mounted) {
+              // 2. ✨ 核心修正：連退三步
+              // 第一步：關閉對話框 (ctx)
+              Navigator.pop(ctx); 
+              
+              // 第二步：關閉預覽頁面 (DeckDetailScreen)
+              Navigator.pop(context); 
+              
+              // 第三步：關閉編輯頁面 (TestConnectionScreen)
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('🎉 牌組「$deckName」儲存成功！'), backgroundColor: Colors.green),
+              );
+              
+              // 3. 重新整理我的牌組列表
+              ref.read(deckViewModelProvider.notifier).fetchMyDecks();
             }
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('儲存成功')));
-          }
-        }, child: const Text('確認')),
+          }, 
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
+          child: const Text('確認儲存'),
+        ),
       ],
     ));
   }
