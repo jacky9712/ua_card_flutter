@@ -43,7 +43,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     final Map<int, int> deckMap = _getDeckMap();
     final List<String> parts = [];
     final List<UACard> uniqueCards = widget.cardsInDeck.toSet().toList();
-    
+
     deckMap.forEach((cardId, quantity) {
       try {
         final card = uniqueCards.firstWhere((c) => c.id == cardId);
@@ -58,10 +58,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     final Map<String, Map<String, dynamic>> grouped = {};
     for (var card in widget.cardsInDeck) {
       if (!grouped.containsKey(card.cardNumber)) {
-        grouped[card.cardNumber] = {
-          'card': card,
-          'count': 1,
-        };
+        grouped[card.cardNumber] = {'card': card, 'count': 1};
       } else {
         grouped[card.cardNumber]!['count']++;
       }
@@ -86,23 +83,35 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
   // 🧮 統計功能二：觸發分佈 (精準識別 UA 各顏色 Color Trigger)
   Map<String, int> _calculateTriggerDistribution() {
     final Map<String, int> dist = {
-      'SPECIAL': 0, 'COLOR': 0, 'FINAL': 0, 'DRAW': 0,
-      'GET': 0, 'ACTIVE': 0, 'RAID': 0, 'OTHER': 0, 'NONE': 0
+      'SPECIAL': 0,
+      'COLOR': 0,
+      'FINAL': 0,
+      'DRAW': 0,
+      'GET': 0,
+      'ACTIVE': 0,
+      'RAID': 0,
+      'OTHER': 0,
+      'NONE': 0,
     };
     for (var card in widget.cardsInDeck) {
       final text = card.triggerText?.trim() ?? '';
-      
+
       if (text.isEmpty || text == '-') {
         dist['NONE'] = dist['NONE']! + 1;
         continue;
       }
 
       // 1. 優先判定 COLOR (使用您提供的精準描述)
-      if (text.contains('カラー') || text.contains('COLOR') ||
+      if (text.contains('カラー') ||
+          text.contains('COLOR') ||
           text.contains('BP2500以下の相手') || // 紅色 Color
           text.contains('BP3500以下の相手') || // 藍色 Color
-          (text.contains('レストにする') && text.contains('アクティブにならない')) || // 黃色 Color
-          (text.contains('2以下') && text.contains('消費APが1') && text.contains('登場させる'))) { // 綠/紫 Color
+          (text.contains('レストにする') &&
+              text.contains('アクティブにならない')) || // 黃色 Color
+          (text.contains('2以下') &&
+              text.contains('消費APが1') &&
+              text.contains('登場させる'))) {
+        // 綠/紫 Color
         dist['COLOR'] = dist['COLOR']! + 1;
       }
       // 2. 判定 RAID (截圖中的重要類別)
@@ -110,23 +119,27 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
         dist['RAID'] = dist['RAID']! + 1;
       }
       // 3. 判定 SPECIAL (排除掉已認定的 Color)
-      else if (text.contains('スペシャル') || text.contains('SPECIAL') || text.contains('退場させる')) {
+      else if (text.contains('スペシャル') ||
+          text.contains('SPECIAL') ||
+          text.contains('退場させる')) {
         dist['SPECIAL'] = dist['SPECIAL']! + 1;
       }
       // 4. 其餘標準觸發
       else if (text.contains('アクティブ') || text.contains('ACTIVE')) {
         dist['ACTIVE'] = dist['ACTIVE']! + 1;
-      }
-      else if (text.contains('手札に加える') || text.contains('ゲット') || text.contains('GET')) {
+      } else if (text.contains('手札に加える') ||
+          text.contains('ゲット') ||
+          text.contains('GET')) {
         dist['GET'] = dist['GET']! + 1;
-      }
-      else if (text.contains('1枚引く') || text.contains('ドロー') || text.contains('DRAW')) {
+      } else if (text.contains('1枚引く') ||
+          text.contains('ドロー') ||
+          text.contains('DRAW')) {
         dist['DRAW'] = dist['DRAW']! + 1;
-      }
-      else if (text.contains('ファイナル') || text.contains('FINAL') || text.contains('自分のライフエリアに置く')) {
+      } else if (text.contains('ファイナル') ||
+          text.contains('FINAL') ||
+          text.contains('自分のライフエリアに置く')) {
         dist['FINAL'] = dist['FINAL']! + 1;
-      }
-      else {
+      } else {
         dist['OTHER'] = dist['OTHER']! + 1;
       }
     }
@@ -139,31 +152,48 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     final energyData = _calculateEnergyDistribution();
     final triggerData = _calculateTriggerDistribution();
     final maxEnergyCount = energyData.values.reduce((a, b) => a > b ? a : b);
-    final int totalPrice = widget.cardsInDeck.fold(0, (sum, card) => sum + (card.price ?? 0));
+    final int totalPrice = widget.cardsInDeck.fold(
+      0,
+      (sum, card) => sum + (card.price ?? 0),
+    );
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // 🎨 統一從主題獲取顏色，確保跟隨系統切換
+    final Color textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final Color surfaceColor = Theme.of(context).cardColor;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF141419),
+      // 移除手動背景色，交給 MaterialApp 處理
       appBar: AppBar(
-        title: Text(widget.onSavePressed != null ? '儲存前預覽' : widget.deckName, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-        backgroundColor: const Color(0xFF1E1E24),
+        title: Text(
+          widget.onSavePressed != null ? '儲存前預覽' : widget.deckName,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            color: textColor,
+          ),
+        ),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: textColor,
         elevation: 0,
         actions: [
-          // 🔥 新增：編輯按鈕 (僅在非預覽模式顯示)
           if (widget.onSavePressed == null)
             IconButton(
               icon: const Icon(Icons.edit_note, color: Colors.amber),
               onPressed: () {
-                // 1. 將卡片載入 ViewModel，傳入 ID 以便編輯後取代舊牌組
-                ref.read(deckViewModelProvider.notifier).loadDeckForEditing(widget.deckId, widget.cardsInDeck);
-                // 2. 跳轉回組牌頁面
+                ref
+                    .read(deckViewModelProvider.notifier)
+                    .loadDeckForEditing(widget.deckId, widget.cardsInDeck);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const TestConnectionScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const TestConnectionScreen(),
+                  ),
                 );
               },
             ),
           IconButton(
-            icon: const Icon(Icons.ios_share, size: 20),
+            icon: Icon(Icons.ios_share, size: 20, color: textColor),
             onPressed: () {
               DeckExporter.exportAndShareDeck(
                 context: context,
@@ -171,51 +201,80 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                 allCards: widget.cardsInDeck.toSet().toList(),
               );
             },
-          )
+          ),
         ],
       ),
-      bottomNavigationBar: widget.onSavePressed != null 
-        ? SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: widget.onSavePressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE53935),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      bottomNavigationBar: widget.onSavePressed != null
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: widget.onSavePressed,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE53935),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    '儲存至我的牌組 (完成編輯)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                 ),
-                child: const Text('儲存至我的牌組 (完成編輯)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
-            ),
-          )
-        : null,
+            )
+          : null,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTabSelector(),
-            
-            // 根據頁籤切換內容
-            _activeTabIndex == 0 
-                ? _buildCardImageGrid(groupedCards)
-                : _buildTextAndQRSection(),
+            _buildTabSelector(textColor),
+
+            _activeTabIndex == 0
+                ? _buildCardImageGrid(groupedCards, isDarkMode)
+                : _buildTextAndQRSection(surfaceColor, textColor),
 
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDeckHeaderOverview(totalPrice),
+                  _buildDeckHeaderOverview(totalPrice, surfaceColor, textColor),
                   const SizedBox(height: 24),
-                  const Text('成本分佈', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                  Text(
+                    '成本分佈',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  _buildEnergyChart(energyData, maxEnergyCount),
+                  _buildEnergyChart(
+                    energyData,
+                    maxEnergyCount,
+                    surfaceColor,
+                    textColor,
+                    isDarkMode,
+                  ),
                   const SizedBox(height: 24),
-                  const Text('觸發分佈', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                  Text(
+                    '觸發分佈',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  _buildTriggerGrid(triggerData),
+                  _buildTriggerGrid(
+                    triggerData,
+                    surfaceColor,
+                    textColor,
+                    isDarkMode,
+                  ),
                 ],
               ),
             ),
@@ -225,46 +284,66 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     );
   }
 
-  Widget _buildTabSelector() {
+  Widget _buildTabSelector(Color textColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          _tabItem('卡片圖像', 0),
+          _tabItem('卡片圖像', 0, textColor),
           const SizedBox(width: 20),
-          _tabItem('導入 QR', 1),
+          _tabItem('導入 QR', 1, textColor),
         ],
       ),
     );
   }
 
-  Widget _tabItem(String label, int index) {
+  Widget _tabItem(String label, int index, Color textColor) {
     bool isActive = _activeTabIndex == index;
     return InkWell(
       onTap: () => setState(() => _activeTabIndex = index),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: isActive ? Colors.white : Colors.grey, fontWeight: FontWeight.bold, fontSize: 15)),
-          if (isActive) Container(margin: const EdgeInsets.only(top: 4), height: 2, width: 20, color: Colors.redAccent)
+          Text(
+            label,
+            style: TextStyle(
+              color: isActive ? textColor : Colors.grey,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+          if (isActive)
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              height: 2,
+              width: 20,
+              color: Colors.redAccent,
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildTextAndQRSection() {
+  Widget _buildTextAndQRSection(Color surfaceColor, Color textColor) {
     final String deckData = _generateDeckData();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E24),
+        color: surfaceColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          const Text('牌組導入 QR Code', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            '牌組導入 QR Code',
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
@@ -279,7 +358,8 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text('其他玩家掃描此碼即可快速導入您的牌組', 
+          const Text(
+            '其他玩家掃描此碼即可快速導入您的牌組',
             style: TextStyle(color: Colors.grey, fontSize: 12),
             textAlign: TextAlign.center,
           ),
@@ -288,7 +368,10 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     );
   }
 
-  Widget _buildCardImageGrid(Map<String, Map<String, dynamic>> groupedCards) {
+  Widget _buildCardImageGrid(
+    Map<String, Map<String, dynamic>> groupedCards,
+    bool isDarkMode,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: GridView.builder(
@@ -313,21 +396,36 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                 child: CachedNetworkImage(
                   imageUrl: card.imageUrl ?? '',
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: Colors.grey.shade900),
-                  errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
+                  placeholder: (context, url) => Container(
+                    color: isDarkMode
+                        ? Colors.grey.shade900
+                        : Colors.grey.shade200,
+                  ),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.broken_image, color: Colors.grey),
                 ),
               ),
               Positioned(
                 bottom: 2,
                 right: 2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.8),
+                    color: Colors.black.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: Colors.white24, width: 0.5),
                   ),
-                  child: Text('x$count', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                  child: Text(
+                    'x$count',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -337,38 +435,74 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     );
   }
 
-  Widget _buildDeckHeaderOverview(int totalPrice) {
+  Widget _buildDeckHeaderOverview(
+    int totalPrice,
+    Color surfaceColor,
+    Color textColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E24), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('總張數', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              SizedBox(height: 4),
-              Text('50 枚', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                '總張數',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '50 枚',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text('預估價格 (參考)', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              const Text(
+                '預估價格 (參考)',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
               const SizedBox(height: 4),
-              Text('¥ $totalPrice', style: const TextStyle(color: Color(0xFFFFD700), fontSize: 18, fontWeight: FontWeight.w900)),
+              Text(
+                '¥ $totalPrice',
+                style: const TextStyle(
+                  color: Color(0xFFFFD700),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEnergyChart(Map<int, int> data, int maxVal) {
+  Widget _buildEnergyChart(
+    Map<int, int> data,
+    int maxVal,
+    Color surfaceColor,
+    Color textColor,
+    bool isDarkMode,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E24), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
         children: data.entries.map((entry) {
           final barWidthRatio = maxVal > 0 ? (entry.value / maxVal) : 0.0;
@@ -378,18 +512,35 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
               children: [
                 SizedBox(
                   width: 35,
-                  child: Text('${entry.key == 6 ? '6+' : entry.key} 能', style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    '${entry.key == 6 ? '6+' : entry.key} 能',
+                    style: TextStyle(
+                      color: textColor.withValues(alpha: 0.7),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: Stack(
                     children: [
-                      Container(height: 16, decoration: BoxDecoration(color: const Color(0xFF2C2C35), borderRadius: BorderRadius.circular(4))),
+                      Container(
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2C2C35)
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                       FractionallySizedBox(
                         widthFactor: barWidthRatio == 0 ? 0.02 : barWidthRatio,
                         child: Container(
                           height: 16,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [Color(0xFF8E24AA), Color(0xFFCE93D8)]),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF8E24AA), Color(0xFFCE93D8)],
+                            ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -400,7 +551,15 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                 const SizedBox(width: 12),
                 SizedBox(
                   width: 25,
-                  child: Text('${entry.value}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.right),
+                  child: Text(
+                    '${entry.value}',
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
                 ),
               ],
             ),
@@ -410,24 +569,45 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     );
   }
 
-  Widget _buildTriggerGrid(Map<String, int> data) {
+  Widget _buildTriggerGrid(
+    Map<String, int> data,
+    Color surfaceColor,
+    Color textColor,
+    bool isDarkMode,
+  ) {
     final triggerColors = {
-      'SPECIAL': Colors.redAccent, 'COLOR': Colors.orangeAccent, 'FINAL': Colors.blueAccent,
-      'DRAW': Colors.greenAccent, 'GET': Colors.yellowAccent, 'ACTIVE': Colors.cyanAccent,
-      'RAID': Colors.pinkAccent, 'OTHER': Colors.blueGrey, 'NONE': Colors.grey,
+      'SPECIAL': Colors.redAccent,
+      'COLOR': Colors.orangeAccent,
+      'FINAL': Colors.blueAccent,
+      'DRAW': Colors.greenAccent,
+      'GET': Colors.yellowAccent,
+      'ACTIVE': Colors.cyanAccent,
+      'RAID': Colors.pinkAccent,
+      'OTHER': Colors.blueGrey,
+      'NONE': Colors.grey,
     };
 
-    // 依照截圖順序重新排序 key
-    final sortedKeys = ['ACTIVE', 'GET', 'DRAW', 'RAID', 'COLOR', 'SPECIAL', 'FINAL'];
-    
+    final sortedKeys = [
+      'ACTIVE',
+      'GET',
+      'DRAW',
+      'RAID',
+      'COLOR',
+      'SPECIAL',
+      'FINAL',
+    ];
+
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E24), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4, // 配合截圖，改為 4 欄
+          crossAxisCount: 4,
           childAspectRatio: 1.8,
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
@@ -440,16 +620,33 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
 
           return Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF2C2C35),
+              color: isDarkMode
+                  ? const Color(0xFF2C2C35)
+                  : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: color.withOpacity(0.4), width: 1),
+              border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(key, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                Text(
+                  key,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text('$count 枚', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                Text(
+                  '$count 枚',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           );

@@ -30,12 +30,11 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
     ] : metaState.metaData;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF141419) : const Color(0xFFF8F9FA), 
+      // 移除手動背景色，交給 MaterialApp 處理
       appBar: AppBar(
         title: const Text('對戰環境排行榜', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
-        foregroundColor: isDarkMode ? Colors.white : Colors.black,
-        elevation: 0.5,
+        backgroundColor: Colors.transparent, // 讓它透明以顯示 Scaffold 的底色
+        elevation: 0,
         centerTitle: true,
       ),
       body: RefreshIndicator(

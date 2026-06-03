@@ -63,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF141419) : Colors.white,
+      // 移除手動背景色，交給 MaterialApp 的 theme 處理
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // 每次點擊出品，先清空編輯器緩存，確保是「新牌組」

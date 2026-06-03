@@ -69,7 +69,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     final Color textColor = isDarkMode ? Colors.white : Colors.black87;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF141419) : const Color(0xFFF5F5F7),
+      // 移除手動背景色，交給 MaterialApp 處理
       appBar: AppBar(
         title: Text('組牌模式', style: TextStyle(fontWeight: FontWeight.w900, color: textColor, fontSize: 18)),
         backgroundColor: appBarColor,
@@ -114,31 +114,73 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
         ),
       ),
       bottomNavigationBar: _buildBottomSettlement(deckState, isDarkMode),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300), // 平滑過渡
-        child: libraryState.isLoading 
-            ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator())
-            : libraryState.filteredCards.isEmpty
-                ? const Center(key: ValueKey('empty'), child: Text('找不到符合的卡片'))
-                : SizedBox.expand( // 強制填滿，避免高度變動
-                    key: const ValueKey('grid_container'),
-                    child: GridView.builder(
-                      padding: const EdgeInsets.all(10),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3, 
-                        childAspectRatio: 0.54, 
-                        crossAxisSpacing: 8, 
-                        mainAxisSpacing: 8
-                      ),
-                      itemCount: libraryState.filteredCards.length,
-                      itemBuilder: (context, index) {
-                        final card = libraryState.filteredCards[index];
-                        final qty = deckState.deckMap[card.id] ?? 0;
-                        return _buildCardItem(card, qty, isDarkMode);
-                      },
-                    ),
+      // 🔥 核心修正：始終保持 GridView 結構，不再使用 Center()
+      body: libraryState.isLoading && libraryState.allCards.isEmpty
+          ? _buildSkeletonGrid(isDarkMode) // 第一次載入顯示骨架
+          : libraryState.filteredCards.isEmpty
+              ? const Center(child: Text('找不到符合的卡片'))
+              : GridView.builder(
+                  padding: const EdgeInsets.all(10),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3, 
+                    childAspectRatio: 0.54, 
+                    crossAxisSpacing: 8, 
+                    mainAxisSpacing: 8
                   ),
+                  itemCount: libraryState.filteredCards.length,
+                  itemBuilder: (context, index) {
+                    final card = libraryState.filteredCards[index];
+                    final qty = deckState.deckMap[card.id] ?? 0;
+                    return _buildCardItem(card, qty, isDarkMode);
+                  },
+                ),
+    );
+  }
+
+  // 🦴 骨架屏：完全模擬真實卡片的佈局結構
+  Widget _buildSkeletonGrid(bool isDarkMode) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(10),
+      physics: const AlwaysScrollableScrollPhysics(), // 保持捲軸物理效果一致
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3, 
+        childAspectRatio: 0.54, 
+        crossAxisSpacing: 8, 
+        mainAxisSpacing: 8
+      ),
+      itemCount: 9,
+      itemBuilder: (context, index) => Container(
+        // 1. 完全一致的外框裝飾（包含 2px 邊框預留）
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.transparent, width: 2), // 👈 關鍵：必須預留這 2px
+        ),
+        child: Column(
+          children: [
+            // 2. 模擬圖片區域
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            // 3. 模擬底部按鈕區域 (固定高度)
+            const SizedBox(
+              height: 48, // 預留給 Row (IconButton + Text) 的高度
+              child: Center(
+                child: SizedBox(
+                  width: 40, height: 10,
+                  child: DecoratedBox(decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.all(Radius.circular(10)))),
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -190,15 +232,18 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                   onTap: () => showDialog(context: context, builder: (_) => CardDetailDialog(card: card)),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: card.imageUrl ?? '', 
-                      fit: BoxFit.contain,
-                      // 🔥 加入佔位符確保高度穩定
-                      placeholder: (context, url) => Container(
-                        color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-                        child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 1))),
+                    // 💡 使用 AspectRatio 強制鎖定圖片區域的寬高比
+                    child: AspectRatio(
+                      aspectRatio: 1 / 1.4, // 根據你實際卡片的比例調整 (寬 / 高)
+                      child: CachedNetworkImage(
+                        imageUrl: card.imageUrl ?? '',
+                        fit: BoxFit.cover, // 🔥 建議改用 cover 或 fill，配合強制比例更完美
+                        placeholder: (context, url) => Container(
+                          color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                          child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 1))),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
                       ),
-                      errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
                     ),
                   ),
                 ),
@@ -240,23 +285,59 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
 
   void _showSeriesPicker(bool isDarkMode) {
     final libState = ref.read(cardLibraryViewModelProvider);
+    
+    // 1. 複製一份清單並進行排序 (字母順序)
+    List<String> sortedSeries = List.from(libState.availableSeries);
+    sortedSeries.sort((a, b) => a.compareTo(b));
+
+    // 2. 在最前面插入「全部系列」
+    final List<String> displayList = ['全部系列', ...sortedSeries];
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(16),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2),
-          itemCount: libState.availableSeries.length,
-          itemBuilder: (ctx, i) {
-            final series = libState.availableSeries[i];
-            return ActionChip(
-              label: Text(series), 
-              onPressed: () {
-                ref.read(cardLibraryViewModelProvider.notifier).updateSelectedSeries(series);
-                Navigator.pop(ctx);
-              }
-            );
-          },
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('選擇系列', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Flexible(
+              child: GridView.builder(
+                shrinkWrap: true,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3, 
+                  childAspectRatio: 2.5,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10
+                ),
+                itemCount: displayList.length,
+                itemBuilder: (ctx, i) {
+                  final series = displayList[i];
+                  final bool isSelected = libState.selectedSeries == series || (series == '全部系列' && libState.selectedSeries.isEmpty);
+                  
+                  return ActionChip(
+                    label: Center(child: Text(series, style: TextStyle(
+                      fontSize: 12, 
+                      color: isSelected ? Colors.black : (isDarkMode ? Colors.white70 : Colors.black87),
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ))),
+                    backgroundColor: isSelected ? Colors.amber : (isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4)),
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    onPressed: () {
+                      final value = (series == '全部系列') ? '' : series;
+                      ref.read(cardLibraryViewModelProvider.notifier).updateSelectedSeries(value);
+                      Navigator.pop(ctx);
+                    }
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

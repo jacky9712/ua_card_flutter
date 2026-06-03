@@ -65,12 +65,27 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'UA Card Deck Builder',
       debugShowCheckedModeBanner: false,
-      // 這裡直接設定你的主題與首頁
+      // 🌕 淺色主題
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange, brightness: Brightness.dark),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.orange, 
+          brightness: Brightness.light
+        ),
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF5F5F7),
       ),
-      home:  HomeScreen(), // 進入你的黑金組牌頁面
+      // 🌑 深色主題
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.orange, 
+          brightness: Brightness.dark
+        ),
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFF141419),
+      ),
+      // 🌓 根據系統設定自動切換
+      themeMode: ThemeMode.system, 
+      home: const HomeScreen(),
     );
   }
 }

@@ -24,7 +24,7 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF141419) : const Color(0xFFF8F9FA),
+      // 移除手動背景色，交給 MaterialApp 處理
       appBar: AppBar(
         title: const Text('我的牌組', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
