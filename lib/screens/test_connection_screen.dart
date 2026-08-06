@@ -362,24 +362,31 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
 
             // 1. 呼叫 ViewModel 執行儲存
             final success = await ref.read(deckViewModelProvider.notifier).saveCurrentDeck(deckName);
-            
+
             if (success && mounted) {
               // 2. ✨ 核心修正：連退三步
               // 第一步：關閉對話框 (ctx)
-              Navigator.pop(ctx); 
-              
+              Navigator.pop(ctx);
+
               // 第二步：關閉預覽頁面 (DeckDetailScreen)
-              Navigator.pop(context); 
-              
+              Navigator.pop(context);
+
               // 第三步：關閉編輯頁面 (TestConnectionScreen)
               Navigator.pop(context);
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('🎉 牌組「$deckName」儲存成功！'), backgroundColor: Colors.green),
               );
-              
+
               // 3. 重新整理我的牌組列表
               ref.read(deckViewModelProvider.notifier).fetchMyDecks();
+            } else if (!success && mounted) {
+              // 🔥 儲存失敗時原本完全沒有任何提示，對話框只是卡住不動。
+              // 把 ViewModel 已經算好的 errorMessage 秀出來，至少讓使用者知道發生什麼事。
+              final errorMessage = ref.read(deckViewModelProvider).errorMessage;
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(content: Text(errorMessage ?? '儲存失敗，請稍後再試'), backgroundColor: Colors.red),
+              );
             }
           }, 
           style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),

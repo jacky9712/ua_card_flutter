@@ -1,22 +1,19 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalStorageHelper {
-  static const String _fileName = 'local_decks.json';
-
-  static Future<File> _getLocalFile() async {
-    final directory = await getApplicationDocumentsDirectory();
-    return File('${directory.path}/$_fileName');
-  }
+  // 🔥 改用 shared_preferences 而非 dart:io File + path_provider：
+  // 後者在 Flutter Web 上沒有真正的檔案系統，getApplicationDocumentsDirectory()/
+  // File 讀寫在瀏覽器環境會直接丟例外，導致訪客（匿名登入，一定走本地儲存路徑）
+  // 在 Web 上存牌組永遠失敗。shared_preferences 在 Web 上是用 localStorage 實作，
+  // 各平台都能正常運作。
+  static const String _prefsKey = 'local_decks';
 
   static Future<List<Map<String, dynamic>>> getLocalDecks() async {
     try {
-      final file = await _getLocalFile();
-      if (!await file.exists()) {
-        return [];
-      }
-      final String contents = await file.readAsString();
+      final prefs = await SharedPreferences.getInstance();
+      final String? contents = prefs.getString(_prefsKey);
+      if (contents == null) return [];
       final List<dynamic> jsonList = json.decode(contents);
       return jsonList.cast<Map<String, dynamic>>();
     } catch (e) {
@@ -30,17 +27,17 @@ class LocalStorageHelper {
     deckData['id'] = -(DateTime.now().millisecondsSinceEpoch % 1000000);
     deckData['created_at'] = DateTime.now().toIso8601String();
     deckData['is_local'] = true;
-    
+
     decks.insert(0, deckData); // 新的排前面
-    
-    final file = await _getLocalFile();
-    await file.writeAsString(json.encode(decks));
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, json.encode(decks));
   }
 
   static Future<void> deleteLocalDeck(int deckId) async {
     final decks = await getLocalDecks();
     decks.removeWhere((deck) => deck['id'] == deckId);
-    final file = await _getLocalFile();
-    await file.writeAsString(json.encode(decks));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, json.encode(decks));
   }
 }
