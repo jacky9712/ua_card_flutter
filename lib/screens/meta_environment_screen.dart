@@ -21,13 +21,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
     final metaState = ref.watch(metaViewModelProvider);
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    final metaData = metaState.metaData.isEmpty ? [
-      {'name_zh': '咒術迴戰 第1彈', 'share_rate': 35.5, 'use_count': 142, 'color': '紫', 'trend': 'up'},
-      {'name_zh': 'HUNTER×HUNTER 獵人', 'share_rate': 28.0, 'use_count': 112, 'color': '黃', 'trend': 'down'},
-      {'name_zh': 'Code Geass 反叛的魯路修', 'share_rate': 15.2, 'use_count': 61, 'color': '青', 'trend': 'stable'},
-      {'name_zh': '偶像大師 閃耀色彩', 'share_rate': 10.8, 'use_count': 43, 'color': '黃', 'trend': 'new'},
-      {'name_zh': '鬼滅之刃', 'share_rate': 10.5, 'use_count': 42, 'color': '紅', 'trend': 'stable'},
-    ] : metaState.metaData;
+    final metaData = metaState.metaData;
 
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 處理
@@ -37,33 +31,45 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment(),
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: _buildSummaryHeader(metaData, isDarkMode),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final item = metaData[index];
-                    return _buildLeaderboardTile(index + 1, item, isDarkMode);
-                  },
-                  childCount: metaData.length,
-                ),
+      body: metaState.isLoading && metaData.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: () => ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment(),
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _buildSummaryHeader(metaData, isDarkMode),
+                  ),
+                  if (metaData.isEmpty)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Center(child: Text('目前尚無環境資料', style: TextStyle(color: Colors.grey))),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = metaData[index];
+                            return _buildLeaderboardTile(index + 1, item, isDarkMode);
+                          },
+                          childCount: metaData.length,
+                        ),
+                      ),
+                    ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                ],
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildSummaryHeader(List<Map<String, dynamic>> data, bool isDarkMode) {
+    final int totalDecks = data.fold(0, (sum, item) => sum + ((item['use_count'] as int?) ?? 0));
+    final int activeSeries = data.length;
     return Container(
       padding: const EdgeInsets.all(20),
       color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
@@ -91,8 +97,8 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem('總計牌組', '420', Icons.layers, isDarkMode),
-              _buildStatItem('活躍系列', '12', Icons.category, isDarkMode),
+              _buildStatItem('上位卡組數', '$totalDecks', Icons.layers, isDarkMode),
+              _buildStatItem('活躍系列', '$activeSeries', Icons.category, isDarkMode),
               _buildStatItem('主流占比', '${data.isNotEmpty ? data[0]['share_rate'] : 0}%', Icons.pie_chart, isDarkMode),
             ],
           ),
@@ -149,35 +155,29 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            _buildColorTag(item['color'] ?? '無'),
+            _buildTierTag((item['best_tier'] ?? '').toString()),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item['name_zh'] ?? (item['name'] ?? '未知系列'),
+                    item['name_zh'] ?? '未知系列',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDarkMode ? Colors.white : Colors.black),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '使用次數: ${item['use_count'] ?? item['count'] ?? 0} 次',
+                    '上位卡組: ${item['use_count'] ?? 0} 組',
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${item['share_rate'] ?? item['rate'] ?? 0}%',
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.blueAccent),
-                ),
-                _buildTrendIcon(item['trend']),
-              ],
+            Text(
+              '${item['share_rate'] ?? 0}%',
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.blueAccent),
             ),
           ],
         ),
@@ -185,36 +185,28 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
     );
   }
 
-  Widget _buildColorTag(String colorName) {
+  // 依 best_tier（"Tier1"/"Tier1.5"...）顯示徽章，跟 recommended_decks_screen.dart 用同一套配色邏輯
+  Widget _buildTierTag(String tier) {
+    final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(tier);
+    final double rank = match != null ? double.tryParse(match.group(1)!) ?? 99 : 99;
     Color c = Colors.grey;
-    switch (colorName) {
-      case '紅': c = Colors.red; break;
-      case '青': c = Colors.blue; break;
-      case '綠': c = Colors.green; break;
-      case '黃': c = Colors.yellow.shade700; break;
-      case '紫': c = Colors.purple; break;
+    if (rank <= 1) {
+      c = const Color(0xFFE53935);
+    } else if (rank <= 2) {
+      c = const Color(0xFFFF9800);
+    } else if (rank <= 3) {
+      c = const Color(0xFF1E88E5);
     }
-    return Container(
-      width: 12,
-      height: 12,
-      decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-    );
-  }
 
-  Widget _buildTrendIcon(String? trend) {
-    switch (trend) {
-      case 'up':
-        return const Icon(Icons.trending_up, color: Colors.red, size: 16);
-      case 'down':
-        return const Icon(Icons.trending_down, color: Colors.blue, size: 16);
-      case 'new':
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-          decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(4)),
-          child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
-        );
-      default:
-        return const Icon(Icons.trending_flat, color: Colors.grey, size: 16);
-    }
+    return Container(
+      width: 32,
+      height: 32,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.15), shape: BoxShape.circle),
+      child: Text(
+        match?.group(1) ?? '?',
+        style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12),
+      ),
+    );
   }
 }

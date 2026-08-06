@@ -20,14 +20,41 @@ abstract class DeckRepository {
 class MixedDeckRepository implements DeckRepository {
   final _supabase = Supabase.instance.client;
 
+  int _extractPrice(dynamic cardJson) {
+    if (cardJson == null || cardJson['latest_prices'] == null) return 0;
+    final lp = cardJson['latest_prices'];
+    if (lp is List && lp.isNotEmpty) {
+      return ((lp[0]['price_jpy'] ?? 0) as num).toInt();
+    } else if (lp is Map) {
+      return ((lp['price_jpy'] ?? 0) as num).toInt();
+    }
+    return 0;
+  }
+
   @override
   Future<List<Map<String, dynamic>>> fetchRemoteDecks(String userId) async {
     final response = await _supabase
         .from('decks')
-        .select('*, series(name_zh, series_code)')
+        .select('*, series(name_zh, series_code), deck_cards(quantity, cards(latest_prices(price_jpy)))')
         .eq('user_id', userId)
         .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(response);
+
+    final List<Map<String, dynamic>> result = [];
+    for (final row in (response as List)) {
+      final map = Map<String, dynamic>.from(row);
+      final List<dynamic> deckCards = map['deck_cards'] ?? [];
+
+      int totalPrice = 0;
+      for (final dc in deckCards) {
+        final qty = (dc['quantity'] ?? 0) as int;
+        totalPrice += _extractPrice(dc['cards']) * qty;
+      }
+
+      map['total_price'] = totalPrice;
+      map.remove('deck_cards');
+      result.add(map);
+    }
+    return result;
   }
 
   @override
