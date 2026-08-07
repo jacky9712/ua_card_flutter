@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
 import '../viewModels/recommended_deck_view_model.dart';
@@ -59,6 +60,15 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
               ref.read(cardLibraryViewModelProvider.notifier).updateSelectedSeries(seriesCode);
             }
 
+            // 牌組本身可能是雙色，直接從已經抓到的卡表推導顏色集合，一併套用篩選。
+            final Set<String> colors = cards
+                .map((c) => (c.color ?? '').toUpperCase())
+                .where((c) => c.isNotEmpty)
+                .toSet();
+            if (colors.isNotEmpty) {
+              ref.read(cardLibraryViewModelProvider.notifier).updateSelectedColors(colors);
+            }
+
             Navigator.push(context, MaterialPageRoute(builder: (_) => const TestConnectionScreen()));
           },
         ),
@@ -105,6 +115,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                       final int totalPrice = deck['total_price'] ?? 0;
                       final int deckId = deck['id'];
                       final bool opening = _openingDeckId == deckId;
+                      final String? coverImageUrl = deck['cover_image_url'];
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -112,17 +123,56 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: ListTile(
                           onTap: opening ? null : () => _openDeck(deck),
-                          leading: Container(
-                            width: 40,
-                            height: 40,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: _tierColor(tier).withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              tierBadge,
-                              style: TextStyle(color: _tierColor(tier), fontWeight: FontWeight.w900, fontSize: 14),
+                          leading: SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: coverImageUrl != null && coverImageUrl.isNotEmpty
+                                      ? CachedNetworkImage(
+                                          imageUrl: coverImageUrl,
+                                          width: 48,
+                                          height: 48,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => Container(
+                                            color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                                          ),
+                                          errorWidget: (context, url, error) => Container(
+                                            width: 48,
+                                            height: 48,
+                                            color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                                            child: const Icon(Icons.style, color: Colors.grey, size: 20),
+                                          ),
+                                        )
+                                      : Container(
+                                          width: 48,
+                                          height: 48,
+                                          color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                                          child: const Icon(Icons.style, color: Colors.grey, size: 20),
+                                        ),
+                                ),
+                                Positioned(
+                                  bottom: -4,
+                                  right: -4,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: _tierColor(tier),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white, width: 1.5),
+                                    ),
+                                    child: Text(
+                                      tierBadge,
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 9),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           title: Text(deck['name'] ?? '未命名牌組', style: const TextStyle(fontWeight: FontWeight.bold)),

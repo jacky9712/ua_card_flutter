@@ -25,7 +25,7 @@ class SupabaseRecommendedDeckRepository implements RecommendedDeckRepository {
     final response = await _supabase
         .from('recommended_decks')
         .select(
-          '*, series(name_zh, series_code), recommended_deck_cards(quantity, cards(latest_prices(price_jpy)))',
+          '*, series(name_zh, series_code), recommended_deck_cards(quantity, cards(image_url, latest_prices(price_jpy)))',
         )
         // "Tier1" < "Tier1.5" < "Tier2" ... < "Tier6" 剛好是文字順序，可以直接排序；
         // 沒有 tier 的（例如熱門度來源）會排在最後，改用 win_rate 排序。
@@ -40,14 +40,26 @@ class SupabaseRecommendedDeckRepository implements RecommendedDeckRepository {
 
       int totalCount = 0;
       int totalPrice = 0;
+      // 目前 recommended_decks.cover_card_url 種子資料都是空的，
+      // 改成用牌組裡單價最高的那張卡當代表卡封面。
+      String? coverImageUrl;
+      int coverPrice = -1;
       for (final dc in deckCards) {
         final qty = (dc['quantity'] ?? 0) as int;
+        final int price = _extractPrice(dc['cards']);
         totalCount += qty;
-        totalPrice += _extractPrice(dc['cards']) * qty;
+        totalPrice += price * qty;
+
+        final String? imageUrl = dc['cards']?['image_url'];
+        if (imageUrl != null && imageUrl.isNotEmpty && price > coverPrice) {
+          coverImageUrl = imageUrl;
+          coverPrice = price;
+        }
       }
 
       map['total_card_count'] = totalCount;
       map['total_price'] = totalPrice;
+      map['cover_image_url'] = coverImageUrl;
       map.remove('recommended_deck_cards');
       result.add(map);
     }

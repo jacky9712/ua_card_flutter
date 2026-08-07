@@ -7,6 +7,7 @@ class CardLibraryState {
   final List<UACard> filteredCards;
   final List<String> availableSeries;
   final String selectedSeries;
+  final Set<String> selectedColors;
   final String searchQuery;
   final bool isLoading;
   final String? errorMessage;
@@ -16,6 +17,7 @@ class CardLibraryState {
     this.filteredCards = const [],
     this.availableSeries = const [],
     this.selectedSeries = '',
+    this.selectedColors = const {},
     this.searchQuery = '',
     this.isLoading = false,
     this.errorMessage,
@@ -26,6 +28,7 @@ class CardLibraryState {
     List<UACard>? filteredCards,
     List<String>? availableSeries,
     String? selectedSeries,
+    Set<String>? selectedColors,
     String? searchQuery,
     bool? isLoading,
     String? errorMessage,
@@ -35,6 +38,7 @@ class CardLibraryState {
       filteredCards: filteredCards ?? this.filteredCards,
       availableSeries: availableSeries ?? this.availableSeries,
       selectedSeries: selectedSeries ?? this.selectedSeries,
+      selectedColors: selectedColors ?? this.selectedColors,
       searchQuery: searchQuery ?? this.searchQuery,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
@@ -69,7 +73,8 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     try {
       final repo = ref.read(cardRepositoryProvider);
       final cards = await repo.fetchCards(series: state.selectedSeries);
-      state = state.copyWith(allCards: cards, filteredCards: cards, isLoading: false);
+      state = state.copyWith(allCards: cards, isLoading: false);
+      _applyFilters();
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: '資料庫連線失敗');
     }
@@ -77,12 +82,12 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
 
   void updateSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
-    
+
     // 如果想要即時從遠端搜尋 (Debounce 更好，這裡先簡單實作)
     if (query.length > 2) {
       _remoteSearch(query);
     } else {
-      _applyLocalSearch();
+      _applyFilters();
     }
   }
 
@@ -91,7 +96,8 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     try {
       final repo = ref.read(cardRepositoryProvider);
       final cards = await repo.searchCards(query);
-      state = state.copyWith(allCards: cards, filteredCards: cards, isLoading: false);
+      state = state.copyWith(allCards: cards, isLoading: false);
+      _applyFilters();
     } catch (e) {
       state = state.copyWith(isLoading: false);
     }
@@ -102,17 +108,29 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     fetchCards();
   }
 
-  void _applyLocalSearch() {
-    final lowerQuery = state.searchQuery.toLowerCase();
-    if (lowerQuery.isEmpty) {
-      state = state.copyWith(filteredCards: state.allCards);
-      return;
+  void updateSelectedColors(Set<String> colors) {
+    state = state.copyWith(selectedColors: colors);
+    _applyFilters();
+  }
+
+  // 統一在這裡套用「顏色」與「搜尋文字」這兩個純 client 端篩選，
+  // 讓不管卡池是從哪個管道進來的（系列查詢 / 遠端搜尋）都套用同一套規則。
+  void _applyFilters() {
+    Iterable<UACard> result = state.allCards;
+
+    if (state.selectedColors.isNotEmpty) {
+      result = result.where((card) => state.selectedColors.contains((card.color ?? '').toUpperCase()));
     }
-    final filtered = state.allCards.where((card) {
-      return card.cardNumber.toLowerCase().contains(lowerQuery) ||
-          (card.name ?? '').toLowerCase().contains(lowerQuery);
-    }).toList();
-    state = state.copyWith(filteredCards: filtered);
+
+    final lowerQuery = state.searchQuery.toLowerCase();
+    if (lowerQuery.isNotEmpty) {
+      result = result.where((card) {
+        return card.cardNumber.toLowerCase().contains(lowerQuery) ||
+            (card.name ?? '').toLowerCase().contains(lowerQuery);
+      });
+    }
+
+    state = state.copyWith(filteredCards: result.toList());
   }
 }
 

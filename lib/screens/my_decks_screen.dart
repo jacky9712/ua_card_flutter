@@ -1,6 +1,7 @@
 // lib/screens/my_decks_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../viewmodels/deck_view_model.dart';
 import 'deck_detail_screen.dart';
 
@@ -41,6 +42,7 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                     final deck = deckState.myDecks[index];
                     final int deckId = deck['id'];
                     final bool isLocal = deckId < 0;
+                    final String? coverCardUrl = deck['cover_card_url'];
 
                     return Dismissible(
                       key: Key('deck_$deckId'),
@@ -82,14 +84,58 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                         color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: ListTile(
-                          leading: Container(
+                          leading: SizedBox(
                             width: 50,
                             height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: coverCardUrl != null && coverCardUrl.isNotEmpty
+                                      ? CachedNetworkImage(
+                                          imageUrl: coverCardUrl,
+                                          width: 50,
+                                          height: 50,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => Container(
+                                            width: 50,
+                                            height: 50,
+                                            color: Colors.amber.withValues(alpha: 0.1),
+                                          ),
+                                          // 圖片載入失敗就退回原本的本地/雲端圖示，不留空白
+                                          errorWidget: (context, url, error) => Container(
+                                            width: 50,
+                                            height: 50,
+                                            color: Colors.amber.withValues(alpha: 0.1),
+                                            child: Icon(isLocal ? Icons.smartphone : Icons.cloud_done, color: Colors.amber),
+                                          ),
+                                        )
+                                      : Container(
+                                          width: 50,
+                                          height: 50,
+                                          color: Colors.amber.withValues(alpha: 0.1),
+                                          child: Icon(isLocal ? Icons.smartphone : Icons.cloud_done, color: Colors.amber),
+                                        ),
+                                ),
+                                if (coverCardUrl != null && coverCardUrl.isNotEmpty)
+                                  Positioned(
+                                    bottom: -4,
+                                    right: -4,
+                                    child: Container(
+                                      width: 18,
+                                      height: 18,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.amber, width: 1),
+                                      ),
+                                      child: Icon(isLocal ? Icons.smartphone : Icons.cloud_done, color: Colors.amber, size: 10),
+                                    ),
+                                  ),
+                              ],
                             ),
-                            child: Icon(isLocal ? Icons.smartphone : Icons.cloud_done, color: Colors.amber),
                           ),
                           title: Text(deck['name'] ?? '未命名牌組', style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(isLocal ? '儲存於此裝置' : '已同步至雲端', style: const TextStyle(fontSize: 12)),
