@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
 import '../viewModels/recommended_deck_view_model.dart';
 import 'deck_detail_screen.dart';
@@ -50,6 +51,14 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
           saveButtonLabel: '複製到組牌編輯器',
           onSavePressed: () {
             ref.read(deckViewModelProvider.notifier).loadCardsForNewDeck(cards);
+
+            // 複製過去的牌組通常整組都是同一系列，組牌頁面預設顯示「全部系列」
+            // 反而要使用者自己再找一次系列，這裡直接把卡池篩選對齊該牌組的系列。
+            final String seriesCode = (deck['series']?['series_code'] ?? '').toString().toUpperCase();
+            if (seriesCode.isNotEmpty) {
+              ref.read(cardLibraryViewModelProvider.notifier).updateSelectedSeries(seriesCode);
+            }
+
             Navigator.push(context, MaterialPageRoute(builder: (_) => const TestConnectionScreen()));
           },
         ),
