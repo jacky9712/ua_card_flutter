@@ -10,6 +10,8 @@ class CardLibraryState {
   final Set<String> selectedColors;
   final String searchQuery;
   final bool isLoading;
+  final bool isLoadingMore;
+  final bool hasMore;
   final String? errorMessage;
 
   CardLibraryState({
@@ -20,6 +22,8 @@ class CardLibraryState {
     this.selectedColors = const {},
     this.searchQuery = '',
     this.isLoading = false,
+    this.isLoadingMore = false,
+    this.hasMore = false,
     this.errorMessage,
   });
 
@@ -31,6 +35,8 @@ class CardLibraryState {
     Set<String>? selectedColors,
     String? searchQuery,
     bool? isLoading,
+    bool? isLoadingMore,
+    bool? hasMore,
     String? errorMessage,
   }) {
     return CardLibraryState(
@@ -41,12 +47,20 @@ class CardLibraryState {
       selectedColors: selectedColors ?? this.selectedColors,
       searchQuery: searchQuery ?? this.searchQuery,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      hasMore: hasMore ?? this.hasMore,
       errorMessage: errorMessage,
     );
   }
 }
 
 class CardLibraryViewModel extends Notifier<CardLibraryState> {
+  // 分頁狀態純內部追蹤，不放進 CardLibraryState：畫面不需要知道目前 offset 是多少，
+  // 只需要 hasMore/isLoadingMore 就夠決定要不要顯示載入中。
+  static const int _pageSize = 60;
+  int _offset = 0;
+  bool _isSearchMode = false; // 目前 allCards 是系列瀏覽來的還是關鍵字搜尋來的，loadMore() 要知道呼叫哪個 repo 方法
+
   @override
   CardLibraryState build() {
     _initData();
@@ -69,11 +83,13 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   }
 
   Future<void> fetchCards() async {
+    _offset = 0;
+    _isSearchMode = false;
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(cardRepositoryProvider);
-      final cards = await repo.fetchCards(series: state.selectedSeries);
-      state = state.copyWith(allCards: cards, isLoading: false);
+      final cards = await repo.fetchCards(series: state.selectedSeries, limit: _pageSize, offset: 0);
+      state = state.copyWith(allCards: cards, isLoading: false, hasMore: cards.length == _pageSize);
       _applyFilters();
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: '資料庫連線失敗');
@@ -92,14 +108,38 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   }
 
   Future<void> _remoteSearch(String query) async {
+    _offset = 0;
+    _isSearchMode = true;
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(cardRepositoryProvider);
-      final cards = await repo.searchCards(query);
-      state = state.copyWith(allCards: cards, isLoading: false);
+      final cards = await repo.searchCards(query, limit: _pageSize, offset: 0);
+      state = state.copyWith(allCards: cards, isLoading: false, hasMore: cards.length == _pageSize);
       _applyFilters();
     } catch (e) {
       state = state.copyWith(isLoading: false);
+    }
+  }
+
+  /// 捲到底時載入下一頁，沿用目前是「系列瀏覽」還是「關鍵字搜尋」模式。
+  Future<void> loadMore() async {
+    if (state.isLoadingMore || !state.hasMore) return;
+    state = state.copyWith(isLoadingMore: true);
+    try {
+      final repo = ref.read(cardRepositoryProvider);
+      final nextOffset = _offset + _pageSize;
+      final more = _isSearchMode
+          ? await repo.searchCards(state.searchQuery, limit: _pageSize, offset: nextOffset)
+          : await repo.fetchCards(series: state.selectedSeries, limit: _pageSize, offset: nextOffset);
+      _offset = nextOffset;
+      state = state.copyWith(
+        allCards: [...state.allCards, ...more],
+        isLoadingMore: false,
+        hasMore: more.length == _pageSize,
+      );
+      _applyFilters();
+    } catch (e) {
+      state = state.copyWith(isLoadingMore: false);
     }
   }
 
