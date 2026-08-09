@@ -61,6 +61,15 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   int _offset = 0;
   bool _isSearchMode = false; // 目前 allCards 是系列瀏覽來的還是關鍵字搜尋來的，loadMore() 要知道呼叫哪個 repo 方法
 
+  // 🔥 賽跑保護：冷啟動時 build() 會非同步觸發 _initData()（先抓系列、再抓第一頁瀏覽），
+  // 如果使用者在這個還沒跑完的當下就直接打關鍵字搜尋（例如從首頁搜尋框第一次進來，
+  // provider 剛初始化），_initData() 裡的 fetchCards() 跟 _remoteSearch() 會同時在跑，
+  // 誰後完成就用誰的結果覆蓋 allCards——如果是瀏覽的那次後完成，就會把「跟搜尋字完全
+  // 無關的瀏覽結果」套用搜尋文字篩選，結果幾乎必定是空的，使用者體感就是「打名字找不到」。
+  // 每次真正發起新的一輪查詢（fetchCards/_remoteSearch）就換一個 request id，
+  // 非同步結果回來時如果 id 已經被更新的請求蓋過，直接丟棄，不寫回 state。
+  int _requestId = 0;
+
   @override
   CardLibraryState build() {
     _initData();
@@ -83,15 +92,18 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   }
 
   Future<void> fetchCards() async {
+    final int myRequest = ++_requestId;
     _offset = 0;
     _isSearchMode = false;
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(cardRepositoryProvider);
       final cards = await repo.fetchCards(series: state.selectedSeries, limit: _pageSize, offset: 0);
+      if (myRequest != _requestId) return; // 這筆結果已經被更新的查詢蓋過，丟棄
       state = state.copyWith(allCards: cards, isLoading: false, hasMore: cards.length == _pageSize);
       _applyFilters();
     } catch (e) {
+      if (myRequest != _requestId) return;
       state = state.copyWith(isLoading: false, errorMessage: '資料庫連線失敗');
     }
   }
@@ -108,15 +120,18 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   }
 
   Future<void> _remoteSearch(String query) async {
+    final int myRequest = ++_requestId;
     _offset = 0;
     _isSearchMode = true;
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(cardRepositoryProvider);
       final cards = await repo.searchCards(query, limit: _pageSize, offset: 0);
+      if (myRequest != _requestId) return;
       state = state.copyWith(allCards: cards, isLoading: false, hasMore: cards.length == _pageSize);
       _applyFilters();
     } catch (e) {
+      if (myRequest != _requestId) return;
       state = state.copyWith(isLoading: false);
     }
   }
@@ -124,6 +139,9 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   /// 捲到底時載入下一頁，沿用目前是「系列瀏覽」還是「關鍵字搜尋」模式。
   Future<void> loadMore() async {
     if (state.isLoadingMore || !state.hasMore) return;
+    // 不換新的 request id（這是延續現有這輪查詢，不是新的一輪），但要記住目前的 id，
+    // 如果等待期間有新的 fetchCards()/_remoteSearch() 蓋過去，這批結果就該丟棄。
+    final int myRequest = _requestId;
     state = state.copyWith(isLoadingMore: true);
     try {
       final repo = ref.read(cardRepositoryProvider);
@@ -131,6 +149,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       final more = _isSearchMode
           ? await repo.searchCards(state.searchQuery, limit: _pageSize, offset: nextOffset)
           : await repo.fetchCards(series: state.selectedSeries, limit: _pageSize, offset: nextOffset);
+      if (myRequest != _requestId) return;
       _offset = nextOffset;
       state = state.copyWith(
         allCards: [...state.allCards, ...more],
@@ -139,6 +158,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       );
       _applyFilters();
     } catch (e) {
+      if (myRequest != _requestId) return;
       state = state.copyWith(isLoadingMore: false);
     }
   }
