@@ -4,7 +4,7 @@ import '../models/ua_card.dart';
 abstract class CardRepository {
   Future<List<String>> fetchSeriesList();
   Future<List<UACard>> fetchCards({String? series, int limit = 300});
-  Future<List<UACard>> searchCards(String query, {int limit = 100});
+  Future<List<UACard>> searchCards(String query, {int limit = 500});
   Future<List<UACard>> fetchCardsByNumbers(List<String> cardNumbers);
 }
 
@@ -28,7 +28,7 @@ class SupabaseCardRepository implements CardRepository {
   }
 
   @override
-  Future<List<UACard>> searchCards(String query, {int limit = 100}) async {
+  Future<List<UACard>> searchCards(String query, {int limit = 500}) async {
     final response = await _supabase
         .from('cards')
         .select('*, latest_prices(price_jpy)')
