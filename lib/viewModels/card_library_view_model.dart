@@ -98,7 +98,12 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(cardRepositoryProvider);
-      final cards = await repo.fetchCards(series: state.selectedSeries, limit: _pageSize, offset: 0);
+      final cards = await repo.fetchCards(
+        series: state.selectedSeries,
+        colors: state.selectedColors.toList(),
+        limit: _pageSize,
+        offset: 0,
+      );
       if (myRequest != _requestId) return; // 這筆結果已經被更新的查詢蓋過，丟棄
       state = state.copyWith(allCards: cards, isLoading: false, hasMore: cards.length == _pageSize);
       _applyFilters();
@@ -111,8 +116,10 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   void updateSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
 
-    // 如果想要即時從遠端搜尋 (Debounce 更好，這裡先簡單實作)
-    if (query.length > 2) {
+    // 🔥 原本要打超過 2 個字才會觸發遠端搜尋，中日文卡名 2 個字往往就是很明確的關鍵字
+    // （例如「紫雲」），卡在這個門檻下只會在「目前已經載入的那一小頁」裡面本地篩選，
+    // 幾乎必定找不到——搜尋分頁後單頁資料量已經很小，不用再靠字數門檻擋遠端查詢。
+    if (query.isNotEmpty) {
       _remoteSearch(query);
     } else {
       _applyFilters();
@@ -126,7 +133,12 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(cardRepositoryProvider);
-      final cards = await repo.searchCards(query, limit: _pageSize, offset: 0);
+      final cards = await repo.searchCards(
+        query,
+        colors: state.selectedColors.toList(),
+        limit: _pageSize,
+        offset: 0,
+      );
       if (myRequest != _requestId) return;
       state = state.copyWith(allCards: cards, isLoading: false, hasMore: cards.length == _pageSize);
       _applyFilters();
@@ -146,9 +158,10 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     try {
       final repo = ref.read(cardRepositoryProvider);
       final nextOffset = _offset + _pageSize;
+      final colors = state.selectedColors.toList();
       final more = _isSearchMode
-          ? await repo.searchCards(state.searchQuery, limit: _pageSize, offset: nextOffset)
-          : await repo.fetchCards(series: state.selectedSeries, limit: _pageSize, offset: nextOffset);
+          ? await repo.searchCards(state.searchQuery, colors: colors, limit: _pageSize, offset: nextOffset)
+          : await repo.fetchCards(series: state.selectedSeries, colors: colors, limit: _pageSize, offset: nextOffset);
       if (myRequest != _requestId) return;
       _offset = nextOffset;
       state = state.copyWith(
@@ -168,19 +181,23 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     fetchCards();
   }
 
+  /// 🔥 顏色篩選改成伺服器端過濾（見 card_repository.dart），跟分頁搭配的話不能只篩
+  /// 「目前已經載入的那一頁」——分頁上限只有 60 筆，選顏色前如果沒剛好捲到底，
+  /// 符合顏色的卡片很可能根本還沒被載入，本地篩選只會篩出小貓兩三隻。選色後重新
+  /// 發一輪查詢（沿用目前是系列瀏覽還是關鍵字搜尋模式），這樣才是對整個資料庫篩選。
   void updateSelectedColors(Set<String> colors) {
     state = state.copyWith(selectedColors: colors);
-    _applyFilters();
+    if (_isSearchMode) {
+      _remoteSearch(state.searchQuery);
+    } else {
+      fetchCards();
+    }
   }
 
-  // 統一在這裡套用「顏色」與「搜尋文字」這兩個純 client 端篩選，
-  // 讓不管卡池是從哪個管道進來的（系列查詢 / 遠端搜尋）都套用同一套規則。
+  // 顏色已經在伺服器端篩過了，這裡只需要再套用搜尋文字的本地篩選——主要是給「系列瀏覽」
+  // 模式擋殘留的搜尋字用（系列瀏覽本身不帶搜尋字查詢），關鍵字搜尋模式下這裡本來就會全過。
   void _applyFilters() {
     Iterable<UACard> result = state.allCards;
-
-    if (state.selectedColors.isNotEmpty) {
-      result = result.where((card) => state.selectedColors.contains((card.color ?? '').toUpperCase()));
-    }
 
     final lowerQuery = state.searchQuery.toLowerCase();
     if (lowerQuery.isNotEmpty) {
