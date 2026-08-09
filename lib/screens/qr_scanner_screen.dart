@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewModels/deck_view_model.dart';
+import '../viewModels/opponent_view_model.dart';
 import '../models/ua_card.dart';
 import 'deck_detail_screen.dart';
 
@@ -27,7 +28,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('掃描導入牌組'),
+        title: const Text('掃描 QR Code'),
         actions: [
           IconButton(
             icon: ValueListenableBuilder<MobileScannerState>(
@@ -74,11 +75,13 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 final String? code = barcode.rawValue;
-                if (code != null && code.startsWith('UA_DECK|')) {
+                if (code == null) continue;
+
+                if (code.startsWith('UA_DECK|')) {
                   setState(() => _isProcessed = true);
-                  
+
                   final success = await ref.read(deckViewModelProvider.notifier).importDeckFromQR(code);
-                  
+
                   if (!mounted) return;
 
                   if (success) {
@@ -115,6 +118,26 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                     );
                   }
                   break;
+                } else if (code.startsWith('UA_PLAYER|')) {
+                  setState(() => _isProcessed = true);
+
+                  final displayName = await ref.read(opponentViewModelProvider.notifier).addOpponentFromQr(code);
+
+                  if (!mounted) return;
+
+                  if (displayName != null) {
+                    Navigator.pop(context); // 掃到人就直接退回上一頁，不用像牌組那樣跳預覽頁
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('🎉 已將「$displayName」加為對手！'), backgroundColor: Colors.green),
+                    );
+                  } else {
+                    setState(() => _isProcessed = false);
+                    final error = ref.read(opponentViewModelProvider).errorMessage ?? '新增對手失敗';
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('❌ $error'), backgroundColor: Colors.redAccent),
+                    );
+                  }
+                  break;
                 }
               }
             },
@@ -135,7 +158,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
             left: 0,
             right: 0,
             child: Text(
-              '請對準其他玩家分享的 QR Code',
+              '請對準其他玩家分享的牌組或個人 QR Code',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, backgroundColor: Colors.black54),
             ),
