@@ -135,6 +135,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       final repo = ref.read(cardRepositoryProvider);
       final cards = await repo.searchCards(
         query,
+        series: state.selectedSeries,
         colors: state.selectedColors.toList(),
         limit: _pageSize,
         offset: 0,
@@ -160,7 +161,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       final nextOffset = _offset + _pageSize;
       final colors = state.selectedColors.toList();
       final more = _isSearchMode
-          ? await repo.searchCards(state.searchQuery, colors: colors, limit: _pageSize, offset: nextOffset)
+          ? await repo.searchCards(state.searchQuery, series: state.selectedSeries, colors: colors, limit: _pageSize, offset: nextOffset)
           : await repo.fetchCards(series: state.selectedSeries, colors: colors, limit: _pageSize, offset: nextOffset);
       if (myRequest != _requestId) return;
       _offset = nextOffset;
@@ -178,7 +179,14 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
 
   void updateSelectedSeries(String s) {
     state = state.copyWith(selectedSeries: s);
-    fetchCards();
+    // 跟 updateSelectedColors 一樣：如果目前是關鍵字搜尋模式，換系列後要沿用
+    // _remoteSearch 重新查，不然會掉回 fetchCards()（不帶搜尋字），變成只在
+    // 新系列的第一頁裡對搜尋字做本地篩選，找不到頁外的結果。
+    if (_isSearchMode) {
+      _remoteSearch(state.searchQuery);
+    } else {
+      fetchCards();
+    }
   }
 
   /// 🔥 顏色篩選改成伺服器端過濾（見 card_repository.dart），跟分頁搭配的話不能只篩

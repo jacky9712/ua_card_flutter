@@ -4,7 +4,7 @@ import '../models/ua_card.dart';
 abstract class CardRepository {
   Future<List<String>> fetchSeriesList();
   Future<List<UACard>> fetchCards({String? series, List<String>? colors, int limit = 60, int offset = 0});
-  Future<List<UACard>> searchCards(String query, {List<String>? colors, int limit = 60, int offset = 0});
+  Future<List<UACard>> searchCards(String query, {String? series, List<String>? colors, int limit = 60, int offset = 0});
   Future<List<UACard>> fetchCardsByNumbers(List<String> cardNumbers);
 }
 
@@ -41,11 +41,16 @@ class SupabaseCardRepository implements CardRepository {
   }
 
   @override
-  Future<List<UACard>> searchCards(String query, {List<String>? colors, int limit = 60, int offset = 0}) async {
+  Future<List<UACard>> searchCards(String query, {String? series, List<String>? colors, int limit = 60, int offset = 0}) async {
     var q = _supabase
         .from('cards')
         .select('*, latest_prices(price_jpy)')
         .or('card_number.ilike.%$query%,name.ilike.%$query%');
+    // 系列篩選原本沒接進來，套了系列篩選（不管自動帶入還是手動選）後只要打字搜尋，
+    // 就會忽略系列限制、變成整個資料庫下去搜──跟 fetchCards() 一樣補上 series 條件。
+    if (series != null && series.isNotEmpty && series != '全部系列') {
+      q = q.ilike('card_number', '$series%');
+    }
     final colorFilter = _colorOrFilter(colors);
     if (colorFilter != null) {
       q = q.or(colorFilter);
