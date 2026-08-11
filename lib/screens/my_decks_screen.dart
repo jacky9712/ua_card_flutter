@@ -93,7 +93,17 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                           ),
                           title: Text(deck['name'] ?? '未命名牌組', style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(isLocal ? '儲存於此裝置' : '已同步至雲端', style: const TextStyle(fontSize: 12)),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '¥ ${deck['total_price'] ?? 0}',
+                                style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w900, fontSize: 13),
+                              ),
+                              const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                            ],
+                          ),
                           onTap: () async {
                             final expandedCards = await ref.read(deckViewModelProvider.notifier).fetchCardsForDeck(deckId);
                             if (context.mounted) {

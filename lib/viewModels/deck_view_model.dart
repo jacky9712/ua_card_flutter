@@ -108,18 +108,49 @@ class DeckViewModel extends Notifier<DeckState> {
     );
   }
 
+  // 🔥 將一組卡片（例如上位卡組推薦）載入編輯器，並視為「全新牌組」（不覆蓋任何既有牌組）
+  void loadCardsForNewDeck(List<UACard> cards) {
+    final Map<int, int> newMap = {};
+    final Map<int, UACard> newDetails = {};
+    for (var card in cards) {
+      if (card.id != null) {
+        newMap[card.id!] = (newMap[card.id!] ?? 0) + 1;
+        newDetails[card.id!] = card;
+      }
+    }
+    state = state.copyWith(
+      deckMap: newMap,
+      deckCardDetails: newDetails,
+      clearEditingId: true,
+    );
+  }
+
+  int _calculateLocalDeckPrice(Map<String, dynamic> deck) {
+    final List<dynamic> cards = deck['cards'] ?? [];
+    int total = 0;
+    for (final item in cards) {
+      final int qty = (item['quantity'] ?? 0) as int;
+      final price = item['card_data']?['price'];
+      if (price != null) total += (price as num).toInt() * qty;
+    }
+    return total;
+  }
+
   Future<void> fetchMyDecks() async {
     state = state.copyWith(isLoading: true);
     final deckRepo = ref.read(deckRepositoryProvider);
     final authRepo = ref.read(authRepositoryProvider);
     final user = authRepo.currentUser;
-    
+
     try {
       List<Map<String, dynamic>> remoteDecks = [];
       if (user != null && !user.isAnonymous) {
         remoteDecks = await deckRepo.fetchRemoteDecks(user.id);
       }
-      final localDecks = await deckRepo.fetchLocalDecks();
+      final rawLocalDecks = await deckRepo.fetchLocalDecks();
+      final localDecks = rawLocalDecks
+          .map((deck) => {...deck, 'total_price': _calculateLocalDeckPrice(deck)})
+          .toList();
       state = state.copyWith(myDecks: [...localDecks, ...remoteDecks], isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: '載入牌組失敗');

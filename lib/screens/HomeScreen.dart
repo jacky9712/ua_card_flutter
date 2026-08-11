@@ -8,6 +8,7 @@ import 'login_screen.dart';
 import 'meta_environment_screen.dart';
 import 'qr_scanner_screen.dart';
 import 'my_decks_screen.dart';
+import 'recommended_decks_screen.dart';
 import 'test_connection_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -240,6 +241,9 @@ class HomeScreen extends ConsumerWidget {
           }),
           _quickButton(Icons.style_outlined, '我的牌組', Colors.blue.shade50, Colors.blue, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()));
+          }),
+          _quickButton(Icons.emoji_events_outlined, '上位卡組', Colors.red.shade50, Colors.redAccent, () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const RecommendedDecksScreen()));
           }),
           _quickButton(Icons.card_giftcard, '主題活動', Colors.orange.shade50, Colors.orange, () {}),
         ],

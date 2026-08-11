@@ -13,6 +13,7 @@ class DeckDetailScreen extends ConsumerStatefulWidget {
   final String deckName;
   final List<UACard> cardsInDeck; // 50張展開的卡片
   final VoidCallback? onSavePressed;
+  final String saveButtonLabel;
 
   const DeckDetailScreen({
     super.key,
@@ -20,6 +21,7 @@ class DeckDetailScreen extends ConsumerStatefulWidget {
     required this.deckName,
     required this.cardsInDeck,
     this.onSavePressed,
+    this.saveButtonLabel = '儲存至我的牌組 (完成編輯)',
   });
 
   @override
@@ -218,9 +220,9 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    '儲存至我的牌組 (完成編輯)',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  child: Text(
+                    widget.saveButtonLabel,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ),
@@ -458,7 +460,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                '50 枚',
+                '${widget.cardsInDeck.length} 枚',
                 style: TextStyle(
                   color: textColor,
                   fontSize: 18,

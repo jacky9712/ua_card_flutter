@@ -28,8 +28,15 @@ class MetaState {
 class MetaViewModel extends Notifier<MetaState> {
   @override
   MetaState build() {
-    fetchRanking();
-    fetchMetaEnvironment();
+    // 🔥 不能在 build() 還沒 return 前就同步觸發會修改 state 的 async function
+    // （fetchMetaEnvironment 一開始就 `state = state.copyWith(isLoading: true)`），
+    // 否則 Riverpod 會丟出 "Tried to read the state of an uninitialized provider"，
+    // 而且會讓整個呼叫 ref.watch(metaViewModelProvider) 的畫面（HomeScreen）直接建構失敗。
+    // 用 Future.microtask 延到 build() 真正 return、provider 完成初始化之後再執行。
+    Future.microtask(() {
+      fetchRanking();
+      fetchMetaEnvironment();
+    });
     return MetaState();
   }
 
