@@ -16,6 +16,15 @@ class TestConnectionScreen extends ConsumerStatefulWidget {
 }
 
 class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
+  // 對應 _getCardColor 支援的五色，中文標籤給顏色篩選器顯示用
+  static const Map<String, String> _colorLabels = {
+    'RED': '紅',
+    'BLUE': '藍',
+    'GREEN': '綠',
+    'YELLOW': '黃',
+    'PURPLE': '紫',
+  };
+
   late TextEditingController _searchController;
 
   @override
@@ -104,6 +113,25 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                     onChanged: (text) => ref.read(cardLibraryViewModelProvider.notifier).updateSearchQuery(text),
                   ),
                 ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.palette_outlined),
+                      onPressed: () => _showColorPicker(isDarkMode),
+                    ),
+                    if (libraryState.selectedColors.isNotEmpty)
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
+                        ),
+                      ),
+                  ],
+                ),
                 IconButton(
                   icon: const Icon(Icons.menu),
                   onPressed: () => _showSeriesPicker(isDarkMode),
@@ -119,21 +147,42 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
           ? _buildSkeletonGrid(isDarkMode) // 第一次載入顯示骨架
           : libraryState.filteredCards.isEmpty
               ? const Center(child: Text('找不到符合的卡片'))
-              : GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3, 
-                    childAspectRatio: 0.54, 
-                    crossAxisSpacing: 8, 
-                    mainAxisSpacing: 8
-                  ),
-                  itemCount: libraryState.filteredCards.length,
-                  itemBuilder: (context, index) {
-                    final card = libraryState.filteredCards[index];
-                    final qty = deckState.deckMap[card.id] ?? 0;
-                    return _buildCardItem(card, qty, isDarkMode);
-                  },
+              : Column(
+                  children: [
+                    Expanded(
+                      child: NotificationListener<ScrollNotification>(
+                        // 捲到接近底部（剩 300px 內）就載入下一頁；loadMore() 內部
+                        // 自己擋 isLoadingMore/hasMore，這裡不用另外 debounce。
+                        onNotification: (notification) {
+                          if (notification.metrics.pixels >= notification.metrics.maxScrollExtent - 300) {
+                            ref.read(cardLibraryViewModelProvider.notifier).loadMore();
+                          }
+                          return false;
+                        },
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(10),
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            childAspectRatio: 0.54,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8
+                          ),
+                          itemCount: libraryState.filteredCards.length,
+                          itemBuilder: (context, index) {
+                            final card = libraryState.filteredCards[index];
+                            final qty = deckState.deckMap[card.id] ?? 0;
+                            return _buildCardItem(card, qty, isDarkMode);
+                          },
+                        ),
+                      ),
+                    ),
+                    if (libraryState.isLoadingMore)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                      ),
+                  ],
                 ),
     );
   }
@@ -343,6 +392,84 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     );
   }
 
+  void _showColorPicker(bool isDarkMode) {
+    final notifier = ref.read(cardLibraryViewModelProvider.notifier);
+    final Set<String> tempSelected = Set.from(ref.read(cardLibraryViewModelProvider).selectedColors);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('選擇顏色', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: _colorLabels.entries.map((entry) {
+                  final String colorKey = entry.key;
+                  final bool isSelected = tempSelected.contains(colorKey);
+
+                  return FilterChip(
+                    avatar: CircleAvatar(backgroundColor: _getCardColor(colorKey), radius: 6),
+                    label: Text(entry.value, style: TextStyle(
+                      fontSize: 12,
+                      color: isSelected ? Colors.black : (isDarkMode ? Colors.white70 : Colors.black87),
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    )),
+                    selected: isSelected,
+                    showCheckmark: false,
+                    backgroundColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
+                    selectedColor: Colors.amber,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    onSelected: (selected) {
+                      setModalState(() {
+                        if (selected) {
+                          tempSelected.add(colorKey);
+                        } else {
+                          tempSelected.remove(colorKey);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => setModalState(() => tempSelected.clear()),
+                      child: const Text('全部顏色'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
+                      onPressed: () {
+                        notifier.updateSelectedColors(tempSelected);
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('完成'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showSaveDialog(bool isDarkMode) {
     final controller = TextEditingController();
     showDialog(context: context, builder: (ctx) => AlertDialog(
@@ -360,13 +487,18 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
             final deckName = controller.text.trim();
             if (deckName.isEmpty) return;
 
+            // dialog（ctx）自己的 Navigator/Messenger 要在 await 前先取出來，
+            // 不然 await 之後直接用 ctx 會被 lint 當成「context 可能已經失效」。
+            final dialogNavigator = Navigator.of(ctx);
+            final dialogMessenger = ScaffoldMessenger.of(ctx);
+
             // 1. 呼叫 ViewModel 執行儲存
             final success = await ref.read(deckViewModelProvider.notifier).saveCurrentDeck(deckName);
 
             if (success && mounted) {
               // 2. ✨ 核心修正：連退三步
               // 第一步：關閉對話框 (ctx)
-              Navigator.pop(ctx);
+              dialogNavigator.pop();
 
               // 第二步：關閉預覽頁面 (DeckDetailScreen)
               Navigator.pop(context);
@@ -384,11 +516,11 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
               // 🔥 儲存失敗時原本完全沒有任何提示，對話框只是卡住不動。
               // 把 ViewModel 已經算好的 errorMessage 秀出來，至少讓使用者知道發生什麼事。
               final errorMessage = ref.read(deckViewModelProvider).errorMessage;
-              ScaffoldMessenger.of(ctx).showSnackBar(
+              dialogMessenger.showSnackBar(
                 SnackBar(content: Text(errorMessage ?? '儲存失敗，請稍後再試'), backgroundColor: Colors.red),
               );
             }
-          }, 
+          },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
           child: const Text('確認儲存'),
         ),

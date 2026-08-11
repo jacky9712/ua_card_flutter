@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../viewModels/auth_view_model.dart';
+import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
 import '../viewModels/meta_view_model.dart';
+import '../viewModels/profile_view_model.dart';
 import 'login_screen.dart';
+import 'location_hub_screen.dart';
+import 'match_records_screen.dart';
 import 'meta_environment_screen.dart';
+import 'profile_setup_dialog.dart';
+import 'my_qr_code_screen.dart';
 import 'qr_scanner_screen.dart';
 import 'my_decks_screen.dart';
 import 'recommended_decks_screen.dart';
@@ -14,14 +19,47 @@ import 'test_connection_screen.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  void _handleProfileClick(BuildContext context, UserAuthState authState, AuthViewModel authNotifier) {
-    // 🔥 如果不是真實使用者（包含未登入或匿名），則跳轉登入頁
+  void _handleProfileClick(BuildContext context, WidgetRef ref, UserAuthState authState, AuthViewModel authNotifier) {
+    // 🔥 訪客（匿名）帳號以前是直接強制跳登入頁，完全沒有「只是設個暱稱」的路徑——
+    // 但「分享位置」「紀錄勝敗」這些功能訪客也該能用（掃 QR 加對手不需要正式帳號），
+    // 所以改成先給選擇，不再無條件強制跳轉。
     if (!authState.isRealUser) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('個人設定'),
+          content: const Text('你目前是訪客身分。可以先設定暱稱讓其他玩家認得你，或是登入/註冊正式帳號。'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const MyQrCodeScreen()));
+              },
+              child: const Text('我的 QR 名片'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                showDialog(context: context, builder: (_) => const ProfileSetupDialog());
+              },
+              child: const Text('設定暱稱'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
+              child: const Text('登入/註冊'),
+            ),
+          ],
+        ),
+      );
       return;
     }
 
     // 已登入（真實使用者）顯示會員中心
+    final displayName = ref.read(profileViewModelProvider).displayName;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -30,7 +68,25 @@ class HomeScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('帳號: ${authState.user?.email}'),
+            const SizedBox(height: 8),
+            Text('暱稱: ${displayName ?? '（尚未設定）'}'),
             const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.badge_outlined, color: Colors.amber),
+              title: const Text('編輯暱稱'),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(context: context, builder: (_) => const ProfileSetupDialog());
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.qr_code, color: Colors.amber),
+              title: const Text('我的 QR 名片'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const MyQrCodeScreen()));
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('登出帳號'),
@@ -39,11 +95,11 @@ class HomeScreen extends ConsumerWidget {
                 await authNotifier.signOut();
                 if (context.mounted) {
                   // 2. 關閉會員中心對話框
-                  Navigator.pop(context); 
-                  
+                  Navigator.pop(context);
+
                   // 3. 立即跳轉至登入介面
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-                  
+
                   // 4. 顯示提示
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('已成功登出'), backgroundColor: Colors.blueGrey),
@@ -61,7 +117,6 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authViewModelProvider);
     final metaState = ref.watch(metaViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 的 theme 處理
@@ -93,11 +148,10 @@ class HomeScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavIcon(context, Icons.home, '首頁', true, () {}),
-              _buildNavIcon(context, Icons.store_outlined, '市場', false, () {}),
               const SizedBox(width: 40),
               _buildNavIcon(context, Icons.chat_bubble_outline, '消息', false, () {}),
-              _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, '個人', false, 
-                () => _handleProfileClick(context, authState, ref.read(authViewModelProvider.notifier))),
+              _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, '個人', false,
+                () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
             ],
           ),
         ),
@@ -114,7 +168,7 @@ class HomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                _buildSearchArea(context),
+                _buildSearchArea(context, ref),
                 _buildBanner(),
                 _buildQuickActions(context),
                 _buildHomeMetaPreview(context, metaState),
@@ -157,7 +211,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSearchArea(BuildContext context) {
+  Widget _buildSearchArea(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -165,10 +219,13 @@ class HomeScreen extends ConsumerWidget {
           Expanded(
             child: TextField(
               onSubmitted: (text) {
-                if (text.isNotEmpty) {
-                  // 這裡之後會改用 CardLibraryViewModel
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
-                }
+                final query = text.trim();
+                if (query.isEmpty) return;
+                // 直接跳組牌頁面會把打好的關鍵字丟掉、要使用者重打一次，
+                // 這裡先把查詢字串灌進共用的 CardLibraryViewModel，組牌頁面
+                // initState 會從同一個 provider 讀回搜尋框內容，兩邊就對得上。
+                ref.read(cardLibraryViewModelProvider.notifier).updateSearchQuery(query);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
               },
               decoration: InputDecoration(
                 hintText: '搜尋卡號或卡名...',
@@ -198,20 +255,6 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Colors.black, Color(0xFF421E91)]),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.camera_alt, color: Colors.white, size: 18),
-                Text('AI檢索', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          )
         ],
       ),
     );
@@ -228,10 +271,16 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    // 拿掉「主題活動」之後剩 6 個入口，改用 3 欄排成剛好 2 整排，
+    // 不會像 4 欄那樣第二排只填一半、看起來像漏東西。
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.95,
         children: [
           _quickButton(Icons.analytics_outlined, '對戰環境', Colors.purple.shade50, const Color(0xFF8E24AA), () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const MetaEnvironmentScreen()));
@@ -245,7 +294,12 @@ class HomeScreen extends ConsumerWidget {
           _quickButton(Icons.emoji_events_outlined, '上位卡組', Colors.red.shade50, Colors.redAccent, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const RecommendedDecksScreen()));
           }),
-          _quickButton(Icons.card_giftcard, '主題活動', Colors.orange.shade50, Colors.orange, () {}),
+          _quickButton(Icons.military_tech_outlined, '戰績紀錄', Colors.teal.shade50, Colors.teal, () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const MatchRecordsScreen()));
+          }),
+          _quickButton(Icons.location_on_outlined, '約戰地點', Colors.indigo.shade50, Colors.indigo, () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const LocationHubScreen()));
+          }),
         ],
       ),
     );

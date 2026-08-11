@@ -26,6 +26,9 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- 分享位置 / 約戰地點功能需要的定位權限說明文字，iOS 沒有這個 key 就不會跳權限詢問。 -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>用來分享你的位置給其他玩家、發布約戰地點，以及依距離排序附近的約戰貼文。</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

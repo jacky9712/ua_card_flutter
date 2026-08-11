@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ua_card.dart';
-import 'package:flutter/material.dart';
 import '../repositories/providers.dart';
 import 'auth_view_model.dart';
 
@@ -248,7 +247,9 @@ class DeckViewModel extends Notifier<DeckState> {
             triggerText: cardData['trigger_text'], price: cardData['price'],
             seriesId: cardData['series_id'],
           );
-          for (int i = 0; i < item['quantity']; i++) expanded.add(card);
+          for (int i = 0; i < item['quantity']; i++) {
+            expanded.add(card);
+          }
         }
         return expanded;
       }

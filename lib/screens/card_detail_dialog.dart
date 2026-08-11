@@ -49,7 +49,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
         _isLoadingHistory = false;
       });
     } catch (e) {
-      print('抓取歷史價格失敗: $e');
+      debugPrint('抓取歷史價格失敗: $e');
       setState(() => _isLoadingHistory = false);
     }
   }
@@ -254,7 +254,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
                   gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.amber.withOpacity(0.3), Colors.amber.withOpacity(0)]
+                      colors: [Colors.amber.withValues(alpha: 0.3), Colors.amber.withValues(alpha: 0)]
                   )
               ),
               dotData: const FlDotData(show: false), // 隱藏數據點，滑過才顯示

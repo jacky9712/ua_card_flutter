@@ -97,7 +97,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem('上位卡組數', '$totalDecks', Icons.layers, isDarkMode),
+              _buildStatItem('總計牌組', '$totalDecks', Icons.layers, isDarkMode),
               _buildStatItem('活躍系列', '$activeSeries', Icons.category, isDarkMode),
               _buildStatItem('主流占比', '${data.isNotEmpty ? data[0]['share_rate'] : 0}%', Icons.pie_chart, isDarkMode),
             ],
@@ -155,8 +155,6 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            _buildTierTag((item['best_tier'] ?? '').toString()),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +167,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '上位卡組: ${item['use_count'] ?? 0} 組',
+                    '使用次數: ${item['use_count'] ?? 0} 次',
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
@@ -181,31 +179,6 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // 依 best_tier（"Tier1"/"Tier1.5"...）顯示徽章，跟 recommended_decks_screen.dart 用同一套配色邏輯
-  Widget _buildTierTag(String tier) {
-    final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(tier);
-    final double rank = match != null ? double.tryParse(match.group(1)!) ?? 99 : 99;
-    Color c = Colors.grey;
-    if (rank <= 1) {
-      c = const Color(0xFFE53935);
-    } else if (rank <= 2) {
-      c = const Color(0xFFFF9800);
-    } else if (rank <= 3) {
-      c = const Color(0xFF1E88E5);
-    }
-
-    return Container(
-      width: 32,
-      height: 32,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: c.withValues(alpha: 0.15), shape: BoxShape.circle),
-      child: Text(
-        match?.group(1) ?? '?',
-        style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12),
       ),
     );
   }

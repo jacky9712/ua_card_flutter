@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 分享位置 / 約戰地點功能需要的定位權限：沒宣告的話系統根本不會跳出詢問視窗，
+         geolocator 的 requestPermission() 會直接判定拒絕，不會有任何提示。 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
         android:label="ua_card_flutter"
         android:name="${applicationName}"
