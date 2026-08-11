@@ -487,13 +487,18 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
             final deckName = controller.text.trim();
             if (deckName.isEmpty) return;
 
+            // dialog（ctx）自己的 Navigator/Messenger 要在 await 前先取出來，
+            // 不然 await 之後直接用 ctx 會被 lint 當成「context 可能已經失效」。
+            final dialogNavigator = Navigator.of(ctx);
+            final dialogMessenger = ScaffoldMessenger.of(ctx);
+
             // 1. 呼叫 ViewModel 執行儲存
             final success = await ref.read(deckViewModelProvider.notifier).saveCurrentDeck(deckName);
 
             if (success && mounted) {
               // 2. ✨ 核心修正：連退三步
               // 第一步：關閉對話框 (ctx)
-              Navigator.pop(ctx);
+              dialogNavigator.pop();
 
               // 第二步：關閉預覽頁面 (DeckDetailScreen)
               Navigator.pop(context);
@@ -511,11 +516,11 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
               // 🔥 儲存失敗時原本完全沒有任何提示，對話框只是卡住不動。
               // 把 ViewModel 已經算好的 errorMessage 秀出來，至少讓使用者知道發生什麼事。
               final errorMessage = ref.read(deckViewModelProvider).errorMessage;
-              ScaffoldMessenger.of(ctx).showSnackBar(
+              dialogMessenger.showSnackBar(
                 SnackBar(content: Text(errorMessage ?? '儲存失敗，請稍後再試'), backgroundColor: Colors.red),
               );
             }
-          }, 
+          },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
           child: const Text('確認儲存'),
         ),

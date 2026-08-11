@@ -215,6 +215,8 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                     ? () async {
                         final typedName = _opponentNameController.text.trim();
                         final opponentLabel = _selectedOpponentName ?? typedName;
+                        final navigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
                         final success = await ref.read(matchRecordViewModelProvider.notifier).createMatchRecord(
                               opponentId: _selectedOpponentId,
                               opponentNameText: _selectedOpponentId == null ? typedName : null,
@@ -227,8 +229,8 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                             );
                         if (!mounted) return;
                         if (success) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          navigator.pop();
+                          messenger.showSnackBar(
                             SnackBar(content: Text('🎉 已記錄與「$opponentLabel」的對戰'), backgroundColor: Colors.green),
                           );
                         }

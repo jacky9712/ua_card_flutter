@@ -200,6 +200,8 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
                     : () async {
                         final name = _locationController.text.trim();
                         if (name.isEmpty) return;
+                        final navigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
                         final success = await ref.read(meetupViewModelProvider.notifier).createMeetupPost(
                               locationName: name,
                               lat: _lat,
@@ -212,8 +214,8 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
                             );
                         if (!mounted) return;
                         if (success) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          navigator.pop();
+                          messenger.showSnackBar(
                             const SnackBar(content: Text('🎉 約戰貼文已發布'), backgroundColor: Colors.green),
                           );
                         }

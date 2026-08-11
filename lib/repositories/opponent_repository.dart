@@ -29,7 +29,7 @@ class SupabaseOpponentRepository implements OpponentRepository {
     await _supabase.from('known_opponents').upsert({
       'owner_id': ownerId,
       'opponent_id': opponentId,
-      if (nickname != null) 'nickname': nickname,
+      'nickname': ?nickname,
     }, onConflict: 'owner_id,opponent_id');
   }
 

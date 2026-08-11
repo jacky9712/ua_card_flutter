@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/providers.dart';
 
@@ -46,7 +47,7 @@ class MetaViewModel extends Notifier<MetaState> {
       final list = await repo.fetchRanking();
       state = state.copyWith(rankingList: list);
     } catch (e) {
-      print('載入排行失敗: $e');
+      debugPrint('載入排行失敗: $e');
     }
   }
 

@@ -57,8 +57,6 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                     return const Icon(Icons.camera_front);
                   case CameraFacing.back:
                     return const Icon(Icons.camera_rear);
-                  default:
-                    return const Icon(Icons.camera_rear);
                 }
               },
             ),
@@ -80,6 +78,8 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                 if (code.startsWith('UA_DECK|')) {
                   setState(() => _isProcessed = true);
 
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
                   final success = await ref.read(deckViewModelProvider.notifier).importDeckFromQR(code);
 
                   if (!mounted) return;
@@ -98,8 +98,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                     });
 
                     // 2. ✨ 直接跳轉至預覽畫面，並取代目前的掃描頁面
-                    Navigator.pushReplacement(
-                      context,
+                    navigator.pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => DeckDetailScreen(
                           deckName: '掃描導入的牌組',
@@ -108,12 +107,12 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                       ),
                     );
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(content: Text('🎉 牌組導入成功！'), backgroundColor: Colors.green),
                     );
                   } else {
                     setState(() => _isProcessed = false);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(content: Text('❌ 導入失敗，格式不正確'), backgroundColor: Colors.redAccent),
                     );
                   }
@@ -121,19 +120,21 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                 } else if (code.startsWith('UA_PLAYER|')) {
                   setState(() => _isProcessed = true);
 
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
                   final displayName = await ref.read(opponentViewModelProvider.notifier).addOpponentFromQr(code);
 
                   if (!mounted) return;
 
                   if (displayName != null) {
-                    Navigator.pop(context); // 掃到人就直接退回上一頁，不用像牌組那樣跳預覽頁
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    navigator.pop(); // 掃到人就直接退回上一頁，不用像牌組那樣跳預覽頁
+                    messenger.showSnackBar(
                       SnackBar(content: Text('🎉 已將「$displayName」加為對手！'), backgroundColor: Colors.green),
                     );
                   } else {
                     setState(() => _isProcessed = false);
                     final error = ref.read(opponentViewModelProvider).errorMessage ?? '新增對手失敗';
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(content: Text('❌ $error'), backgroundColor: Colors.redAccent),
                     );
                   }

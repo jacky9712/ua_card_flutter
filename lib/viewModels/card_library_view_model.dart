@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ua_card.dart';
 import '../repositories/providers.dart';
@@ -87,7 +88,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       final list = await repo.fetchSeriesList();
       state = state.copyWith(availableSeries: list);
     } catch (e) {
-      print('載入系列失敗: $e');
+      debugPrint('載入系列失敗: $e');
     }
   }
 

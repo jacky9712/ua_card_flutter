@@ -43,6 +43,9 @@ class DeckExporter {
 
     // 2. 建立一個 ScreenshotController
     final screenshotController = ScreenshotController();
+    // 下面有好幾個 await，之後要用的 ScaffoldMessenger 先在這裡取出來，
+    // 避免 await 之後才透過 context 去問，被 lint 當成潛在的失效 context。
+    final messenger = ScaffoldMessenger.of(context);
 
     try {
       // 3. 實例化我們的匯出 Widget，但**不要把這行貼上網**。
@@ -69,11 +72,13 @@ class DeckExporter {
       final file = await File('${tempDir.path}/ua_deck_share.png').create();
       await file.writeAsBytes(imageBytes);
 
-      // 7. 🔥 呼叫原生分享選單，把檔案分享出去
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: '這是我剛用 UA Card App 組好的牌組，強吧！',
-        subject: 'UA 牌組分享', // iOS 用的郵件主旨
+      // 7. 🔥 呼叫原生分享選單，把檔案分享出去（share_plus 新版 API）
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: '這是我剛用 UA Card App 組好的牌組，強吧！',
+          subject: 'UA 牌組分享', // iOS 用的郵件主旨
+        ),
       );
 
     } catch (e) {
@@ -81,7 +86,7 @@ class DeckExporter {
       if (_loaderKey.currentContext != null) {
         Navigator.of(_loaderKey.currentContext!, rootNavigator: true).pop();
       }
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('匯出失敗: $e')),
       );
     }
