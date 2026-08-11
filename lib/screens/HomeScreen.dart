@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../viewModels/auth_view_model.dart';
 import '../viewModels/card_library_view_model.dart';
@@ -153,7 +155,7 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 _buildHeader(),
                 _buildSearchArea(context, ref),
-                _buildBanner(),
+                const _HomeBannerAd(),
                 _buildQuickActions(context),
                 _buildHomeMetaPreview(context, metaState),
                 const SizedBox(height: 100),
@@ -218,17 +220,6 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBanner() {
-    // TODO: 目前是佔位用的橫幅，之後這裡要接廣告（廣告 SDK/素材尚未確定）。
-    return Container(
-      margin: const EdgeInsets.all(16),
-      width: double.infinity,
-      height: 110,
-      decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(15)),
-      child: const Center(child: Text('熱門活動橫幅', style: TextStyle(fontWeight: FontWeight.bold))),
     );
   }
 
@@ -355,5 +346,98 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// 首頁的橫幅廣告（Google AdMob）。
+///
+/// 目前用的是 Google 公開的測試廣告單元 ID，任何裝置/帳號都看得到測試素材，
+/// 不會產生真的收益。正式上架前要到 AdMob 後台申請自己的 App，把這裡的
+/// [_testBannerAdUnitId] 換成正式的廣告單元 ID，同時把
+/// android/app/src/main/AndroidManifest.xml 的 APPLICATION_ID 跟
+/// ios/Runner/Info.plist 的 GADApplicationIdentifier 換成正式的 App ID。
+///
+/// AdMob 只支援 Android/iOS，桌面/Web 平台沒有對應實作，這兩個平台維持原本
+/// 的靜態佔位版面。
+class _HomeBannerAd extends StatefulWidget {
+  const _HomeBannerAd();
+
+  @override
+  State<_HomeBannerAd> createState() => _HomeBannerAdState();
+}
+
+class _HomeBannerAdState extends State<_HomeBannerAd> {
+  BannerAd? _bannerAd;
+  bool _isLoaded = false;
+
+  bool get _supportsAds =>
+      !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+
+  String get _testBannerAdUnitId => defaultTargetPlatform == TargetPlatform.iOS
+      ? 'ca-app-pub-3940256099942544/2934735716' // Google 官方 iOS 測試橫幅 ID
+      : 'ca-app-pub-3940256099942544/6300978111'; // Google 官方 Android 測試橫幅 ID
+
+  @override
+  void initState() {
+    super.initState();
+    if (_supportsAds) {
+      _loadAd();
+    }
+  }
+
+  void _loadAd() {
+    BannerAd(
+      adUnitId: _testBannerAdUnitId,
+      size: AdSize.largeBanner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (!mounted) {
+            ad.dispose();
+            return;
+          }
+          setState(() {
+            _bannerAd = ad as BannerAd;
+            _isLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          // 載入失敗（例如沒有網路、測試裝置沒被 AdMob 認可）就維持佔位版面，
+          // 不讓整個首頁因為廣告載入失敗而壞掉。
+          ad.dispose();
+        },
+      ),
+    ).load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      width: double.infinity,
+      height: 110,
+      decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(15)),
+      child: const Center(child: Text('熱門活動橫幅', style: TextStyle(fontWeight: FontWeight.bold))),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ad = _bannerAd;
+    if (_isLoaded && ad != null) {
+      return Container(
+        margin: const EdgeInsets.all(16),
+        alignment: Alignment.center,
+        width: ad.size.width.toDouble(),
+        height: ad.size.height.toDouble(),
+        child: AdWidget(ad: ad),
+      );
+    }
+    return _buildPlaceholder();
   }
 }

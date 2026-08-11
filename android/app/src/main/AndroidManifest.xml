@@ -34,6 +34,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- 首頁橫幅廣告（AdMob）。這是 Google 公開的測試用 App ID，正式上架前要換成
+             AdMob 後台自己申請的正式 App ID，跟 lib/screens/HomeScreen.dart 裡的測試
+             廣告單元 ID 一起換掉。 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

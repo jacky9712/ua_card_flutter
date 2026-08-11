@@ -29,6 +29,12 @@
 	<!-- 分享位置 / 約戰地點功能需要的定位權限說明文字，iOS 沒有這個 key 就不會跳權限詢問。 -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>用來分享你的位置給其他玩家、發布約戰地點，以及依距離排序附近的約戰貼文。</string>
+	<!-- 首頁橫幅廣告（AdMob）。這是 Google 公開的測試用 App ID，正式上架前要換成
+	     AdMob 後台自己申請的正式 App ID，跟 lib/screens/HomeScreen.dart 裡的測試
+	     廣告單元 ID 一起換掉；上架前也還要補 SKAdNetworkItems 清單跟 App Tracking
+	     Transparency 說明文字，這裡先只接測試用的最小設定。 -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

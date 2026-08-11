@@ -1,5 +1,9 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ua_card_flutter/screens/HomeScreen.dart';
@@ -41,6 +45,12 @@ void main() async {
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
   );
+
+  // 3.5 初始化 AdMob（首頁橫幅廣告）。google_mobile_ads 只支援 Android/iOS，
+  // Web/桌面平台沒有對應的 platform channel 實作，呼叫下去會直接失敗，這裡先擋掉。
+  if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+    unawaited(MobileAds.instance.initialize());
+  }
 
   // 4. 訪客無感匿名登入 (使用 Repository 保持一致)
   final container = ProviderContainer();
