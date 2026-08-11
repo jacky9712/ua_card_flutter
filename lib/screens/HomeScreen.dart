@@ -166,17 +166,9 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          const Text('トップ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(width: 10),
-          Text('|', style: TextStyle(color: Colors.grey.shade600)),
-          const SizedBox(width: 10),
-          const Text('投稿清單', style: TextStyle(color: Colors.grey, fontSize: 14)),
-        ],
-      ),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Text('トップ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 
