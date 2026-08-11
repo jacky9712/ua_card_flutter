@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../viewModels/auth_view_model.dart';
 import '../viewModels/card_library_view_model.dart';
-import '../viewModels/deck_view_model.dart';
 import '../viewModels/meta_view_model.dart';
 import '../viewModels/profile_view_model.dart';
 import 'login_screen.dart';
@@ -18,6 +18,12 @@ import 'test_connection_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  // 「消息」目前直接連到 UNION ARENA 官網最新情報頁，不在 App 內另外做一份消息列表。
+  Future<void> _openOfficialNews() async {
+    final uri = Uri.parse('https://www.unionarena-tcg.com/jp/news/');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 
   void _handleProfileClick(BuildContext context, WidgetRef ref, UserAuthState authState, AuthViewModel authNotifier) {
     // 🔥 訪客（匿名）帳號以前是直接強制跳登入頁，完全沒有「只是設個暱稱」的路徑——
@@ -120,36 +126,14 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 的 theme 處理
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // 每次點擊出品，先清空編輯器緩存，確保是「新牌組」
-          ref.read(deckViewModelProvider.notifier).clearEditor();
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
-        },
-        backgroundColor: Colors.amber,
-        shape: const CircleBorder(),
-        elevation: 5,
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add, color: Colors.black, size: 20),
-            Text('出品', style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
       bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
         child: SizedBox(
           height: 60,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavIcon(context, Icons.home, '首頁', true, () {}),
-              const SizedBox(width: 40),
-              _buildNavIcon(context, Icons.chat_bubble_outline, '消息', false, () {}),
+              _buildNavIcon(context, Icons.chat_bubble_outline, '消息', false, _openOfficialNews),
               _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, '個人', false,
                 () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
             ],
@@ -191,21 +175,6 @@ class HomeScreen extends ConsumerWidget {
           Text('|', style: TextStyle(color: Colors.grey.shade600)),
           const SizedBox(width: 10),
           const Text('投稿清單', style: TextStyle(color: Colors.grey, fontSize: 14)),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.language, size: 16),
-                Text(' 日本語', style: TextStyle(fontSize: 12)),
-                Icon(Icons.arrow_drop_down, size: 16),
-              ],
-            ),
-          )
         ],
       ),
     );
@@ -261,6 +230,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildBanner() {
+    // TODO: 目前是佔位用的橫幅，之後這裡要接廣告（廣告 SDK/素材尚未確定）。
     return Container(
       margin: const EdgeInsets.all(16),
       width: double.infinity,
