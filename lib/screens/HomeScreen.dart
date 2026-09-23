@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../viewModels/auth_view_model.dart';
 import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
@@ -21,6 +22,24 @@ import '../viewModels/locale_view_model.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  // 「消息」直接連到 UNION ARENA 官網最新情報頁，不在 App 內另外維護一份消息列表。
+  static final Uri _officialNewsUri = Uri.parse('https://www.unionarena-tcg.com/jp/news/');
+
+  Future<void> _openOfficialNews(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    // 沒有瀏覽器可開時 launchUrl 會回 false 或丟例外，兩種都要讓使用者知道，不然看起來像按了沒反應
+    bool opened;
+    try {
+      opened = await launchUrl(_officialNewsUri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      opened = false;
+    }
+    if (!opened) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.openNewsFailed)));
+    }
+  }
 
   void _handleProfileClick(BuildContext context, WidgetRef ref, UserAuthState authState, AuthViewModel authNotifier) {
     final l10n = AppLocalizations.of(context);
@@ -166,7 +185,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildNavIcon(context, Icons.chat_bubble_outline, l10n.navMessages, false, () {}),
+                    _buildNavIcon(context, Icons.newspaper, l10n.navMessages, false, () => _openOfficialNews(context)),
                     _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, l10n.navProfile, false,
                       () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
                   ],

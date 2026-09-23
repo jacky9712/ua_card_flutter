@@ -18,7 +18,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navDecks => 'デッキ';
 
   @override
-  String get navMessages => 'メッセージ';
+  String get navMessages => 'ニュース';
 
   @override
   String get navProfile => 'マイページ';
@@ -700,4 +700,7 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get startupErrorBody =>
       'サーバー設定の読み込みに失敗しました。最新版に更新するか、しばらくしてから再度お試しください。問題が続く場合は、下のメッセージを添えてご連絡ください。';
+
+  @override
+  String get openNewsFailed => '公式サイトのニュースを開けませんでした';
 }

@@ -3,7 +3,7 @@
   "languageName": "日本語",
   "navHome": "ホーム",
   "navDecks": "デッキ",
-  "navMessages": "メッセージ",
+  "navMessages": "ニュース",
   "navProfile": "マイページ",
   "fabCreate": "作成",
   "searchHint": "カード番号・カード名で検索...",
@@ -213,5 +213,6 @@
   "saveFailed": "保存に失敗しました。しばらくしてから再試行してください",
   "confirmSave": "保存する",
   "startupErrorTitle": "アプリを起動できません",
-  "startupErrorBody": "サーバー設定の読み込みに失敗しました。最新版に更新するか、しばらくしてから再度お試しください。問題が続く場合は、下のメッセージを添えてご連絡ください。"
+  "startupErrorBody": "サーバー設定の読み込みに失敗しました。最新版に更新するか、しばらくしてから再度お試しください。問題が続く場合は、下のメッセージを添えてご連絡ください。",
+  "openNewsFailed": "公式サイトのニュースを開けませんでした"
 }

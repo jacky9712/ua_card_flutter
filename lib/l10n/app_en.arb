@@ -3,7 +3,7 @@
   "languageName": "English",
   "navHome": "Home",
   "navDecks": "Decks",
-  "navMessages": "Messages",
+  "navMessages": "News",
   "navProfile": "Profile",
   "fabCreate": "Build",
   "searchHint": "Search card no. or name...",
@@ -213,5 +213,6 @@
   "saveFailed": "Save failed. Please try again later",
   "confirmSave": "Save",
   "startupErrorTitle": "Couldn't start the app",
-  "startupErrorBody": "Failed to load the server settings. Please update to the latest version or try again later. If this keeps happening, send us the message below."
+  "startupErrorBody": "Failed to load the server settings. Please update to the latest version or try again later. If this keeps happening, send us the message below.",
+  "openNewsFailed": "Couldn't open the official news page"
 }
