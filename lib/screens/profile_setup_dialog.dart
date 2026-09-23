@@ -52,9 +52,9 @@ class _ProfileSetupDialogState extends ConsumerState<ProfileSetupDialog> {
             maxLength: 20,
             decoration: InputDecoration(hintText: context.l10n.nicknameHint, border: OutlineInputBorder()),
           ),
-          if (profileState.errorMessage != null) ...[
+          if (profileState.error != null) ...[
             const SizedBox(height: 8),
-            Text(profileState.errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+            Text(profileState.error!.localize(context.l10n), style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
           ],
         ],
       ),

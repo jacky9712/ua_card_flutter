@@ -714,4 +714,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openNewsFailed => 'Couldn\'t open the official news page';
+
+  @override
+  String get errSignOutFailed => 'Something went wrong while logging out';
+
+  @override
+  String get errDbConnectionFailed => 'Couldn\'t connect to the database';
+
+  @override
+  String get errLoadDecksFailed => 'Failed to load decks';
+
+  @override
+  String get errDeckMustBe50 =>
+      '🚨 Can\'t save: a deck must have exactly 50 cards!';
+
+  @override
+  String get errSaveDeckFailed => 'Save failed';
+
+  @override
+  String get errImportDeckFailed => 'Import failed';
+
+  @override
+  String get errLoadNearbyFailed => 'Failed to load nearby players';
+
+  @override
+  String get errLocationNotSupported =>
+      'Location sharing isn\'t supported on this device';
+
+  @override
+  String get errLoadMatchesFailed => 'Failed to load match log';
+
+  @override
+  String get errRecordMatchFailed => 'Failed to record match';
+
+  @override
+  String get errDeleteFailed => 'Delete failed';
+
+  @override
+  String get errLoadMeetupsFailed => 'Failed to load meetup posts';
+
+  @override
+  String get errLocationFallbackToTime =>
+      'Couldn\'t get your location — sorting by time instead';
+
+  @override
+  String get errPublishFailed => 'Failed to post';
+
+  @override
+  String get errLoadOpponentsFailed => 'Failed to load opponents';
+
+  @override
+  String get errInvalidQr => 'Invalid QR code';
+
+  @override
+  String get errPlayerNotFound => 'Player not found';
+
+  @override
+  String get errLoadProfileFailed => 'Failed to load profile';
+
+  @override
+  String get errUpdateNicknameFailed => 'Failed to update nickname';
+
+  @override
+  String get errLoadTopDecksFailed => 'Failed to load top decks';
+
+  @override
+  String errorWithDetail(String message, String detail) {
+    return '$message: $detail';
+  }
 }

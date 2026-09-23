@@ -1,19 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/providers.dart';
+import '../utils/app_error.dart';
 
 class ProfileState {
   final String? displayName;
   final bool isLoading;
-  final String? errorMessage;
+  final AppError? error;
 
-  ProfileState({this.displayName, this.isLoading = false, this.errorMessage});
+  ProfileState({this.displayName, this.isLoading = false, this.error});
 
-  ProfileState copyWith({String? displayName, bool? isLoading, String? errorMessage}) {
+  ProfileState copyWith({String? displayName, bool? isLoading, AppError? error}) {
     return ProfileState(
       displayName: displayName ?? this.displayName,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      error: error,
     );
   }
 }
@@ -30,25 +31,25 @@ class ProfileViewModel extends Notifier<ProfileState> {
   Future<void> fetchMyProfile() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return;
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final repo = ref.read(profileRepositoryProvider);
       final profile = await repo.fetchProfile(userId);
       state = state.copyWith(displayName: profile?['display_name'] as String?, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '載入個人資料失敗');
+      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadProfileFailed));
     }
   }
 
   Future<bool> updateDisplayName(String displayName) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final repo = ref.read(profileRepositoryProvider);
       await repo.updateDisplayName(displayName);
       state = state.copyWith(displayName: displayName, isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '更新暱稱失敗: $e');
+      state = state.copyWith(isLoading: false, error: AppError(AppErrorCode.updateNicknameFailed, detail: '$e'));
       return false;
     }
   }

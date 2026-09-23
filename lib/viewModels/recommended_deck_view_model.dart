@@ -1,27 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ua_card.dart';
 import '../repositories/providers.dart';
+import '../utils/app_error.dart';
 
 class RecommendedDeckState {
   final List<Map<String, dynamic>> decks;
   final bool isLoading;
-  final String? errorMessage;
+  final AppError? error;
 
   RecommendedDeckState({
     this.decks = const [],
     this.isLoading = false,
-    this.errorMessage,
+    this.error,
   });
 
   RecommendedDeckState copyWith({
     List<Map<String, dynamic>>? decks,
     bool? isLoading,
-    String? errorMessage,
+    AppError? error,
   }) {
     return RecommendedDeckState(
       decks: decks ?? this.decks,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      error: error,
     );
   }
 }
@@ -39,13 +40,13 @@ class RecommendedDeckViewModel extends Notifier<RecommendedDeckState> {
   }
 
   Future<void> fetchRecommendedDecks() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final repo = ref.read(recommendedDeckRepositoryProvider);
       final list = await repo.fetchRecommendedDecks();
       state = state.copyWith(decks: list, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '載入上位卡組失敗: $e');
+      state = state.copyWith(isLoading: false, error: AppError(AppErrorCode.loadTopDecksFailed, detail: '$e'));
     }
   }
 

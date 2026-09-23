@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ua_card.dart';
 import '../repositories/providers.dart';
+import '../utils/app_error.dart';
 
 class CardLibraryState {
   final List<UACard> allCards;
@@ -13,7 +14,7 @@ class CardLibraryState {
   final bool isLoading;
   final bool isLoadingMore;
   final bool hasMore;
-  final String? errorMessage;
+  final AppError? error;
 
   CardLibraryState({
     this.allCards = const [],
@@ -25,7 +26,7 @@ class CardLibraryState {
     this.isLoading = false,
     this.isLoadingMore = false,
     this.hasMore = false,
-    this.errorMessage,
+    this.error,
   });
 
   CardLibraryState copyWith({
@@ -38,7 +39,7 @@ class CardLibraryState {
     bool? isLoading,
     bool? isLoadingMore,
     bool? hasMore,
-    String? errorMessage,
+    AppError? error,
   }) {
     return CardLibraryState(
       allCards: allCards ?? this.allCards,
@@ -50,7 +51,7 @@ class CardLibraryState {
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMore: hasMore ?? this.hasMore,
-      errorMessage: errorMessage,
+      error: error,
     );
   }
 }
@@ -110,7 +111,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       _applyFilters();
     } catch (e) {
       if (myRequest != _requestId) return;
-      state = state.copyWith(isLoading: false, errorMessage: '資料庫連線失敗');
+      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.dbConnectionFailed));
     }
   }
 

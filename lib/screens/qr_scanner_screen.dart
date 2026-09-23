@@ -132,11 +132,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                   if (displayName != null) {
                     navigator.pop(); // 掃到人就直接退回上一頁，不用像牌組那樣跳預覽頁
                     messenger.showSnackBar(
-                      SnackBar(content: Text(l10n.opponentAdded(displayName)), backgroundColor: Colors.green),
+                      SnackBar(content: Text(l10n.opponentAdded(displayName.isEmpty ? l10n.unnamedPlayer : displayName)), backgroundColor: Colors.green),
                     );
                   } else {
                     setState(() => _isProcessed = false);
-                    final error = ref.read(opponentViewModelProvider).errorMessage ?? l10n.addOpponentFailed;
+                    final error = ref.read(opponentViewModelProvider).error?.localize(l10n) ?? l10n.addOpponentFailed;
                     messenger.showSnackBar(
                       SnackBar(content: Text('❌ $error'), backgroundColor: Colors.redAccent),
                     );

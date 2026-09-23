@@ -517,8 +517,8 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
               ref.read(deckViewModelProvider.notifier).fetchMyDecks();
             } else if (!success && mounted) {
               // 🔥 儲存失敗時原本完全沒有任何提示，對話框只是卡住不動。
-              // 把 ViewModel 已經算好的 errorMessage 秀出來，至少讓使用者知道發生什麼事。
-              final errorMessage = ref.read(deckViewModelProvider).errorMessage;
+              // 把 ViewModel 回報的錯誤秀出來，至少讓使用者知道發生什麼事。
+              final errorMessage = ref.read(deckViewModelProvider).error?.localize(context.l10n);
               dialogMessenger.showSnackBar(
                 SnackBar(content: Text(errorMessage ?? context.l10n.saveFailed), backgroundColor: Colors.red),
               );

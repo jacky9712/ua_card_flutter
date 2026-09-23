@@ -706,4 +706,69 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get openNewsFailed => '公式サイトのニュースを開けませんでした';
+
+  @override
+  String get errSignOutFailed => 'ログアウト中にエラーが発生しました';
+
+  @override
+  String get errDbConnectionFailed => 'データベースに接続できませんでした';
+
+  @override
+  String get errLoadDecksFailed => 'デッキの読み込みに失敗しました';
+
+  @override
+  String get errDeckMustBe50 => '🚨 保存できません：デッキはちょうど50枚にしてください！';
+
+  @override
+  String get errSaveDeckFailed => '保存に失敗しました';
+
+  @override
+  String get errImportDeckFailed => 'インポートに失敗しました';
+
+  @override
+  String get errLoadNearbyFailed => '近くのプレイヤーの読み込みに失敗しました';
+
+  @override
+  String get errLocationNotSupported => 'この端末では位置情報の共有に対応していません';
+
+  @override
+  String get errLoadMatchesFailed => '対戦記録の読み込みに失敗しました';
+
+  @override
+  String get errRecordMatchFailed => '記録に失敗しました';
+
+  @override
+  String get errDeleteFailed => '削除に失敗しました';
+
+  @override
+  String get errLoadMeetupsFailed => '対戦募集の読み込みに失敗しました';
+
+  @override
+  String get errLocationFallbackToTime => '現在地を取得できないため、日時順で表示します';
+
+  @override
+  String get errPublishFailed => '投稿に失敗しました';
+
+  @override
+  String get errLoadOpponentsFailed => '対戦相手リストの読み込みに失敗しました';
+
+  @override
+  String get errInvalidQr => 'QRコードの形式が正しくありません';
+
+  @override
+  String get errPlayerNotFound => 'このプレイヤーが見つかりません';
+
+  @override
+  String get errLoadProfileFailed => 'プロフィールの読み込みに失敗しました';
+
+  @override
+  String get errUpdateNicknameFailed => 'ニックネームの更新に失敗しました';
+
+  @override
+  String get errLoadTopDecksFailed => '上位デッキの読み込みに失敗しました';
+
+  @override
+  String errorWithDetail(String message, String detail) {
+    return '$message: $detail';
+  }
 }

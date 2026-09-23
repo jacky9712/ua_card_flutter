@@ -2,13 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ua_card.dart';
 import '../repositories/providers.dart';
 import 'auth_view_model.dart';
+import '../utils/app_error.dart';
 
 class DeckState {
   final Map<int, int> deckMap;
   final Map<int, UACard> deckCardDetails;
   final List<Map<String, dynamic>> myDecks;
   final bool isLoading;
-  final String? errorMessage;
+  final AppError? error;
   final int? editingDeckId; // 🔥 追蹤目前正在編輯的牌組 ID
 
   DeckState({
@@ -16,7 +17,7 @@ class DeckState {
     this.deckCardDetails = const {},
     this.myDecks = const [],
     this.isLoading = false,
-    this.errorMessage,
+    this.error,
     this.editingDeckId,
   });
 
@@ -36,7 +37,7 @@ class DeckState {
     Map<int, UACard>? deckCardDetails,
     List<Map<String, dynamic>>? myDecks,
     bool? isLoading,
-    String? errorMessage,
+    AppError? error,
     int? editingDeckId,
     bool clearEditingId = false, // 用於手動重置
   }) {
@@ -45,7 +46,7 @@ class DeckState {
       deckCardDetails: deckCardDetails ?? this.deckCardDetails,
       myDecks: myDecks ?? this.myDecks,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      error: error,
       editingDeckId: clearEditingId ? null : (editingDeckId ?? this.editingDeckId),
     );
   }
@@ -152,13 +153,13 @@ class DeckViewModel extends Notifier<DeckState> {
           .toList();
       state = state.copyWith(myDecks: [...localDecks, ...remoteDecks], isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '載入牌組失敗');
+      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadDecksFailed));
     }
   }
 
   Future<bool> saveCurrentDeck(String deckName) async {
     if (state.totalDeckCount != 50) {
-      state = state.copyWith(errorMessage: '🚨 儲存失敗：牌組必須剛好 50 張！');
+      state = state.copyWith(error: const AppError(AppErrorCode.deckMustBe50));
       return false;
     }
 
@@ -168,7 +169,7 @@ class DeckViewModel extends Notifier<DeckState> {
     final bool isRealUser = user != null && !user.isAnonymous;
 
     try {
-      state = state.copyWith(isLoading: true, errorMessage: null);
+      state = state.copyWith(isLoading: true, error: null);
       
       // 1. 如果是「編輯舊牌組」，儲存前先刪除舊的 (或之後實作 Update RPC)
       if (state.editingDeckId != null) {
@@ -210,7 +211,7 @@ class DeckViewModel extends Notifier<DeckState> {
       state = state.copyWith(isLoading: false, deckMap: {}, deckCardDetails: {}, clearEditingId: true);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '儲存失敗: $e');
+      state = state.copyWith(isLoading: false, error: AppError(AppErrorCode.saveDeckFailed, detail: '$e'));
       return false;
     }
   }
@@ -261,7 +262,7 @@ class DeckViewModel extends Notifier<DeckState> {
 
   Future<bool> importDeckFromQR(String qrData) async {
     if (!qrData.startsWith('UA_DECK|')) return false;
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final String content = qrData.substring(8);
       final List<String> pairs = content.split(',');
@@ -287,7 +288,7 @@ class DeckViewModel extends Notifier<DeckState> {
       state = state.copyWith(deckMap: newDeckMap, deckCardDetails: newDetails, isLoading: false, clearEditingId: true);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '導入失敗: $e');
+      state = state.copyWith(isLoading: false, error: AppError(AppErrorCode.importDeckFailed, detail: '$e'));
       return false;
     }
   }

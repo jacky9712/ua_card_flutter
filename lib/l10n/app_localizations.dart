@@ -1395,6 +1395,132 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'無法開啟官網最新情報頁'**
   String get openNewsFailed;
+
+  /// No description provided for @errSignOutFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'登出發生異常'**
+  String get errSignOutFailed;
+
+  /// No description provided for @errDbConnectionFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'資料庫連線失敗'**
+  String get errDbConnectionFailed;
+
+  /// No description provided for @errLoadDecksFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入牌組失敗'**
+  String get errLoadDecksFailed;
+
+  /// No description provided for @errDeckMustBe50.
+  ///
+  /// In zh, this message translates to:
+  /// **'🚨 儲存失敗：牌組必須剛好 50 張！'**
+  String get errDeckMustBe50;
+
+  /// No description provided for @errSaveDeckFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'儲存失敗'**
+  String get errSaveDeckFailed;
+
+  /// No description provided for @errImportDeckFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'導入失敗'**
+  String get errImportDeckFailed;
+
+  /// No description provided for @errLoadNearbyFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入附近玩家失敗'**
+  String get errLoadNearbyFailed;
+
+  /// No description provided for @errLocationNotSupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'此裝置平台不支援定位分享'**
+  String get errLocationNotSupported;
+
+  /// No description provided for @errLoadMatchesFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入戰績失敗'**
+  String get errLoadMatchesFailed;
+
+  /// No description provided for @errRecordMatchFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'紀錄失敗'**
+  String get errRecordMatchFailed;
+
+  /// No description provided for @errDeleteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'刪除失敗'**
+  String get errDeleteFailed;
+
+  /// No description provided for @errLoadMeetupsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入約戰貼文失敗'**
+  String get errLoadMeetupsFailed;
+
+  /// No description provided for @errLocationFallbackToTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法取得目前位置，改用時間排序'**
+  String get errLocationFallbackToTime;
+
+  /// No description provided for @errPublishFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'發布失敗'**
+  String get errPublishFailed;
+
+  /// No description provided for @errLoadOpponentsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入對手清單失敗'**
+  String get errLoadOpponentsFailed;
+
+  /// No description provided for @errInvalidQr.
+  ///
+  /// In zh, this message translates to:
+  /// **'QR 格式不正確'**
+  String get errInvalidQr;
+
+  /// No description provided for @errPlayerNotFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'找不到這個玩家的資料'**
+  String get errPlayerNotFound;
+
+  /// No description provided for @errLoadProfileFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入個人資料失敗'**
+  String get errLoadProfileFailed;
+
+  /// No description provided for @errUpdateNicknameFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新暱稱失敗'**
+  String get errUpdateNicknameFailed;
+
+  /// No description provided for @errLoadTopDecksFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入上位卡組失敗'**
+  String get errLoadTopDecksFailed;
+
+  /// 錯誤訊息後面接原始例外內容（技術細節，不翻譯）
+  ///
+  /// In zh, this message translates to:
+  /// **'{message}: {detail}'**
+  String errorWithDetail(String message, String detail);
 }
 
 class _AppLocalizationsDelegate

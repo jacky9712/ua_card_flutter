@@ -2,20 +2,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../repositories/providers.dart';
 import '../utils/location_platform.dart';
+import '../utils/app_error.dart';
 
 enum MeetupSortMode { soonest, nearest }
 
 class MeetupState {
   final List<Map<String, dynamic>> posts;
   final bool isLoading;
-  final String? errorMessage;
+  final AppError? error;
   final MeetupSortMode sortMode;
   final Position? myPosition;
 
   MeetupState({
     this.posts = const [],
     this.isLoading = false,
-    this.errorMessage,
+    this.error,
     this.sortMode = MeetupSortMode.soonest,
     this.myPosition,
   });
@@ -23,14 +24,14 @@ class MeetupState {
   MeetupState copyWith({
     List<Map<String, dynamic>>? posts,
     bool? isLoading,
-    String? errorMessage,
+    AppError? error,
     MeetupSortMode? sortMode,
     Position? myPosition,
   }) {
     return MeetupState(
       posts: posts ?? this.posts,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      error: error,
       sortMode: sortMode ?? this.sortMode,
       myPosition: myPosition ?? this.myPosition,
     );
@@ -62,13 +63,13 @@ class MeetupViewModel extends Notifier<MeetupState> {
   }
 
   Future<void> fetchOpenMeetupPosts() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final repo = ref.read(meetupRepositoryProvider);
       final posts = await repo.fetchOpenMeetupPosts();
       state = state.copyWith(posts: posts, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '載入約戰貼文失敗');
+      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadMeetupsFailed));
     }
   }
 
@@ -77,7 +78,7 @@ class MeetupViewModel extends Notifier<MeetupState> {
     if (mode == MeetupSortMode.nearest && state.myPosition == null) {
       final position = await getCurrentPositionOrNull();
       if (position == null) {
-        state = state.copyWith(errorMessage: '無法取得目前位置，改用時間排序');
+        state = state.copyWith(error: const AppError(AppErrorCode.locationFallbackToTime));
         return;
       }
       state = state.copyWith(myPosition: position);
@@ -95,7 +96,7 @@ class MeetupViewModel extends Notifier<MeetupState> {
     String? deckNameSnapshot,
     String? deckTier,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final repo = ref.read(meetupRepositoryProvider);
       await repo.createMeetupPost(
@@ -111,7 +112,7 @@ class MeetupViewModel extends Notifier<MeetupState> {
       await fetchOpenMeetupPosts();
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '發布失敗: $e');
+      state = state.copyWith(isLoading: false, error: AppError(AppErrorCode.publishFailed, detail: '$e'));
       return false;
     }
   }
@@ -122,7 +123,7 @@ class MeetupViewModel extends Notifier<MeetupState> {
       await repo.deleteMeetupPost(id);
       await fetchOpenMeetupPosts();
     } catch (e) {
-      state = state.copyWith(errorMessage: '刪除失敗: $e');
+      state = state.copyWith(error: AppError(AppErrorCode.deleteFailed, detail: '$e'));
     }
   }
 }

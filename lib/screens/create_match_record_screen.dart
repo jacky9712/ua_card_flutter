@@ -204,8 +204,8 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
             ),
             const SizedBox(height: 24),
 
-            if (matchState.errorMessage != null) ...[
-              Text(matchState.errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+            if (matchState.error != null) ...[
+              Text(matchState.error!.localize(context.l10n), style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
               const SizedBox(height: 12),
             ],
 
