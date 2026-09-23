@@ -6,22 +6,28 @@ class MetaState {
   final List<Map<String, dynamic>> rankingList;
   final List<Map<String, dynamic>> metaData;
   final bool isLoading;
+  // series_popularity 是即時彙總的 view，資料新鮮度就是「最後一次成功抓取」的時間。
+  // 以前畫面直接顯示 DateTime.now()，每次重建都會跳成當下時間，看起來永遠是剛更新。
+  final DateTime? fetchedAt;
 
   MetaState({
     this.rankingList = const [],
     this.metaData = const [],
     this.isLoading = false,
+    this.fetchedAt,
   });
 
   MetaState copyWith({
     List<Map<String, dynamic>>? rankingList,
     List<Map<String, dynamic>>? metaData,
     bool? isLoading,
+    DateTime? fetchedAt,
   }) {
     return MetaState(
       rankingList: rankingList ?? this.rankingList,
       metaData: metaData ?? this.metaData,
       isLoading: isLoading ?? this.isLoading,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
     );
   }
 }
@@ -56,7 +62,7 @@ class MetaViewModel extends Notifier<MetaState> {
       state = state.copyWith(isLoading: true);
       final repo = ref.read(metaRepositoryProvider);
       final data = await repo.fetchEnvironmentData();
-      state = state.copyWith(metaData: data, isLoading: false);
+      state = state.copyWith(metaData: data, isLoading: false, fetchedAt: DateTime.now());
     } catch (e) {
       state = state.copyWith(isLoading: false);
     }

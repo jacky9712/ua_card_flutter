@@ -701,4 +701,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirmSave => 'Save';
+
+  @override
+  String get startupErrorTitle => 'Couldn\'t start the app';
+
+  @override
+  String get startupErrorBody =>
+      'Failed to load the server settings. Please update to the latest version or try again later. If this keeps happening, send us the message below.';
 }
