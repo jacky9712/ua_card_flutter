@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart'; // 🔥 必加：用於日期格式化
 import 'package:supabase_flutter/supabase_flutter.dart'; // 🔥 必加：抓取歷史數據
 import '../models/ua_card.dart';
+import '../l10n/l10n_ext.dart';
 
 class CardDetailDialog extends StatefulWidget {
   final UACard card;
@@ -54,7 +55,22 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
     }
   }
 
+  // 卡片原文是日文：介面是日文就不需要翻譯，其他語言翻成介面語言
+  String? _translateTarget(BuildContext context) {
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'ja':
+        return null;
+      case 'en':
+        return 'en';
+      default:
+        return 'zh-tw';
+    }
+  }
+
   Future<void> _translateTexts() async {
+    final target = _translateTarget(context);
+    if (target == null) return;
+    final l10n = context.l10n;
     if (_translatedEffect != null || _translatedTrigger != null) {
       setState(() => _showTranslation = !_showTranslation);
       return;
@@ -62,17 +78,17 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
     setState(() => _isTranslating = true);
     try {
       if (widget.card.effectText != null && widget.card.effectText!.isNotEmpty) {
-        final effectResult = await _translator.translate(widget.card.effectText!, to: 'zh-tw');
+        final effectResult = await _translator.translate(widget.card.effectText!, to: target);
         _translatedEffect = effectResult.text;
       }
       if (widget.card.triggerText != null && widget.card.triggerText!.isNotEmpty) {
-        final triggerResult = await _translator.translate(widget.card.triggerText!, to: 'zh-tw');
+        final triggerResult = await _translator.translate(widget.card.triggerText!, to: target);
         _translatedTrigger = triggerResult.text;
       }
       setState(() => _showTranslation = true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('翻譯失敗')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.translationFailed)));
       }
     } finally {
       setState(() => _isTranslating = false);
@@ -85,7 +101,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: Container(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85), // 稍微拉高一點放圖表
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -93,6 +109,9 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                if (_translateTarget(context) == null)
+                  const SizedBox.shrink()
+                else
                 Padding(
                   padding: const EdgeInsets.only(left: 8.0),
                   child: TextButton.icon(
@@ -100,7 +119,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
                     icon: _isTranslating
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                         : Icon(_showTranslation ? Icons.g_translate : Icons.translate),
-                    label: Text(_showTranslation ? '顯示原文' : '中文翻譯'),
+                    label: Text(_showTranslation ? context.l10n.showOriginal : context.l10n.translateCardText),
                   ),
                 ),
                 IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
@@ -124,7 +143,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
                         ),
                       ),
                     const SizedBox(height: 16),
-                    Text(widget.card.name ?? '未知名稱', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(widget.card.name ?? context.l10n.unknownName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     Text(widget.card.cardNumber, style: const TextStyle(fontSize: 14, color: Colors.grey)),
                     const Divider(height: 24),
 
@@ -132,15 +151,15 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildStatBadge('BP', widget.card.bp?.toString() ?? '-'),
-                        _buildStatBadge('AP 消耗', widget.card.apCost?.toString() ?? '-'),
-                        _buildStatBadge('顏色', widget.card.color ?? '-'),
+                        _buildStatBadge(context.l10n.apCost, widget.card.apCost?.toString() ?? '-'),
+                        _buildStatBadge(context.l10n.colorLabel, widget.card.color ?? '-'),
                       ],
                     ),
                     const SizedBox(height: 20),
 
                     // ⚔️ 效果區
                     if (widget.card.effectText != null) ...[
-                      const Text('效果', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                      Text(context.l10n.effect, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
                       const SizedBox(height: 4),
                       Text(_showTranslation ? (_translatedEffect ?? '') : widget.card.effectText!, style: const TextStyle(height: 1.4)),
                       const SizedBox(height: 16),
@@ -148,7 +167,7 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
 
                     // ⚡ 觸發區
                     if (widget.card.triggerText != null) ...[
-                      const Text('觸發 (Trigger)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                      Text(context.l10n.trigger, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
                       const SizedBox(height: 4),
                       Text(_showTranslation ? (_translatedTrigger ?? '') : widget.card.triggerText!, style: const TextStyle(height: 1.4)),
                       const SizedBox(height: 16),
@@ -156,13 +175,13 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
 
                     // 📈 價格趨勢區 (放在這裡！)
                     const Divider(),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
                         children: [
                           Icon(Icons.trending_up, color: Colors.amber, size: 20),
                           SizedBox(width: 8),
-                          Text('價格趨勢 (JPY)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(context.l10n.priceTrend, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         ],
                       ),
                     ),
@@ -185,9 +204,9 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
   // --- 實作像右圖那樣的詳細價格歷史圖表 ---
   Widget _buildPriceChart(List<Map<String, dynamic>> history) {
     if (history.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 150,
-        child: Center(child: Text('暫無歷史價格數據', style: TextStyle(color: Colors.grey))),
+        child: Center(child: Text(context.l10n.noPriceHistory, style: TextStyle(color: Colors.grey))),
       );
     }
 

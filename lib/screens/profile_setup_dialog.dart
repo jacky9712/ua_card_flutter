@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewModels/profile_view_model.dart';
+import '../l10n/l10n_ext.dart';
 
 /// 設定顯示暱稱的小對話框。訪客（匿名）帳號跟正式帳號都能用——
 /// 「分享位置」「紀錄勝敗」都需要對方看得懂「這是誰」，匿名帳號原本
@@ -35,13 +36,13 @@ class _ProfileSetupDialogState extends ConsumerState<ProfileSetupDialog> {
 
     return AlertDialog(
       backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
-      title: const Text('設定暱稱', style: TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(context.l10n.setNickname, style: TextStyle(fontWeight: FontWeight.bold)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '掃 QR 加對手、約戰貼文、戰績紀錄都會用這個名字讓別人認出你。',
+          Text(
+            context.l10n.nicknameExplain,
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 16),
@@ -49,7 +50,7 @@ class _ProfileSetupDialogState extends ConsumerState<ProfileSetupDialog> {
             controller: _controller,
             autofocus: true,
             maxLength: 20,
-            decoration: const InputDecoration(hintText: '輸入暱稱...', border: OutlineInputBorder()),
+            decoration: InputDecoration(hintText: context.l10n.nicknameHint, border: OutlineInputBorder()),
           ),
           if (profileState.errorMessage != null) ...[
             const SizedBox(height: 8),
@@ -58,7 +59,7 @@ class _ProfileSetupDialogState extends ConsumerState<ProfileSetupDialog> {
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.cancel)),
         ElevatedButton(
           onPressed: profileState.isLoading
               ? null
@@ -69,14 +70,14 @@ class _ProfileSetupDialogState extends ConsumerState<ProfileSetupDialog> {
                   if (success && context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('暱稱已設為「$name」'), backgroundColor: Colors.green),
+                      SnackBar(content: Text(context.l10n.nicknameSet(name)), backgroundColor: Colors.green),
                     );
                   }
                 },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
           child: profileState.isLoading
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('儲存'),
+              : Text(context.l10n.save),
         ),
       ],
     );

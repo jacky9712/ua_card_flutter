@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'meetup_posts_screen.dart';
 import 'live_location_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 /// 「約戰地點」跟「分享我的位置」共用一個入口，用分頁切換——
 /// 避免首頁圖示因為兩個定位相關功能而過度膨脹（跟使用者確認過的設計）。
@@ -14,14 +15,14 @@ class LocationHubScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('約戰 / 位置分享', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(context.l10n.locationHubTitle, style: TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: '約戰貼文'),
-              Tab(text: '即時位置'),
+              Tab(text: context.l10n.meetupPostsTab),
+              Tab(text: context.l10n.liveLocationTab),
             ],
           ),
         ),

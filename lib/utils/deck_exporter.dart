@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/ua_card.dart';
 import '../screens/deck_export_widget.dart';
+import '../l10n/l10n_ext.dart';
 
 class DeckExporter {
   // 用來在畫面上方顯示載入圈圈
@@ -27,13 +28,13 @@ class DeckExporter {
       builder: (BuildContext context) {
         return Dialog(
           key: _loaderKey,
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.all(20.0),
             child: Row(
               children: [
                 CircularProgressIndicator(),
                 SizedBox(width: 20),
-                Text("正在產生牌組圖片..."),
+                Text(context.l10n.generatingDeckImage),
               ],
             ),
           ),
@@ -46,11 +47,19 @@ class DeckExporter {
     // 下面有好幾個 await，之後要用的 ScaffoldMessenger 先在這裡取出來，
     // 避免 await 之後才透過 context 去問，被 lint 當成潛在的失效 context。
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context);
 
     try {
       // 3. 實例化我們的匯出 Widget，但**不要把這行貼上網**。
-      final exportWidget = Material( // 必須包在 Material 裡面，否則文字樣式會跑版
-          child: DeckExportWidget(deckMap: deckMap, allCards: allCards)
+      // captureFromWidget 是在 App 樹之外獨立渲染，拿不到 MaterialApp 提供的
+      // Localizations，匯出圖裡的 context.l10n 會直接炸掉，所以這裡自己補一層。
+      final exportWidget = Localizations(
+        locale: locale,
+        delegates: AppLocalizations.localizationsDelegates,
+        child: Material( // 必須包在 Material 裡面，否則文字樣式會跑版
+            child: DeckExportWidget(deckMap: deckMap, allCards: allCards)
+        ),
       );
 
       // 4. 🔥 最魔法的一行：在記憶體中偷偷渲染這個 Widget 並捕捉成圖片
@@ -76,8 +85,8 @@ class DeckExporter {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(file.path)],
-          text: '這是我剛用 UA Card App 組好的牌組，強吧！',
-          subject: 'UA 牌組分享', // iOS 用的郵件主旨
+          text: l10n.deckShareText,
+          subject: l10n.deckShareSubject, // iOS 用的郵件主旨
         ),
       );
 
@@ -87,7 +96,7 @@ class DeckExporter {
         Navigator.of(_loaderKey.currentContext!, rootNavigator: true).pop();
       }
       messenger.showSnackBar(
-        SnackBar(content: Text('匯出失敗: $e')),
+        SnackBar(content: Text(l10n.exportFailed('$e'))),
       );
     }
   }

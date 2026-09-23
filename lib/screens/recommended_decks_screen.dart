@@ -6,6 +6,7 @@ import '../viewModels/deck_view_model.dart';
 import '../viewModels/recommended_deck_view_model.dart';
 import 'deck_detail_screen.dart';
 import 'test_connection_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 class RecommendedDecksScreen extends ConsumerStatefulWidget {
   const RecommendedDecksScreen({super.key});
@@ -24,13 +25,13 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
   String? _selectedTier;
   bool _onlyMySeries = false;
 
-  // 跟 test_connection_screen.dart 用同一套顏色/中文標籤對照，維持全站一致。
-  static const Map<String, String> _colorLabels = {
-    'RED': '紅',
-    'BLUE': '藍',
-    'GREEN': '綠',
-    'YELLOW': '黃',
-    'PURPLE': '紫',
+  // 跟 test_connection_screen.dart 用同一套顏色/標籤對照，維持全站一致。
+  Map<String, String> get _colorLabels => {
+    'RED': context.l10n.colorRed,
+    'BLUE': context.l10n.colorBlue,
+    'GREEN': context.l10n.colorGreen,
+    'YELLOW': context.l10n.colorYellow,
+    'PURPLE': context.l10n.colorPurple,
   };
 
   Color _getCardColor(String colorStr) {
@@ -73,7 +74,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
       byId[seriesId] = {
         'id': seriesId,
         'code': series['series_code'] ?? '',
-        'name': series['name_zh'] ?? series['series_code'] ?? '未分類',
+        'name': series['name_zh'] ?? series['series_code'] ?? context.l10n.uncategorized,
       };
     }
     final list = byId.values.toList();
@@ -144,7 +145,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('篩選', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(context.l10n.filter, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           TextButton(
                             onPressed: () {
                               setSheetState(() {
@@ -155,15 +156,15 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                               });
                               setState(() {});
                             },
-                            child: const Text('清除篩選'),
+                            child: Text(context.l10n.clearFilters),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('只看我的卡組系列', style: TextStyle(fontSize: 14)),
-                        subtitle: const Text('只顯示「我的牌組」頁面裡有的系列', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        title: Text(context.l10n.onlyMySeries, style: TextStyle(fontSize: 14)),
+                        subtitle: Text(context.l10n.onlyMySeriesHint, style: TextStyle(fontSize: 11, color: Colors.grey)),
                         value: _onlyMySeries,
                         onChanged: (v) {
                           setSheetState(() => _onlyMySeries = v);
@@ -171,7 +172,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                         },
                       ),
                       const SizedBox(height: 8),
-                      const Text('系列', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text(context.l10n.series, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -191,7 +192,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                         }).toList(),
                       ),
                       const SizedBox(height: 16),
-                      const Text('顏色', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text(context.l10n.colorLabel, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -216,7 +217,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                         }).toList(),
                       ),
                       const SizedBox(height: 16),
-                      const Text('T 級', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text(context.l10n.tier, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -258,7 +259,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
 
     if (cards.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('這組牌組尚未建立完整卡表')),
+        SnackBar(content: Text(context.l10n.deckListIncomplete)),
       );
       return;
     }
@@ -267,9 +268,9 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
       context,
       MaterialPageRoute(
         builder: (_) => DeckDetailScreen(
-          deckName: deck['name'] ?? '推薦牌組',
+          deckName: deck['name'] ?? context.l10n.recommendedDeck,
           cardsInDeck: cards,
-          saveButtonLabel: '複製到組牌編輯器',
+          saveButtonLabel: context.l10n.copyToDeckBuilder,
           onSavePressed: () {
             ref.read(deckViewModelProvider.notifier).loadCardsForNewDeck(cards);
 
@@ -308,7 +309,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('上位卡組推薦', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.topDecksTitle, style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -318,7 +319,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
             children: [
               IconButton(
                 icon: const Icon(Icons.filter_list),
-                tooltip: '篩選',
+                tooltip: context.l10n.filter,
                 onPressed: () => _showFilterSheet(state.decks, isDarkMode),
               ),
               if (_hasActiveFilter)
@@ -342,19 +343,19 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
             ? const Center(child: CircularProgressIndicator())
             : state.decks.isEmpty
                 ? ListView(
-                    children: const [
+                    children: [
                       Padding(
                         padding: EdgeInsets.all(40),
-                        child: Center(child: Text('目前尚無推薦牌組', style: TextStyle(color: Colors.grey))),
+                        child: Center(child: Text(context.l10n.noRecommendedDecks, style: TextStyle(color: Colors.grey))),
                       ),
                     ],
                   )
                 : filteredDecks.isEmpty
                     ? ListView(
-                        children: const [
+                        children: [
                           Padding(
                             padding: EdgeInsets.all(40),
-                            child: Center(child: Text('沒有符合篩選條件的牌組', style: TextStyle(color: Colors.grey))),
+                            child: Center(child: Text(context.l10n.noDecksMatchFilter, style: TextStyle(color: Colors.grey))),
                           ),
                         ],
                       )
@@ -367,7 +368,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                       // 圓形徽章空間有限，"Tier1.5" 這種字串只取數字部分顯示
                       final tierMatch = RegExp(r'(\d+(\.\d+)?)').firstMatch(tier);
                       final String tierBadge = tierMatch?.group(1) ?? '?';
-                      final String seriesName = deck['series']?['name_zh'] ?? '未分類系列';
+                      final String seriesName = deck['series']?['name_zh'] ?? context.l10n.uncategorizedSeries;
                       final winRate = deck['win_rate'];
                       final int totalPrice = deck['total_price'] ?? 0;
                       final int deckId = deck['id'];
@@ -432,11 +433,11 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                               ],
                             ),
                           ),
-                          title: Text(deck['name'] ?? '未命名牌組', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          title: Text(deck['name'] ?? context.l10n.unnamedDeck, style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(
                             '$seriesName'
                             '${tier.isNotEmpty ? ' · $tier' : ''}'
-                            '${winRate != null ? ' · 勝率 $winRate%' : ''}',
+                            '${winRate != null ? ' · ${context.l10n.winRateValue('$winRate')}' : ''}',
                             style: const TextStyle(fontSize: 12),
                           ),
                           trailing: opening

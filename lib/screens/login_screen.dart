@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewModels/auth_view_model.dart';
+import '../l10n/l10n_ext.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -36,7 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       success = await viewModel.signUp(email, password);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('註冊成功！請檢查信箱驗證。'), backgroundColor: Colors.green),
+          SnackBar(content: Text(context.l10n.signUpSuccess), backgroundColor: Colors.green),
         );
         setState(() => _isSignUp = false);
       }
@@ -48,9 +49,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (!success && mounted) {
-      final error = ref.read(authViewModelProvider).errorMessage ?? '認證失敗';
+      final error = ref.read(authViewModelProvider).errorMessage ?? context.l10n.authFailed;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('錯誤: $error'), backgroundColor: Colors.redAccent),
+        SnackBar(content: Text(context.l10n.errorWithMessage(error)), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -80,7 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 20),
               // 標題區
               Text(
-                _isSignUp ? '建立新帳號' : '歡迎回來',
+                _isSignUp ? context.l10n.createAccount : context.l10n.welcomeBack,
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w900,
@@ -89,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _isSignUp ? '加入 UA Card 隨時同步您的牌組' : '登入以同步您的雲端牌組',
+                _isSignUp ? context.l10n.signUpSubtitle : context.l10n.loginSubtitle,
                 style: const TextStyle(color: Colors.grey, fontSize: 16),
               ),
               const SizedBox(height: 48),
@@ -99,14 +100,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: '電子郵件',
+                  labelText: context.l10n.email,
                   prefixIcon: const Icon(Icons.email_outlined),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                   filled: true,
                   fillColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
                 ),
                 validator: (value) {
-                  if (value == null || !value.contains('@')) return '請輸入有效的 Email';
+                  if (value == null || !value.contains('@')) return context.l10n.invalidEmail;
                   return null;
                 },
               ),
@@ -117,7 +118,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
-                  labelText: '密碼',
+                  labelText: context.l10n.password,
                   prefixIcon: const Icon(Icons.lock_outline_rounded),
                   suffixIcon: IconButton(
                     icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
@@ -128,7 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   fillColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
                 ),
                 validator: (value) {
-                  if (value == null || value.length < 6) return '密碼至少需要 6 位數';
+                  if (value == null || value.length < 6) return context.l10n.passwordTooShort;
                   return null;
                 },
               ),
@@ -146,7 +147,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 child: authState.isLoading
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                    : Text(_isSignUp ? '立即註冊' : '登入帳號', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : Text(_isSignUp ? context.l10n.signUpNow : context.l10n.logIn, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 24),
 
@@ -155,13 +156,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _isSignUp ? '已經有帳號了？' : '還沒有帳號嗎？',
+                    _isSignUp ? context.l10n.haveAccount : context.l10n.noAccount,
                     style: TextStyle(color: isDarkMode ? Colors.grey : Colors.black54),
                   ),
                   TextButton(
                     onPressed: () => setState(() => _isSignUp = !_isSignUp),
                     child: Text(
-                      _isSignUp ? '登入' : '註冊',
+                      _isSignUp ? context.l10n.loginShort : context.l10n.signUpShort,
                       style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold),
                     ),
                   ),

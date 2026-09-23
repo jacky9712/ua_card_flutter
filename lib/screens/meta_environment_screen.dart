@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewModels/meta_view_model.dart';
+import '../l10n/l10n_ext.dart';
 
 class MetaEnvironmentScreen extends ConsumerStatefulWidget {
   const MetaEnvironmentScreen({super.key});
@@ -26,7 +27,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 處理
       appBar: AppBar(
-        title: const Text('對戰環境排行榜', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.metaLeaderboardTitle, style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent, // 讓它透明以顯示 Scaffold 的底色
         elevation: 0,
         centerTitle: true,
@@ -41,10 +42,10 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                     child: _buildSummaryHeader(metaData, isDarkMode),
                   ),
                   if (metaData.isEmpty)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.all(40),
-                        child: Center(child: Text('目前尚無環境資料', style: TextStyle(color: Colors.grey))),
+                        child: Center(child: Text(context.l10n.noMetaData, style: TextStyle(color: Colors.grey))),
                       ),
                     )
                   else
@@ -87,9 +88,9 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text('環境趨勢分析', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+              Text(context.l10n.metaTrend, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
               const Spacer(),
-              Text('更新於: ${DateTime.now().toString().substring(5, 16)}', 
+              Text(context.l10n.updatedAt(DateTime.now().toString().substring(5, 16)), 
                 style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
@@ -97,9 +98,9 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem('總計牌組', '$totalDecks', Icons.layers, isDarkMode),
-              _buildStatItem('活躍系列', '$activeSeries', Icons.category, isDarkMode),
-              _buildStatItem('主流占比', '${data.isNotEmpty ? data[0]['share_rate'] : 0}%', Icons.pie_chart, isDarkMode),
+              _buildStatItem(context.l10n.totalDecks, '$totalDecks', Icons.layers, isDarkMode),
+              _buildStatItem(context.l10n.activeSeries, '$activeSeries', Icons.category, isDarkMode),
+              _buildStatItem(context.l10n.topShare, '${data.isNotEmpty ? data[0]['share_rate'] : 0}%', Icons.pie_chart, isDarkMode),
             ],
           ),
         ],
@@ -160,14 +161,14 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item['name_zh'] ?? '未知系列',
+                    item['name_zh'] ?? context.l10n.unknownSeries,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDarkMode ? Colors.white : Colors.black),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '使用次數: ${item['use_count'] ?? 0} 次',
+                    context.l10n.useCount('${item['use_count'] ?? 0}'),
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],

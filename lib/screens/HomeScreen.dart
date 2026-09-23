@@ -15,11 +15,15 @@ import 'qr_scanner_screen.dart';
 import 'my_decks_screen.dart';
 import 'recommended_decks_screen.dart';
 import 'test_connection_screen.dart';
+import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
+import '../viewModels/locale_view_model.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   void _handleProfileClick(BuildContext context, WidgetRef ref, UserAuthState authState, AuthViewModel authNotifier) {
+    final l10n = AppLocalizations.of(context);
     // 🔥 訪客（匿名）帳號以前是直接強制跳登入頁，完全沒有「只是設個暱稱」的路徑——
     // 但「分享位置」「紀錄勝敗」這些功能訪客也該能用（掃 QR 加對手不需要正式帳號），
     // 所以改成先給選擇，不再無條件強制跳轉。
@@ -27,30 +31,29 @@ class HomeScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('個人設定'),
-          content: const Text('你目前是訪客身分。可以先設定暱稱讓其他玩家認得你，或是登入/註冊正式帳號。'),
+          title: Text(l10n.guestDialogTitle),
+          content: Text(l10n.guestDialogBody),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const MyQrCodeScreen()));
               },
-              child: const Text('我的 QR 名片'),
+              child: Text(l10n.myQrCard),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
                 showDialog(context: context, builder: (_) => const ProfileSetupDialog());
               },
-              child: const Text('設定暱稱'),
+              child: Text(l10n.setNickname),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
-              child: const Text('登入/註冊'),
+              child: Text(l10n.loginOrRegister),
             ),
           ],
         ),
@@ -63,25 +66,25 @@ class HomeScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('會員中心'),
+        title: Text(l10n.memberCenter),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('帳號: ${authState.user?.email}'),
+            Text(l10n.accountLabel(authState.user?.email ?? '')),
             const SizedBox(height: 8),
-            Text('暱稱: ${displayName ?? '（尚未設定）'}'),
+            Text(l10n.nicknameLabel(displayName ?? l10n.nicknameNotSet)),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.badge_outlined, color: Colors.amber),
-              title: const Text('編輯暱稱'),
+              leading: const Icon(Icons.badge_outlined, color: AppColors.gold),
+              title: Text(l10n.editNickname),
               onTap: () {
                 Navigator.pop(context);
                 showDialog(context: context, builder: (_) => const ProfileSetupDialog());
               },
             ),
             ListTile(
-              leading: const Icon(Icons.qr_code, color: Colors.amber),
-              title: const Text('我的 QR 名片'),
+              leading: const Icon(Icons.qr_code, color: AppColors.gold),
+              title: Text(l10n.myQrCard),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const MyQrCodeScreen()));
@@ -89,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('登出帳號'),
+              title: Text(l10n.signOut),
               onTap: () async {
                 // 1. 執行登出邏輯
                 await authNotifier.signOut();
@@ -102,7 +105,7 @@ class HomeScreen extends ConsumerWidget {
 
                   // 4. 顯示提示
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('已成功登出'), backgroundColor: Colors.blueGrey),
+                    SnackBar(content: Text(l10n.signedOut)),
                   );
                 }
               },
@@ -117,6 +120,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authViewModelProvider);
     final metaState = ref.watch(metaViewModelProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 的 theme 處理
@@ -126,14 +130,13 @@ class HomeScreen extends ConsumerWidget {
           ref.read(deckViewModelProvider.notifier).clearEditor();
           Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
         },
-        backgroundColor: Colors.amber,
         shape: const CircleBorder(),
         elevation: 5,
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add, color: Colors.black, size: 20),
-            Text('出品', style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
+            const Icon(Icons.add, color: Colors.black, size: 20),
+            Text(l10n.fabCreate, style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -144,14 +147,31 @@ class HomeScreen extends ConsumerWidget {
         notchMargin: 8,
         child: SizedBox(
           height: 60,
+          // 中間留給 centerDocked 的「出品」按鈕，左右兩半各自平均分配，
+          // 缺口才會剛好對在 FAB 正下方，不會壓到旁邊的圖示。
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavIcon(context, Icons.home, '首頁', true, () {}),
-              const SizedBox(width: 40),
-              _buildNavIcon(context, Icons.chat_bubble_outline, '消息', false, () {}),
-              _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, '個人', false,
-                () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildNavIcon(context, Icons.home, l10n.navHome, true, () {}),
+                    _buildNavIcon(context, Icons.style_outlined, l10n.navDecks, false,
+                      () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()))),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 72),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildNavIcon(context, Icons.chat_bubble_outline, l10n.navMessages, false, () {}),
+                    _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, l10n.navProfile, false,
+                      () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -164,12 +184,14 @@ class HomeScreen extends ConsumerWidget {
             await ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment();
           },
           child: SingleChildScrollView(
+            // 內容不滿一頁時預設不能捲，下拉更新就拉不動
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
+                _buildHeader(context, ref),
                 _buildSearchArea(context, ref),
-                _buildBanner(),
+                _buildBanner(context),
                 _buildQuickActions(context),
                 _buildHomeMetaPreview(context, metaState),
                 const SizedBox(height: 100),
@@ -181,31 +203,45 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          const Text('トップ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(width: 10),
-          Text('|', style: TextStyle(color: Colors.grey.shade600)),
-          const SizedBox(width: 10),
-          const Text('投稿清單', style: TextStyle(color: Colors.grey, fontSize: 14)),
+          const Icon(Icons.diamond, color: AppColors.gold, size: 20),
+          const SizedBox(width: 8),
+          const Text('UA DECK', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2, color: AppColors.gold)),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(20),
+          PopupMenuButton<String>(
+            tooltip: '',
+            position: PopupMenuPosition.under,
+            color: AppColors.surface,
+            onSelected: (code) => ref.read(localeViewModelProvider.notifier).setLocale(Locale(code)),
+            // 選項名稱固定用各語言自己的寫法，切錯語言時才找得回來
+            itemBuilder: (context) {
+              final current = Localizations.localeOf(context).languageCode;
+              return [
+                for (final (code, name) in const [('zh', '繁體中文'), ('ja', '日本語'), ('en', 'English')])
+                  CheckedPopupMenuItem<String>(value: code, checked: code == current, child: Text(name)),
+              ];
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.language, size: 16, color: AppColors.gold),
+                  Text(' ${l10n.languageName}', style: const TextStyle(fontSize: 12)),
+                  const Icon(Icons.arrow_drop_down, size: 16),
+                ],
+              ),
             ),
-            child: const Row(
-              children: [
-                Icon(Icons.language, size: 16),
-                Text(' 日本語', style: TextStyle(fontSize: 12)),
-                Icon(Icons.arrow_drop_down, size: 16),
-              ],
-            ),
-          )
+          ),
         ],
       ),
     );
@@ -227,13 +263,20 @@ class HomeScreen extends ConsumerWidget {
                 ref.read(cardLibraryViewModelProvider.notifier).updateSearchQuery(query);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
               },
+              // 底色交給 app_theme 的 inputDecorationTheme，這裡只改成膠囊形 + 聚焦金框
               decoration: InputDecoration(
-                hintText: '搜尋卡號或卡名...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.grey.shade100,
+                hintText: AppLocalizations.of(context).searchHint,
+                prefixIcon: const Icon(Icons.search, color: AppColors.gold),
                 contentPadding: EdgeInsets.zero,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(color: AppColors.surfaceHigh),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
+                ),
               ),
             ),
           ),
@@ -241,16 +284,17 @@ class HomeScreen extends ConsumerWidget {
           // QR 掃描導入按鈕
           InkWell(
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen())),
+            borderRadius: BorderRadius.circular(12),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Colors.amber, Colors.orange]),
+                gradient: const LinearGradient(colors: [AppColors.gold, AppColors.amber]),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Icon(Icons.qr_code_scanner, color: Colors.black, size: 18),
-                  Text('QR導入', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold)),
+                  const Icon(Icons.qr_code_scanner, color: Colors.black, size: 18),
+                  Text(AppLocalizations.of(context).qrImport, style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -260,17 +304,39 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBanner() {
+  Widget _buildBanner(BuildContext context) {
+    // 金色漸層外框 + 深色內層，做出卡框的感覺
     return Container(
       margin: const EdgeInsets.all(16),
-      width: double.infinity,
       height: 110,
-      decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(15)),
-      child: const Center(child: Text('熱門活動橫幅', style: TextStyle(fontWeight: FontWeight.bold))),
+      padding: const EdgeInsets.all(1.5),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.gold, Color(0xFF8A6D00), AppColors.amber],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [BoxShadow(color: AppColors.gold.withValues(alpha: 0.15), blurRadius: 16)],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF26222E), AppColors.surface],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(13.5),
+        ),
+        child: Center(
+          child: Text(AppLocalizations.of(context).bannerPlaceholder, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.gold, letterSpacing: 1)),
+        ),
+      ),
     );
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // 拿掉「主題活動」之後剩 6 個入口，改用 3 欄排成剛好 2 整排，
     // 不會像 4 欄那樣第二排只填一半、看起來像漏東西。
     return Padding(
@@ -282,22 +348,22 @@ class HomeScreen extends ConsumerWidget {
         mainAxisSpacing: 12,
         childAspectRatio: 0.95,
         children: [
-          _quickButton(Icons.analytics_outlined, '對戰環境', Colors.purple.shade50, const Color(0xFF8E24AA), () {
+          _quickButton(Icons.analytics_outlined, l10n.actionMeta, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const MetaEnvironmentScreen()));
           }),
-          _quickButton(Icons.dashboard_customize_outlined, '智能組牌', Colors.pink.shade50, Colors.pink, () {
+          _quickButton(Icons.dashboard_customize_outlined, l10n.actionDeckBuilder, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
           }),
-          _quickButton(Icons.style_outlined, '我的牌組', Colors.blue.shade50, Colors.blue, () {
+          _quickButton(Icons.style_outlined, l10n.actionMyDecks, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()));
           }),
-          _quickButton(Icons.emoji_events_outlined, '上位卡組', Colors.red.shade50, Colors.redAccent, () {
+          _quickButton(Icons.emoji_events_outlined, l10n.actionTopDecks, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const RecommendedDecksScreen()));
           }),
-          _quickButton(Icons.military_tech_outlined, '戰績紀錄', Colors.teal.shade50, Colors.teal, () {
+          _quickButton(Icons.military_tech_outlined, l10n.actionMatchRecords, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const MatchRecordsScreen()));
           }),
-          _quickButton(Icons.location_on_outlined, '約戰地點', Colors.indigo.shade50, Colors.indigo, () {
+          _quickButton(Icons.location_on_outlined, l10n.actionMeetup, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const LocationHubScreen()));
           }),
         ],
@@ -305,7 +371,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _quickButton(IconData icon, String label, Color bg, Color iconColor, VoidCallback onTap) {
+  Widget _quickButton(IconData icon, String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
@@ -313,17 +379,22 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Container(
             width: 55, height: 55,
-            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(15)),
-            child: Icon(icon, color: iconColor, size: 30),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+            ),
+            child: Icon(icon, color: AppColors.gold, size: 28),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
   Widget _buildHomeMetaPreview(BuildContext context, MetaState metaState) {
+    final l10n = AppLocalizations.of(context);
     if (metaState.isLoading) {
       return const Padding(padding: EdgeInsets.all(24.0), child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
@@ -338,25 +409,30 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Text('對戰環境', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                  Text(l10n.metaTitle, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.bodyLarge?.color)),
                   const SizedBox(width: 6),
                   const Icon(Icons.circle, color: Colors.green, size: 8),
                 ],
               ),
               InkWell(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MetaEnvironmentScreen())),
-                child: const Text('查看更多 >', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                child: Text(l10n.seeMore, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E24),
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF2C2C35)),
+              border: Border.all(color: AppColors.surfaceHigh),
             ),
-            child: ListView.separated(
+            child: previewList.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                    child: Center(child: Text(l10n.metaEmpty, style: const TextStyle(color: Colors.grey, fontSize: 12))),
+                  )
+                : ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: previewList.length,
@@ -369,7 +445,7 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       Text('#${index + 1}', style: TextStyle(fontWeight: FontWeight.w900, color: index == 0 ? const Color(0xFFFFD700) : Colors.white.withValues(alpha: 0.7))),
                       const SizedBox(width: 16),
-                      Expanded(child: Text('${item['name_zh'] ?? '未知系列'}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                      Expanded(child: Text('${item['name_zh'] ?? l10n.unknownSeries}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
                       Text('${item['share_rate']}%', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
                     ],
                   ),
@@ -388,8 +464,8 @@ class HomeScreen extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isActive ? Colors.amber.shade800 : Colors.grey, size: 28),
-          Text(label, style: TextStyle(fontSize: 10, color: isActive ? Colors.amber.shade800 : Colors.grey)),
+          Icon(icon, color: isActive ? AppColors.gold : Colors.grey, size: 28),
+          Text(label, style: TextStyle(fontSize: 10, color: isActive ? AppColors.gold : Colors.grey)),
         ],
       ),
     );

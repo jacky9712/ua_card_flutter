@@ -8,6 +8,7 @@ import '../viewModels/meetup_view_model.dart';
 import '../utils/location_platform.dart';
 import 'create_match_record_screen.dart';
 import 'create_meetup_post_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 class MeetupPostsScreen extends ConsumerWidget {
   const MeetupPostsScreen({super.key});
@@ -26,13 +27,13 @@ class MeetupPostsScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('取消約戰貼文'),
-        content: Text('確定要取消「$locationName」這則貼文嗎？取消後就不會再顯示。'),
+        title: Text(context.l10n.cancelMeetupTitle),
+        content: Text(context.l10n.cancelMeetupConfirm(locationName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('保留')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.keep)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('取消貼文', style: TextStyle(color: Colors.redAccent)),
+            child: Text(context.l10n.cancelPost, style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -50,7 +51,7 @@ class MeetupPostsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('約戰地點', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.actionMeetup, style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -66,17 +67,17 @@ class MeetupPostsScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                const Text('排序：', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(context.l10n.sortBy, style: TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(width: 8),
                 ChoiceChip(
-                  label: const Text('最近時間'),
+                  label: Text(context.l10n.sortByTime),
                   selected: meetupState.sortMode == MeetupSortMode.soonest,
                   onSelected: (_) => ref.read(meetupViewModelProvider.notifier).setSortMode(MeetupSortMode.soonest),
                 ),
                 const SizedBox(width: 8),
                 if (isLocationCapablePlatform)
                   ChoiceChip(
-                    label: const Text('最近距離'),
+                    label: Text(context.l10n.sortByDistance),
                     selected: meetupState.sortMode == MeetupSortMode.nearest,
                     onSelected: (_) => ref.read(meetupViewModelProvider.notifier).setSortMode(MeetupSortMode.nearest),
                   ),
@@ -87,7 +88,7 @@ class MeetupPostsScreen extends ConsumerWidget {
             child: meetupState.isLoading && posts.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : posts.isEmpty
-                    ? const Center(child: Text('目前沒有約戰貼文', style: TextStyle(color: Colors.grey)))
+                    ? Center(child: Text(context.l10n.noMeetups, style: TextStyle(color: Colors.grey)))
                     : RefreshIndicator(
                         onRefresh: () => ref.read(meetupViewModelProvider.notifier).fetchOpenMeetupPosts(),
                         child: ListView.builder(
@@ -95,7 +96,7 @@ class MeetupPostsScreen extends ConsumerWidget {
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
                             final post = posts[index];
-                            final authorName = post['profiles']?['display_name'] ?? '（未命名玩家）';
+                            final authorName = post['profiles']?['display_name'] ?? context.l10n.unnamedPlayer;
                             final scheduledAt = DateTime.tryParse(post['scheduled_at'] ?? '');
                             final lat = post['lat'] as double?;
                             final lng = post['lng'] as double?;
@@ -110,14 +111,14 @@ class MeetupPostsScreen extends ConsumerWidget {
                                   backgroundColor: Color(0x33FFC107),
                                   child: Icon(Icons.location_on, color: Colors.amber),
                                 ),
-                                title: Text(post['location_name'] ?? '未命名地點', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                title: Text(post['location_name'] ?? context.l10n.unnamedLocation, style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Text(
                                   [
-                                    '發布者: $authorName',
+                                    context.l10n.postedBy(authorName),
                                     if (scheduledAt != null) DateFormat('yyyy/MM/dd HH:mm').format(scheduledAt.toLocal()),
                                     if ((post['deck_name_snapshot'] as String?)?.isNotEmpty == true)
-                                      '牌組: ${post['deck_name_snapshot']}'
-                                          '${(post['deck_tier'] as String?)?.isNotEmpty == true ? '(${post['deck_tier']})' : ''}',
+                                      context.l10n.deckWithName(
+                                          '${post['deck_name_snapshot']}${(post['deck_tier'] as String?)?.isNotEmpty == true ? '(${post['deck_tier']})' : ''}'),
                                     if ((post['note'] as String?)?.isNotEmpty == true) post['note'],
                                   ].join(' · '),
                                   maxLines: 2,
@@ -130,12 +131,12 @@ class MeetupPostsScreen extends ConsumerWidget {
                                     if (lat != null && lng != null)
                                       IconButton(
                                         icon: const Icon(Icons.map_outlined),
-                                        tooltip: '開啟地圖 App',
+                                        tooltip: context.l10n.openMaps,
                                         onPressed: () => _openInMaps(context, lat, lng, post['location_name'] ?? ''),
                                       ),
                                     IconButton(
                                       icon: const Icon(Icons.emoji_events_outlined),
-                                      tooltip: '記錄與此相關的對戰',
+                                      tooltip: context.l10n.recordRelatedMatch,
                                       onPressed: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -146,12 +147,12 @@ class MeetupPostsScreen extends ConsumerWidget {
                                     if (isOwner)
                                       IconButton(
                                         icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                        tooltip: '取消貼文',
+                                        tooltip: context.l10n.cancelPost,
                                         onPressed: () => _confirmDelete(
                                           context,
                                           ref,
                                           post['id'] as int,
-                                          post['location_name'] ?? '未命名地點',
+                                          post['location_name'] ?? context.l10n.unnamedLocation,
                                         ),
                                       ),
                                   ],

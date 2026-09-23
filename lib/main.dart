@@ -3,7 +3,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ua_card_flutter/screens/HomeScreen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'repositories/providers.dart';
+import 'theme/app_theme.dart';
+import 'viewModels/locale_view_model.dart';
 
 
 // 1. 初始化 Supabase
@@ -43,7 +47,10 @@ void main() async {
   );
 
   // 4. 訪客無感匿名登入 (使用 Repository 保持一致)
-  final container = ProviderContainer();
+  final savedLocale = await LocaleViewModel.loadSaved();
+  final container = ProviderContainer(
+    overrides: [savedLocaleProvider.overrideWithValue(savedLocale)],
+  );
   final authRepo = container.read(authRepositoryProvider);
   if (authRepo.currentUser == null) {
     try {
@@ -57,34 +64,28 @@ void main() async {
   runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'UA Card Deck Builder',
       debugShowCheckedModeBanner: false,
-      // 🌕 淺色主題
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.orange, 
-          brightness: Brightness.light
-        ),
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF5F5F7),
-      ),
-      // 🌑 深色主題
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.orange, 
-          brightness: Brightness.dark
-        ),
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFF141419),
-      ),
-      // 🌓 根據系統設定自動切換
-      themeMode: ThemeMode.system, 
+      // locale 為 null 時跟隨系統；系統語言不在支援清單時退回第一個（繁中）
+      locale: ref.watch(localeViewModelProvider),
+      // 手動排序：生成的 supportedLocales 是字母序（en 在前），退回預設會變英文
+      supportedLocales: const [Locale('zh'), Locale('ja'), Locale('en')],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      // 卡牌遊戲風：固定深色底 + 金色點綴。各頁面原本的 isDarkMode 分支
+      // 已經用同一組深色色票（0xFF141419 / 0xFF1E1E24 / 0xFF2C2C35），這裡統一收斂。
+      theme: buildTcgTheme(),
+      themeMode: ThemeMode.dark,
       home: const HomeScreen(),
     );
   }

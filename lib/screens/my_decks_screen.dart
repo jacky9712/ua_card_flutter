@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../viewmodels/deck_view_model.dart';
 import 'deck_detail_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 class MyDecksScreen extends ConsumerStatefulWidget {
   const MyDecksScreen({super.key});
@@ -27,14 +28,14 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 處理
       appBar: AppBar(
-        title: const Text('我的牌組', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.actionMyDecks, style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: deckState.isLoading 
           ? const Center(child: CircularProgressIndicator())
           : deckState.myDecks.isEmpty
-              ? const Center(child: Text('目前還沒有任何牌組，快去組一套吧！'))
+              ? Center(child: Text(context.l10n.noDecksYet))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: deckState.myDecks.length,
@@ -61,13 +62,13 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                         return await showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('確認刪除'),
-                            content: Text('確定要刪除「${deck['name']}」嗎？'),
+                            title: Text(context.l10n.confirmDelete),
+                            content: Text(context.l10n.deleteDeckConfirm('${deck['name']}')),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
                               TextButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('刪除', style: TextStyle(color: Colors.red)),
+                                child: Text(context.l10n.delete, style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           ),
@@ -76,7 +77,7 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                       onDismissed: (direction) {
                         ref.read(deckViewModelProvider.notifier).deleteDeck(deckId);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('已刪除牌組 ${deck['name']}')),
+                          SnackBar(content: Text(context.l10n.deckDeleted('${deck['name']}'))),
                         );
                       },
                       child: Card(
@@ -137,8 +138,8 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                               ],
                             ),
                           ),
-                          title: Text(deck['name'] ?? '未命名牌組', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(isLocal ? '儲存於此裝置' : '已同步至雲端', style: const TextStyle(fontSize: 12)),
+                          title: Text(deck['name'] ?? context.l10n.unnamedDeck, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text(isLocal ? context.l10n.savedOnDevice : context.l10n.syncedToCloud, style: const TextStyle(fontSize: 12)),
                           trailing: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.end,
