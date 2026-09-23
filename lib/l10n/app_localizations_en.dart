@@ -18,7 +18,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDecks => 'Decks';
 
   @override
-  String get navMessages => 'Messages';
+  String get navMessages => 'News';
 
   @override
   String get navProfile => 'Profile';
@@ -708,4 +708,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get startupErrorBody =>
       'Failed to load the server settings. Please update to the latest version or try again later. If this keeps happening, send us the message below.';
+
+  @override
+  String get openNewsFailed => 'Couldn\'t open the official news page';
 }

@@ -1383,6 +1383,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'讀取伺服器設定失敗，請更新到最新版本或稍後再試。如果問題持續，請把下面的訊息回報給我們。'**
   String get startupErrorBody;
+
+  /// No description provided for @openNewsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法開啟官網最新情報頁'**
+  String get openNewsFailed;
 }
 
 class _AppLocalizationsDelegate
