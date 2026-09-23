@@ -1,0 +1,386 @@
+{
+  "@@locale": "zh",
+  "languageName": "繁體中文",
+  "@languageName": {
+    "description": "語言選單上顯示的該語言自稱"
+  },
+  "navHome": "首頁",
+  "navDecks": "牌組",
+  "navMessages": "消息",
+  "navProfile": "個人",
+  "fabCreate": "出品",
+  "searchHint": "搜尋卡號或卡名...",
+  "qrImport": "QR導入",
+  "bannerPlaceholder": "熱門活動橫幅",
+  "actionMeta": "對戰環境",
+  "actionDeckBuilder": "智能組牌",
+  "actionMyDecks": "我的牌組",
+  "actionTopDecks": "上位卡組",
+  "actionMatchRecords": "戰績紀錄",
+  "actionMeetup": "約戰地點",
+  "metaTitle": "對戰環境",
+  "seeMore": "查看更多 >",
+  "metaEmpty": "暫無對戰環境資料，下拉重新整理",
+  "unknownSeries": "未知系列",
+  "guestDialogTitle": "個人設定",
+  "guestDialogBody": "你目前是訪客身分。可以先設定暱稱讓其他玩家認得你，或是登入/註冊正式帳號。",
+  "myQrCard": "我的 QR 名片",
+  "setNickname": "設定暱稱",
+  "loginOrRegister": "登入/註冊",
+  "memberCenter": "會員中心",
+  "accountLabel": "帳號: {email}",
+  "@accountLabel": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "nicknameLabel": "暱稱: {name}",
+  "@nicknameLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nicknameNotSet": "（尚未設定）",
+  "editNickname": "編輯暱稱",
+  "signOut": "登出帳號",
+  "signedOut": "已成功登出",
+  "cancel": "取消",
+  "delete": "刪除",
+  "save": "儲存",
+  "done": "完成",
+  "note": "備註",
+  "unnamedPlayer": "（未命名玩家）",
+  "unnamedDeck": "未命名牌組",
+  "noSavedDecks": "目前沒有已存的牌組",
+  "tierOptional": "T 級（選填，自己評估這副牌組的強度）",
+  "win": "勝",
+  "loss": "敗",
+  "draw": "平手",
+  "colorLabel": "顏色",
+  "colorRed": "紅",
+  "colorBlue": "藍",
+  "colorGreen": "綠",
+  "colorYellow": "黃",
+  "colorPurple": "紫",
+  "errorWithMessage": "錯誤: {message}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "translationFailed": "翻譯失敗",
+  "showOriginal": "顯示原文",
+  "translateCardText": "中文翻譯",
+  "unknownName": "未知名稱",
+  "apCost": "AP 消耗",
+  "effect": "效果",
+  "trigger": "觸發 (Trigger)",
+  "priceTrend": "價格趨勢 (JPY)",
+  "noPriceHistory": "暫無歷史價格數據",
+  "recordMatchTitle": "紀錄對戰結果",
+  "opponent": "對手",
+  "noKnownOpponents": "還沒有已知對手，先掃對方的 QR 名片加一個，或直接在下面輸入名字",
+  "scanQrAddOpponent": "掃 QR 新增對手",
+  "opponentNameHint": "或者直接輸入對手名字（沒有帳號也能記）",
+  "clearSelectedOpponent": "取消已選的對手，改用文字輸入",
+  "deckUsedOptional": "使用的牌組（選填）",
+  "result": "結果",
+  "noteOptional": "備註（選填）",
+  "matchNoteHint": "這場對戰的心得、關鍵回合...",
+  "matchRecorded": "🎉 已記錄與「{name}」的對戰",
+  "@matchRecorded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "saveRecord": "儲存紀錄",
+  "locationUnavailable": "無法取得目前位置，請確認定位權限已開啟",
+  "locationAttached": "已附上目前位置座標",
+  "postMeetupTitle": "發布約戰地點",
+  "locationName": "地點名稱",
+  "locationNameHint": "例如：OO 桌遊店 3 樓",
+  "coordsAttached": "已附上目前座標",
+  "attachCoordsOptional": "附上目前位置座標（選填）",
+  "plannedDeckOptional": "打算用的牌組（選填）",
+  "time": "時間",
+  "pickTimeOptional": "選擇時間（選填）",
+  "meetupNoteHint": "想約什麼牌組、幾點到幾點...",
+  "meetupPosted": "🎉 約戰貼文已發布",
+  "publish": "發布",
+  "saveToMyDecks": "儲存至我的牌組 (完成編輯)",
+  "previewBeforeSave": "儲存前預覽",
+  "costDistribution": "成本分佈",
+  "triggerDistribution": "觸發分佈",
+  "tabCardImages": "卡片圖像",
+  "tabImportQr": "導入 QR",
+  "deckImportQrTitle": "牌組導入 QR Code",
+  "deckImportQrHint": "其他玩家掃描此碼即可快速導入您的牌組",
+  "totalCards": "總張數",
+  "cardCount": "{count} 枚",
+  "@cardCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "estimatedPrice": "預估價格 (參考)",
+  "energyCost": "{value} 能",
+  "@energyCost": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "deckShareTitle": "Union Arena 牌組分享",
+  "totalCardsOf50": "總張數: {count} / 50",
+  "@totalCardsOf50": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanToImportDeck": "掃描導入牌組",
+  "generatingDeckImage": "正在產生牌組圖片...",
+  "deckShareText": "這是我剛用 UA Card App 組好的牌組，強吧！",
+  "deckShareSubject": "UA 牌組分享",
+  "exportFailed": "匯出失敗: {error}",
+  "@exportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "shareDurationTitle": "分享多久？",
+  "durationMinutes": "{count} 分鐘",
+  "@durationMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHours": "{count} 小時",
+  "@durationHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareFailed": "分享失敗",
+  "mobileOnly": "此功能目前僅支援手機（Android / iOS）。桌面版的定位支援不穩定，先不開放。",
+  "sharing": "分享中",
+  "notSharing": "目前沒有分享位置",
+  "autoStopAt": "將於 {time} 自動停止",
+  "@autoStopAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "stopSharing": "停止分享",
+  "shareMyLocation": "分享我的位置",
+  "playersSharing": "目前分享中的玩家",
+  "noOneSharing": "目前沒有其他人在分享位置",
+  "locationHubTitle": "約戰 / 位置分享",
+  "meetupPostsTab": "約戰貼文",
+  "liveLocationTab": "即時位置",
+  "signUpSuccess": "註冊成功！請檢查信箱驗證。",
+  "authFailed": "認證失敗",
+  "createAccount": "建立新帳號",
+  "welcomeBack": "歡迎回來",
+  "signUpSubtitle": "加入 UA Card 隨時同步您的牌組",
+  "loginSubtitle": "登入以同步您的雲端牌組",
+  "email": "電子郵件",
+  "invalidEmail": "請輸入有效的 Email",
+  "password": "密碼",
+  "passwordTooShort": "密碼至少需要 6 位數",
+  "signUpNow": "立即註冊",
+  "logIn": "登入帳號",
+  "haveAccount": "已經有帳號了？",
+  "noAccount": "還沒有帳號嗎？",
+  "loginShort": "登入",
+  "signUpShort": "註冊",
+  "noMatchRecords": "還沒有任何對戰紀錄",
+  "totalMatches": "總場次",
+  "winRate": "勝率",
+  "deckUsed": "使用牌組",
+  "playedAt": "對戰時間",
+  "deleteThisRecord": "刪除這筆紀錄",
+  "deleteRecordTitle": "刪除對戰紀錄",
+  "deleteRecordConfirm": "確定要刪除這筆紀錄嗎？刪除後無法復原。",
+  "cancelMeetupTitle": "取消約戰貼文",
+  "cancelMeetupConfirm": "確定要取消「{name}」這則貼文嗎？取消後就不會再顯示。",
+  "@cancelMeetupConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "keep": "保留",
+  "cancelPost": "取消貼文",
+  "sortBy": "排序：",
+  "sortByTime": "最近時間",
+  "sortByDistance": "最近距離",
+  "noMeetups": "目前沒有約戰貼文",
+  "unnamedLocation": "未命名地點",
+  "postedBy": "發布者: {name}",
+  "@postedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deckWithName": "牌組: {name}",
+  "@deckWithName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "openMaps": "開啟地圖 App",
+  "recordRelatedMatch": "記錄與此相關的對戰",
+  "metaLeaderboardTitle": "對戰環境排行榜",
+  "noMetaData": "目前尚無環境資料",
+  "metaTrend": "環境趨勢分析",
+  "updatedAt": "更新於: {time}",
+  "@updatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "totalDecks": "總計牌組",
+  "activeSeries": "活躍系列",
+  "topShare": "主流占比",
+  "useCount": "使用次數: {count} 次",
+  "@useCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "noDecksYet": "目前還沒有任何牌組，快去組一套吧！",
+  "confirmDelete": "確認刪除",
+  "deleteDeckConfirm": "確定要刪除「{name}」嗎？",
+  "@deleteDeckConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deckDeleted": "已刪除牌組 {name}",
+  "@deckDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "savedOnDevice": "儲存於此裝置",
+  "syncedToCloud": "已同步至雲端",
+  "notLoggedIn": "尚未登入",
+  "nicknameNotSetLong": "（尚未設定暱稱）",
+  "myQrHint": "讓其他玩家掃描這個 QR，就能把你加為已知對手",
+  "nicknameExplain": "掃 QR 加對手、約戰貼文、戰績紀錄都會用這個名字讓別人認出你。",
+  "nicknameHint": "輸入暱稱...",
+  "nicknameSet": "暱稱已設為「{name}」",
+  "@nicknameSet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scanQrTitle": "掃描 QR Code",
+  "importedDeckName": "掃描導入的牌組",
+  "deckImported": "🎉 牌組導入成功！",
+  "importFailed": "❌ 導入失敗，格式不正確",
+  "opponentAdded": "🎉 已將「{name}」加為對手！",
+  "@opponentAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "addOpponentFailed": "新增對手失敗",
+  "scanQrHint": "請對準其他玩家分享的牌組或個人 QR Code",
+  "uncategorized": "未分類",
+  "filter": "篩選",
+  "clearFilters": "清除篩選",
+  "onlyMySeries": "只看我的卡組系列",
+  "onlyMySeriesHint": "只顯示「我的牌組」頁面裡有的系列",
+  "series": "系列",
+  "tier": "T 級",
+  "deckListIncomplete": "這組牌組尚未建立完整卡表",
+  "recommendedDeck": "推薦牌組",
+  "copyToDeckBuilder": "複製到組牌編輯器",
+  "topDecksTitle": "上位卡組推薦",
+  "noRecommendedDecks": "目前尚無推薦牌組",
+  "noDecksMatchFilter": "沒有符合篩選條件的牌組",
+  "uncategorizedSeries": "未分類系列",
+  "winRateValue": "勝率 {rate}%",
+  "@winRateValue": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "newDeckPreview": "新牌組預覽",
+  "deckBuilderMode": "組牌模式",
+  "noCardsFound": "找不到符合的卡片",
+  "currentCardCount": "目前張數: {count} / 50",
+  "@currentCardCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "totalPrice": "總金額: ¥ {price}",
+  "@totalPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "previewAndSave": "預覽並儲存",
+  "allSeries": "全部系列",
+  "selectSeries": "選擇系列",
+  "selectColor": "選擇顏色",
+  "allColors": "全部顏色",
+  "saveDeck": "儲存牌組",
+  "deckNameHint": "輸入牌組名稱...",
+  "deckSaved": "🎉 牌組「{name}」儲存成功！",
+  "@deckSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "saveFailed": "儲存失敗，請稍後再試",
+  "confirmSave": "確認儲存"
+}
