@@ -3,20 +3,21 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/providers.dart';
 import '../utils/location_platform.dart';
+import '../utils/app_error.dart';
 
 class LiveLocationState {
   final bool isSharing;
   final DateTime? sharingUntil;
   final List<Map<String, dynamic>> nearbyOthers;
   final bool isLoading;
-  final String? errorMessage;
+  final AppError? error;
 
   LiveLocationState({
     this.isSharing = false,
     this.sharingUntil,
     this.nearbyOthers = const [],
     this.isLoading = false,
-    this.errorMessage,
+    this.error,
   });
 
   LiveLocationState copyWith({
@@ -25,14 +26,14 @@ class LiveLocationState {
     bool clearSharingUntil = false,
     List<Map<String, dynamic>>? nearbyOthers,
     bool? isLoading,
-    String? errorMessage,
+    AppError? error,
   }) {
     return LiveLocationState(
       isSharing: isSharing ?? this.isSharing,
       sharingUntil: clearSharingUntil ? null : (sharingUntil ?? this.sharingUntil),
       nearbyOthers: nearbyOthers ?? this.nearbyOthers,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      error: error,
     );
   }
 }
@@ -52,27 +53,27 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
 
   Future<void> fetchNearbyOthers() async {
     if (!isLocationCapablePlatform) return;
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final repo = ref.read(liveLocationRepositoryProvider);
       final all = await repo.fetchActiveLiveLocations();
       state = state.copyWith(nearbyOthers: all, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '載入附近玩家失敗');
+      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadNearbyFailed));
     }
   }
 
   Future<bool> startSharing(Duration duration) async {
     if (!isLocationCapablePlatform) {
-      state = state.copyWith(errorMessage: '此裝置平台不支援定位分享');
+      state = state.copyWith(error: const AppError(AppErrorCode.locationNotSupported));
       return false;
     }
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
 
     final until = DateTime.now().add(duration);
     final success = await _pingOnce(until);
     if (!success) {
-      state = state.copyWith(isLoading: false, errorMessage: '無法取得目前位置，請確認定位權限已開啟');
+      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.locationUnavailable));
       return false;
     }
 

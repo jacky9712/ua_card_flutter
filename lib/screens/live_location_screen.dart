@@ -41,7 +41,7 @@ class LiveLocationScreen extends ConsumerWidget {
                       .startSharing(Duration(minutes: entry.value));
                   if (!context.mounted) return;
                   if (!success) {
-                    final error = ref.read(liveLocationViewModelProvider).errorMessage ?? context.l10n.shareFailed;
+                    final error = ref.read(liveLocationViewModelProvider).error?.localize(context.l10n) ?? context.l10n.shareFailed;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
                     );

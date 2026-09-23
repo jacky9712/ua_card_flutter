@@ -188,8 +188,8 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
             ),
             const SizedBox(height: 24),
 
-            if (meetupState.errorMessage != null) ...[
-              Text(meetupState.errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+            if (meetupState.error != null) ...[
+              Text(meetupState.error!.localize(context.l10n), style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
               const SizedBox(height: 12),
             ],
 

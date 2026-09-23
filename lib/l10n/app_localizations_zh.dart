@@ -703,4 +703,69 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openNewsFailed => '無法開啟官網最新情報頁';
+
+  @override
+  String get errSignOutFailed => '登出發生異常';
+
+  @override
+  String get errDbConnectionFailed => '資料庫連線失敗';
+
+  @override
+  String get errLoadDecksFailed => '載入牌組失敗';
+
+  @override
+  String get errDeckMustBe50 => '🚨 儲存失敗：牌組必須剛好 50 張！';
+
+  @override
+  String get errSaveDeckFailed => '儲存失敗';
+
+  @override
+  String get errImportDeckFailed => '導入失敗';
+
+  @override
+  String get errLoadNearbyFailed => '載入附近玩家失敗';
+
+  @override
+  String get errLocationNotSupported => '此裝置平台不支援定位分享';
+
+  @override
+  String get errLoadMatchesFailed => '載入戰績失敗';
+
+  @override
+  String get errRecordMatchFailed => '紀錄失敗';
+
+  @override
+  String get errDeleteFailed => '刪除失敗';
+
+  @override
+  String get errLoadMeetupsFailed => '載入約戰貼文失敗';
+
+  @override
+  String get errLocationFallbackToTime => '無法取得目前位置，改用時間排序';
+
+  @override
+  String get errPublishFailed => '發布失敗';
+
+  @override
+  String get errLoadOpponentsFailed => '載入對手清單失敗';
+
+  @override
+  String get errInvalidQr => 'QR 格式不正確';
+
+  @override
+  String get errPlayerNotFound => '找不到這個玩家的資料';
+
+  @override
+  String get errLoadProfileFailed => '載入個人資料失敗';
+
+  @override
+  String get errUpdateNicknameFailed => '更新暱稱失敗';
+
+  @override
+  String get errLoadTopDecksFailed => '載入上位卡組失敗';
+
+  @override
+  String errorWithDetail(String message, String detail) {
+    return '$message: $detail';
+  }
 }

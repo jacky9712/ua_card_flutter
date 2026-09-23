@@ -1,18 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/providers.dart';
+import '../utils/app_error.dart';
 
 class MatchRecordState {
   final List<Map<String, dynamic>> records;
   final bool isLoading;
-  final String? errorMessage;
+  final AppError? error;
 
-  MatchRecordState({this.records = const [], this.isLoading = false, this.errorMessage});
+  MatchRecordState({this.records = const [], this.isLoading = false, this.error});
 
-  MatchRecordState copyWith({List<Map<String, dynamic>>? records, bool? isLoading, String? errorMessage}) {
+  MatchRecordState copyWith({List<Map<String, dynamic>>? records, bool? isLoading, AppError? error}) {
     return MatchRecordState(
       records: records ?? this.records,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      error: error,
     );
   }
 
@@ -38,13 +39,13 @@ class MatchRecordViewModel extends Notifier<MatchRecordState> {
   }
 
   Future<void> fetchMyMatchRecords() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final repo = ref.read(matchRecordRepositoryProvider);
       final records = await repo.fetchMyMatchRecords();
       state = state.copyWith(records: records, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '載入戰績失敗');
+      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadMatchesFailed));
     }
   }
 
@@ -58,7 +59,7 @@ class MatchRecordViewModel extends Notifier<MatchRecordState> {
     String? note,
     int? meetupPostId,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final repo = ref.read(matchRecordRepositoryProvider);
       await repo.createMatchRecord(
@@ -74,7 +75,7 @@ class MatchRecordViewModel extends Notifier<MatchRecordState> {
       await fetchMyMatchRecords();
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: '紀錄失敗: $e');
+      state = state.copyWith(isLoading: false, error: AppError(AppErrorCode.recordMatchFailed, detail: '$e'));
       return false;
     }
   }
@@ -85,7 +86,7 @@ class MatchRecordViewModel extends Notifier<MatchRecordState> {
       await repo.deleteMatchRecord(id);
       await fetchMyMatchRecords();
     } catch (e) {
-      state = state.copyWith(errorMessage: '刪除失敗: $e');
+      state = state.copyWith(error: AppError(AppErrorCode.deleteFailed, detail: '$e'));
     }
   }
 }

@@ -49,7 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (!success && mounted) {
-      final error = ref.read(authViewModelProvider).errorMessage ?? context.l10n.authFailed;
+      final error = ref.read(authViewModelProvider).error?.localize(context.l10n) ?? context.l10n.authFailed;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.errorWithMessage(error)), backgroundColor: Colors.redAccent),
       );
