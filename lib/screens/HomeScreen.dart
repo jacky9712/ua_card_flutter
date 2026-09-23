@@ -143,54 +143,19 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 的 theme 處理
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // 每次點擊出品，先清空編輯器緩存，確保是「新牌組」
-          ref.read(deckViewModelProvider.notifier).clearEditor();
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
-        },
-        shape: const CircleBorder(),
-        elevation: 5,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.add, color: Colors.black, size: 20),
-            Text(l10n.fabCreate, style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
+      // 「出品」浮動按鈕已拿掉，建新牌組統一走快捷入口的「智能組牌」
       bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
         child: SizedBox(
           height: 60,
-          // 中間留給 centerDocked 的「出品」按鈕，左右兩半各自平均分配，
-          // 缺口才會剛好對在 FAB 正下方，不會壓到旁邊的圖示。
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavIcon(context, Icons.home, l10n.navHome, true, () {}),
-                    _buildNavIcon(context, Icons.style_outlined, l10n.navDecks, false,
-                      () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()))),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 72),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavIcon(context, Icons.newspaper, l10n.navMessages, false, () => _openOfficialNews(context)),
-                    _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, l10n.navProfile, false,
-                      () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
-                  ],
-                ),
-              ),
+              _buildNavIcon(context, Icons.home, l10n.navHome, true, () {}),
+              _buildNavIcon(context, Icons.style_outlined, l10n.navDecks, false,
+                () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()))),
+              _buildNavIcon(context, Icons.newspaper, l10n.navMessages, false, () => _openOfficialNews(context)),
+              _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, l10n.navProfile, false,
+                () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
             ],
           ),
         ),
@@ -370,6 +335,9 @@ class HomeScreen extends ConsumerWidget {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const MetaEnvironmentScreen()));
           }),
           _quickButton(Icons.dashboard_customize_outlined, l10n.actionDeckBuilder, () {
+            // 原本由「出品」按鈕負責清空編輯器；拿掉按鈕後改在這裡清。不清的話，編輯過既有牌組後
+            // 編輯器還留著那副牌組的 editingId，從這裡進去組新牌一儲存就會覆蓋掉舊牌組。
+            ProviderScope.containerOf(context, listen: false).read(deckViewModelProvider.notifier).clearEditor();
             Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
           }),
           _quickButton(Icons.style_outlined, l10n.actionMyDecks, () {

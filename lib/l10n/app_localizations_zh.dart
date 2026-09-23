@@ -24,9 +24,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navProfile => '個人';
 
   @override
-  String get fabCreate => '出品';
-
-  @override
   String get searchHint => '搜尋卡號或卡名...';
 
   @override
