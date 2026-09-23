@@ -1371,6 +1371,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'確認儲存'**
   String get confirmSave;
+
+  /// No description provided for @startupErrorTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法啟動 App'**
+  String get startupErrorTitle;
+
+  /// No description provided for @startupErrorBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'讀取伺服器設定失敗，請更新到最新版本或稍後再試。如果問題持續，請把下面的訊息回報給我們。'**
+  String get startupErrorBody;
 }
 
 class _AppLocalizationsDelegate

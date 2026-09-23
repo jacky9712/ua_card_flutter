@@ -693,4 +693,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get confirmSave => '保存する';
+
+  @override
+  String get startupErrorTitle => 'アプリを起動できません';
+
+  @override
+  String get startupErrorBody =>
+      'サーバー設定の読み込みに失敗しました。最新版に更新するか、しばらくしてから再度お試しください。問題が続く場合は、下のメッセージを添えてご連絡ください。';
 }

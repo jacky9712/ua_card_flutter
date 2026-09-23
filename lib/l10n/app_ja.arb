@@ -211,5 +211,7 @@
   "deckNameHint": "デッキ名を入力...",
   "deckSaved": "🎉 デッキ「{name}」を保存しました！",
   "saveFailed": "保存に失敗しました。しばらくしてから再試行してください",
-  "confirmSave": "保存する"
+  "confirmSave": "保存する",
+  "startupErrorTitle": "アプリを起動できません",
+  "startupErrorBody": "サーバー設定の読み込みに失敗しました。最新版に更新するか、しばらくしてから再度お試しください。問題が続く場合は、下のメッセージを添えてご連絡ください。"
 }

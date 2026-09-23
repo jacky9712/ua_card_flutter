@@ -691,4 +691,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get confirmSave => '確認儲存';
+
+  @override
+  String get startupErrorTitle => '無法啟動 App';
+
+  @override
+  String get startupErrorBody => '讀取伺服器設定失敗，請更新到最新版本或稍後再試。如果問題持續，請把下面的訊息回報給我們。';
 }

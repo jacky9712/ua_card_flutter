@@ -211,5 +211,7 @@
   "deckNameHint": "Enter deck name...",
   "deckSaved": "🎉 Deck \"{name}\" saved!",
   "saveFailed": "Save failed. Please try again later",
-  "confirmSave": "Save"
+  "confirmSave": "Save",
+  "startupErrorTitle": "Couldn't start the app",
+  "startupErrorBody": "Failed to load the server settings. Please update to the latest version or try again later. If this keeps happening, send us the message below."
 }
