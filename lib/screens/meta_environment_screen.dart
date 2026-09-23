@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../viewModels/meta_view_model.dart';
 import '../l10n/l10n_ext.dart';
 
@@ -39,7 +40,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
               child: CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
-                    child: _buildSummaryHeader(metaData, isDarkMode),
+                    child: _buildSummaryHeader(metaData, metaState.fetchedAt, isDarkMode),
                   ),
                   if (metaData.isEmpty)
                     SliverToBoxAdapter(
@@ -68,7 +69,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
     );
   }
 
-  Widget _buildSummaryHeader(List<Map<String, dynamic>> data, bool isDarkMode) {
+  Widget _buildSummaryHeader(List<Map<String, dynamic>> data, DateTime? fetchedAt, bool isDarkMode) {
     final int totalDecks = data.fold(0, (sum, item) => sum + ((item['use_count'] as int?) ?? 0));
     final int activeSeries = data.length;
     return Container(
@@ -90,8 +91,9 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
               const SizedBox(width: 8),
               Text(context.l10n.metaTrend, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
               const Spacer(),
-              Text(context.l10n.updatedAt(DateTime.now().toString().substring(5, 16)), 
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              if (fetchedAt != null)
+                Text(context.l10n.updatedAt(DateFormat('MM/dd HH:mm').format(fetchedAt)),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
           const SizedBox(height: 16),
