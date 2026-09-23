@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/ua_card.dart';
+import '../l10n/l10n_ext.dart';
 
 class DeckExportWidget extends StatelessWidget {
   final Map<int, int> deckMap;
@@ -57,13 +58,13 @@ class DeckExportWidget extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Union Arena 牌組分享',
+                  Text(
+                    context.l10n.deckShareTitle,
                     style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '總張數: $totalCount / 50',
+                    context.l10n.totalCardsOf50(totalCount),
                     style: const TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -82,7 +83,7 @@ class DeckExportWidget extends StatelessWidget {
                       version: QrVersions.auto,
                       size: 100.0,
                     ),
-                    const Text('掃描導入牌組', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                    Text(context.l10n.scanToImportDeck, style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),

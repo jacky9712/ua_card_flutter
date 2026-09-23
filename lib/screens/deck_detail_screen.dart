@@ -7,13 +7,15 @@ import '../models/ua_card.dart';
 import '../utils/deck_exporter.dart';
 import '../viewModels/deck_view_model.dart';
 import 'test_connection_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 class DeckDetailScreen extends ConsumerStatefulWidget {
   final int? deckId; // 🔥 新增：牌組 ID，用於編輯模式
   final String deckName;
   final List<UACard> cardsInDeck; // 50張展開的卡片
   final VoidCallback? onSavePressed;
-  final String saveButtonLabel;
+  /// null 時用預設的「儲存至我的牌組」（跟著介面語言）
+  final String? saveButtonLabel;
 
   const DeckDetailScreen({
     super.key,
@@ -21,7 +23,7 @@ class DeckDetailScreen extends ConsumerStatefulWidget {
     required this.deckName,
     required this.cardsInDeck,
     this.onSavePressed,
-    this.saveButtonLabel = '儲存至我的牌組 (完成編輯)',
+    this.saveButtonLabel,
   });
 
   @override
@@ -168,7 +170,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
       // 移除手動背景色，交給 MaterialApp 處理
       appBar: AppBar(
         title: Text(
-          widget.onSavePressed != null ? '儲存前預覽' : widget.deckName,
+          widget.onSavePressed != null ? context.l10n.previewBeforeSave : widget.deckName,
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 16,
@@ -221,7 +223,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                     ),
                   ),
                   child: Text(
-                    widget.saveButtonLabel,
+                    widget.saveButtonLabel ?? context.l10n.saveToMyDecks,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
@@ -246,7 +248,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                   _buildDeckHeaderOverview(totalPrice, surfaceColor, textColor),
                   const SizedBox(height: 24),
                   Text(
-                    '成本分佈',
+                    context.l10n.costDistribution,
                     style: TextStyle(
                       color: textColor,
                       fontSize: 16,
@@ -263,7 +265,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    '觸發分佈',
+                    context.l10n.triggerDistribution,
                     style: TextStyle(
                       color: textColor,
                       fontSize: 16,
@@ -291,9 +293,9 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          _tabItem('卡片圖像', 0, textColor),
+          _tabItem(context.l10n.tabCardImages, 0, textColor),
           const SizedBox(width: 20),
-          _tabItem('導入 QR', 1, textColor),
+          _tabItem(context.l10n.tabImportQr, 1, textColor),
         ],
       ),
     );
@@ -339,7 +341,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
       child: Column(
         children: [
           Text(
-            '牌組導入 QR Code',
+            context.l10n.deckImportQrTitle,
             style: TextStyle(
               color: textColor,
               fontWeight: FontWeight.bold,
@@ -360,8 +362,8 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            '其他玩家掃描此碼即可快速導入您的牌組',
+          Text(
+            context.l10n.deckImportQrHint,
             style: TextStyle(color: Colors.grey, fontSize: 12),
             textAlign: TextAlign.center,
           ),
@@ -454,13 +456,13 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '總張數',
+              Text(
+                context.l10n.totalCards,
                 style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
               const SizedBox(height: 4),
               Text(
-                '${widget.cardsInDeck.length} 枚',
+                context.l10n.cardCount(widget.cardsInDeck.length),
                 style: TextStyle(
                   color: textColor,
                   fontSize: 18,
@@ -472,8 +474,8 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                '預估價格 (參考)',
+              Text(
+                context.l10n.estimatedPrice,
                 style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
               const SizedBox(height: 4),
@@ -515,7 +517,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                 SizedBox(
                   width: 35,
                   child: Text(
-                    '${entry.key == 6 ? '6+' : entry.key} 能',
+                    context.l10n.energyCost(entry.key == 6 ? '6+' : '${entry.key}'),
                     style: TextStyle(
                       color: textColor.withValues(alpha: 0.7),
                       fontSize: 13,
@@ -642,7 +644,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$count 枚',
+                  context.l10n.cardCount(count),
                   style: TextStyle(
                     color: textColor,
                     fontSize: 14,

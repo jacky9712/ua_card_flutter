@@ -6,6 +6,7 @@ import '../viewModels/match_record_view_model.dart';
 import '../viewModels/opponent_view_model.dart';
 import 'create_meetup_post_screen.dart' show kDeckTiers;
 import 'qr_scanner_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 /// 記錄一場對戰的勝負。可以單獨從「戰績紀錄」畫面進來，也可以帶著
 /// [initialMeetupPostId] 從約戰貼文串過來（完全選填，見任務規劃裡的「可串可不串」）。
@@ -61,7 +62,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('紀錄對戰結果', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.recordMatchTitle, style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -70,10 +71,10 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('對手', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(context.l10n.opponent, style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             if (opponentState.knownOpponents.isEmpty)
-              Text('還沒有已知對手，先掃對方的 QR 名片加一個，或直接在下面輸入名字',
+              Text(context.l10n.noKnownOpponents,
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 13))
             else
               Wrap(
@@ -81,7 +82,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                 runSpacing: 8,
                 children: opponentState.knownOpponents.map((o) {
                   final String id = o['opponent_id'];
-                  final String name = o['nickname'] ?? o['profiles']?['display_name'] ?? '（未命名玩家）';
+                  final String name = o['nickname'] ?? o['profiles']?['display_name'] ?? context.l10n.unnamedPlayer;
                   final bool selected = _selectedOpponentId == id;
                   return ChoiceChip(
                     label: Text(name),
@@ -100,7 +101,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
             TextButton.icon(
               onPressed: _scanForOpponent,
               icon: const Icon(Icons.qr_code_scanner, size: 18),
-              label: const Text('掃 QR 新增對手'),
+              label: Text(context.l10n.scanQrAddOpponent),
             ),
             const SizedBox(height: 8),
             Row(
@@ -111,7 +112,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                     enabled: _selectedOpponentId == null,
                     onChanged: (value) => setState(() {}),
                     decoration: InputDecoration(
-                      hintText: '或者直接輸入對手名字（沒有帳號也能記）',
+                      hintText: context.l10n.opponentNameHint,
                       isDense: true,
                       filled: true,
                       fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
@@ -122,7 +123,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                 if (_selectedOpponentId != null)
                   IconButton(
                     icon: const Icon(Icons.close, size: 18),
-                    tooltip: '取消已選的對手，改用文字輸入',
+                    tooltip: context.l10n.clearSelectedOpponent,
                     onPressed: () => setState(() {
                       _selectedOpponentId = null;
                       _selectedOpponentName = null;
@@ -132,17 +133,17 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
             ),
             const SizedBox(height: 20),
 
-            const Text('使用的牌組（選填）', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(context.l10n.deckUsedOptional, style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             if (deckState.myDecks.isEmpty)
-              Text('目前沒有已存的牌組', style: TextStyle(color: Colors.grey.shade600, fontSize: 13))
+              Text(context.l10n.noSavedDecks, style: TextStyle(color: Colors.grey.shade600, fontSize: 13))
             else
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: deckState.myDecks.map((d) {
                   final int id = d['id'];
-                  final String name = d['name'] ?? '未命名牌組';
+                  final String name = d['name'] ?? context.l10n.unnamedDeck;
                   final bool selected = _selectedDeckId == id;
                   return ChoiceChip(
                     label: Text(name),
@@ -160,7 +161,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                 }).toList(),
               ),
             const SizedBox(height: 12),
-            const Text('T 級（選填，自己評估這副牌組的強度）', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            Text(context.l10n.tierOptional, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -176,26 +177,26 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
             ),
             const SizedBox(height: 20),
 
-            const Text('結果', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(context.l10n.result, style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'win', label: Text('勝'), icon: Icon(Icons.emoji_events)),
-                ButtonSegment(value: 'loss', label: Text('敗'), icon: Icon(Icons.close)),
-                ButtonSegment(value: 'draw', label: Text('平手'), icon: Icon(Icons.remove)),
+              segments: [
+                ButtonSegment(value: 'win', label: Text(context.l10n.win), icon: Icon(Icons.emoji_events)),
+                ButtonSegment(value: 'loss', label: Text(context.l10n.loss), icon: Icon(Icons.close)),
+                ButtonSegment(value: 'draw', label: Text(context.l10n.draw), icon: Icon(Icons.remove)),
               ],
               selected: {_result},
               onSelectionChanged: (s) => setState(() => _result = s.first),
             ),
             const SizedBox(height: 20),
 
-            const Text('備註（選填）', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(context.l10n.noteOptional, style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _noteController,
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: '這場對戰的心得、關鍵回合...',
+                hintText: context.l10n.matchNoteHint,
                 filled: true,
                 fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
@@ -217,6 +218,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                         final opponentLabel = _selectedOpponentName ?? typedName;
                         final navigator = Navigator.of(context);
                         final messenger = ScaffoldMessenger.of(context);
+                        final l10n = context.l10n;
                         final success = await ref.read(matchRecordViewModelProvider.notifier).createMatchRecord(
                               opponentId: _selectedOpponentId,
                               opponentNameText: _selectedOpponentId == null ? typedName : null,
@@ -231,7 +233,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                         if (success) {
                           navigator.pop();
                           messenger.showSnackBar(
-                            SnackBar(content: Text('🎉 已記錄與「$opponentLabel」的對戰'), backgroundColor: Colors.green),
+                            SnackBar(content: Text(l10n.matchRecorded(opponentLabel)), backgroundColor: Colors.green),
                           );
                         }
                       }
@@ -243,7 +245,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                 ),
                 child: matchState.isLoading
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('儲存紀錄', style: TextStyle(fontWeight: FontWeight.bold)),
+                    : Text(context.l10n.saveRecord, style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],

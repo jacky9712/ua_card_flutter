@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../viewModels/match_record_view_model.dart';
 import 'create_match_record_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 class MatchRecordsScreen extends ConsumerWidget {
   const MatchRecordsScreen({super.key});
@@ -24,12 +25,12 @@ class MatchRecordsScreen extends ConsumerWidget {
     }
   }
 
-  String _opponentNameFromMyPerspective(Map<String, dynamic> record, String myUserId) {
+  String _opponentNameFromMyPerspective(BuildContext context, Map<String, dynamic> record, String myUserId) {
     if (record['player_id'] == myUserId) {
       // 自行輸入名字的對手沒有帳號、也就沒有 opponent_profile 可以 join，退回文字欄位。
-      return record['opponent_profile']?['display_name'] ?? record['opponent_name_text'] ?? '（未命名玩家）';
+      return record['opponent_profile']?['display_name'] ?? record['opponent_name_text'] ?? context.l10n.unnamedPlayer;
     }
-    return record['player_profile']?['display_name'] ?? '（未命名玩家）';
+    return record['player_profile']?['display_name'] ?? context.l10n.unnamedPlayer;
   }
 
   Color _resultColor(String result) {
@@ -43,14 +44,14 @@ class MatchRecordsScreen extends ConsumerWidget {
     }
   }
 
-  String _resultLabel(String result) {
+  String _resultLabel(BuildContext context, String result) {
     switch (result) {
       case 'win':
-        return '勝';
+        return context.l10n.win;
       case 'loss':
-        return '敗';
+        return context.l10n.loss;
       default:
-        return '平手';
+        return context.l10n.draw;
     }
   }
 
@@ -62,7 +63,7 @@ class MatchRecordsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('戰績紀錄', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.actionMatchRecords, style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -78,12 +79,12 @@ class MatchRecordsScreen extends ConsumerWidget {
               onRefresh: () => ref.read(matchRecordViewModelProvider.notifier).fetchMyMatchRecords(),
               child: CustomScrollView(
                 slivers: [
-                  SliverToBoxAdapter(child: _buildStatsHeader(matchState, isDarkMode)),
+                  SliverToBoxAdapter(child: _buildStatsHeader(context, matchState, isDarkMode)),
                   if (matchState.records.isEmpty)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.all(40),
-                        child: Center(child: Text('還沒有任何對戰紀錄', style: TextStyle(color: Colors.grey))),
+                        child: Center(child: Text(context.l10n.noMatchRecords, style: TextStyle(color: Colors.grey))),
                       ),
                     )
                   else if (myUserId != null)
@@ -106,17 +107,17 @@ class MatchRecordsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsHeader(MatchRecordState state, bool isDarkMode) {
+  Widget _buildStatsHeader(BuildContext context, MatchRecordState state, bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.all(20),
       color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('總場次', '${state.totalCount}', isDarkMode),
-          _buildStatItem('勝', '${state.winCount}', isDarkMode, color: Colors.green),
-          _buildStatItem('敗', '${state.lossCount}', isDarkMode, color: Colors.redAccent),
-          _buildStatItem('勝率', '${state.winRate.toStringAsFixed(0)}%', isDarkMode, color: Colors.amber),
+          _buildStatItem(context.l10n.totalMatches, '${state.totalCount}', isDarkMode),
+          _buildStatItem(context.l10n.win, '${state.winCount}', isDarkMode, color: Colors.green),
+          _buildStatItem(context.l10n.loss, '${state.lossCount}', isDarkMode, color: Colors.redAccent),
+          _buildStatItem(context.l10n.winRate, '${state.winRate.toStringAsFixed(0)}%', isDarkMode, color: Colors.amber),
         ],
       ),
     );
@@ -134,7 +135,7 @@ class MatchRecordsScreen extends ConsumerWidget {
 
   Widget _buildRecordTile(BuildContext context, WidgetRef ref, Map<String, dynamic> record, String myUserId, bool isDarkMode) {
     final result = _resultFromMyPerspective(record, myUserId);
-    final opponentName = _opponentNameFromMyPerspective(record, myUserId);
+    final opponentName = _opponentNameFromMyPerspective(context, record, myUserId);
     final deckName = record['deck_name_snapshot'] as String?;
     final deckTier = record['deck_tier'] as String?;
     final playedAt = DateTime.tryParse(record['played_at'] ?? '');
@@ -148,7 +149,7 @@ class MatchRecordsScreen extends ConsumerWidget {
         onTap: () => _showRecordDetail(context, ref, record, myUserId, isDarkMode),
         leading: CircleAvatar(
           backgroundColor: _resultColor(result).withValues(alpha: 0.15),
-          child: Text(_resultLabel(result), style: TextStyle(color: _resultColor(result), fontWeight: FontWeight.bold)),
+          child: Text(_resultLabel(context, result), style: TextStyle(color: _resultColor(result), fontWeight: FontWeight.bold)),
         ),
         title: Text('vs $opponentName', style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(
@@ -173,7 +174,7 @@ class MatchRecordsScreen extends ConsumerWidget {
     bool isDarkMode,
   ) {
     final result = _resultFromMyPerspective(record, myUserId);
-    final opponentName = _opponentNameFromMyPerspective(record, myUserId);
+    final opponentName = _opponentNameFromMyPerspective(context, record, myUserId);
     final deckName = record['deck_name_snapshot'] as String?;
     final deckTier = record['deck_tier'] as String?;
     final playedAt = DateTime.tryParse(record['played_at'] ?? '');
@@ -198,7 +199,7 @@ class MatchRecordsScreen extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       backgroundColor: _resultColor(result).withValues(alpha: 0.15),
-                      child: Text(_resultLabel(result),
+                      child: Text(_resultLabel(context, result),
                           style: TextStyle(color: _resultColor(result), fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: 12),
@@ -210,16 +211,16 @@ class MatchRecordsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 if (deckName != null) ...[
-                  _detailRow(Icons.style_outlined, '使用牌組',
+                  _detailRow(Icons.style_outlined, context.l10n.deckUsed,
                       '$deckName${deckTier != null && deckTier.isNotEmpty ? '（$deckTier）' : ''}'),
                   const SizedBox(height: 8),
                 ],
                 if (playedAt != null) ...[
-                  _detailRow(Icons.event, '對戰時間', DateFormat('yyyy/MM/dd HH:mm').format(playedAt.toLocal())),
+                  _detailRow(Icons.event, context.l10n.playedAt, DateFormat('yyyy/MM/dd HH:mm').format(playedAt.toLocal())),
                   const SizedBox(height: 8),
                 ],
                 if (note != null && note.isNotEmpty) ...[
-                  _detailRow(Icons.notes, '備註', note),
+                  _detailRow(Icons.notes, context.l10n.note, note),
                   const SizedBox(height: 8),
                 ],
                 const SizedBox(height: 12),
@@ -229,18 +230,18 @@ class MatchRecordsScreen extends ConsumerWidget {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent),
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('刪除這筆紀錄'),
+                      label: Text(context.l10n.deleteThisRecord),
                       onPressed: () async {
                         final confirmed = await showDialog<bool>(
                           context: ctx,
                           builder: (dialogCtx) => AlertDialog(
-                            title: const Text('刪除對戰紀錄'),
-                            content: const Text('確定要刪除這筆紀錄嗎？刪除後無法復原。'),
+                            title: Text(context.l10n.deleteRecordTitle),
+                            content: Text(context.l10n.deleteRecordConfirm),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('取消')),
+                              TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: Text(context.l10n.cancel)),
                               TextButton(
                                 onPressed: () => Navigator.pop(dialogCtx, true),
-                                child: const Text('刪除', style: TextStyle(color: Colors.redAccent)),
+                                child: Text(context.l10n.delete, style: TextStyle(color: Colors.redAccent)),
                               ),
                             ],
                           ),

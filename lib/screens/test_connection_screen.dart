@@ -7,6 +7,7 @@ import '../viewModels/deck_view_model.dart';
 import '../models/ua_card.dart';
 import 'card_detail_dialog.dart';
 import 'deck_detail_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 class TestConnectionScreen extends ConsumerStatefulWidget {
   const TestConnectionScreen({super.key});
@@ -16,13 +17,13 @@ class TestConnectionScreen extends ConsumerStatefulWidget {
 }
 
 class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
-  // 對應 _getCardColor 支援的五色，中文標籤給顏色篩選器顯示用
-  static const Map<String, String> _colorLabels = {
-    'RED': '紅',
-    'BLUE': '藍',
-    'GREEN': '綠',
-    'YELLOW': '黃',
-    'PURPLE': '紫',
+  // 對應 _getCardColor 支援的五色，標籤給顏色篩選器顯示用（跟著介面語言）
+  Map<String, String> get _colorLabels => {
+    'RED': context.l10n.colorRed,
+    'BLUE': context.l10n.colorBlue,
+    'GREEN': context.l10n.colorGreen,
+    'YELLOW': context.l10n.colorYellow,
+    'PURPLE': context.l10n.colorPurple,
   };
 
   late TextEditingController _searchController;
@@ -62,7 +63,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     });
 
     Navigator.push(context, MaterialPageRoute(builder: (context) => DeckDetailScreen(
-      deckName: '新牌組預覽',
+      deckName: context.l10n.newDeckPreview,
       cardsInDeck: expandedCards,
       onSavePressed: () => _showSaveDialog(isDarkMode),
     )));
@@ -80,7 +81,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 處理
       appBar: AppBar(
-        title: Text('組牌模式', style: TextStyle(fontWeight: FontWeight.w900, color: textColor, fontSize: 18)),
+        title: Text(context.l10n.deckBuilderMode, style: TextStyle(fontWeight: FontWeight.w900, color: textColor, fontSize: 18)),
         backgroundColor: appBarColor,
         elevation: 0,
         bottom: PreferredSize(
@@ -94,7 +95,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                     controller: _searchController,
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
-                      hintText: '搜尋卡號或名稱...',
+                      hintText: context.l10n.searchHint,
                       filled: true,
                       fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
                       prefixIcon: const Icon(Icons.search, size: 18),
@@ -146,7 +147,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
       body: libraryState.isLoading && libraryState.allCards.isEmpty
           ? _buildSkeletonGrid(isDarkMode) // 第一次載入顯示骨架
           : libraryState.filteredCards.isEmpty
-              ? const Center(child: Text('找不到符合的卡片'))
+              ? Center(child: Text(context.l10n.noCardsFound))
               : Column(
                   children: [
                     Expanded(
@@ -249,14 +250,14 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('目前張數: ${deckState.totalDeckCount} / 50', style: TextStyle(color: deckState.totalDeckCount > 50 ? Colors.red : Colors.grey)),
-                Text('總金額: ¥ ${deckState.totalDeckPrice}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
+                Text(context.l10n.currentCardCount(deckState.totalDeckCount), style: TextStyle(color: deckState.totalDeckCount > 50 ? Colors.red : Colors.grey)),
+                Text(context.l10n.totalPrice('${deckState.totalDeckPrice}'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
               ],
             ),
             ElevatedButton(
               onPressed: deckState.totalDeckCount == 50 ? () => _navigateToPreview(deckState, isDarkMode) : null,
               style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
-              child: const Text('預覽並儲存'),
+              child: Text(context.l10n.previewAndSave),
             )
           ],
         ),
@@ -339,8 +340,10 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     List<String> sortedSeries = List.from(libState.availableSeries);
     sortedSeries.sort((a, b) => a.compareTo(b));
 
-    // 2. 在最前面插入「全部系列」
-    final List<String> displayList = ['全部系列', ...sortedSeries];
+    // 2. 在最前面插入「全部系列」。這個字串同時拿來判斷是不是「不篩選」，
+    //    所以整個函式用同一個變數，不能各自再去翻譯一次。
+    final allSeries = context.l10n.allSeries;
+    final List<String> displayList = [allSeries, ...sortedSeries];
 
     showModalBottomSheet(
       context: context,
@@ -352,7 +355,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('選擇系列', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(context.l10n.selectSeries, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Flexible(
               child: GridView.builder(
@@ -366,7 +369,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                 itemCount: displayList.length,
                 itemBuilder: (ctx, i) {
                   final series = displayList[i];
-                  final bool isSelected = libState.selectedSeries == series || (series == '全部系列' && libState.selectedSeries.isEmpty);
+                  final bool isSelected = libState.selectedSeries == series || (series == allSeries && libState.selectedSeries.isEmpty);
                   
                   return ActionChip(
                     label: Center(child: Text(series, style: TextStyle(
@@ -378,7 +381,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     onPressed: () {
-                      final value = (series == '全部系列') ? '' : series;
+                      final value = (series == allSeries) ? '' : series;
                       ref.read(cardLibraryViewModelProvider.notifier).updateSelectedSeries(value);
                       Navigator.pop(ctx);
                     }
@@ -407,7 +410,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('選擇顏色', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(context.l10n.selectColor, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Wrap(
                 spacing: 10,
@@ -447,7 +450,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => setModalState(() => tempSelected.clear()),
-                      child: const Text('全部顏色'),
+                      child: Text(context.l10n.allColors),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -458,7 +461,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                         notifier.updateSelectedColors(tempSelected);
                         Navigator.pop(ctx);
                       },
-                      child: const Text('完成'),
+                      child: Text(context.l10n.done),
                     ),
                   ),
                 ],
@@ -474,14 +477,14 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     final controller = TextEditingController();
     showDialog(context: context, builder: (ctx) => AlertDialog(
       backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
-      title: const Text('儲存牌組', style: TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(context.l10n.saveDeck, style: TextStyle(fontWeight: FontWeight.bold)),
       content: TextField(
         controller: controller, 
         autofocus: true,
-        decoration: const InputDecoration(hintText: '輸入牌組名稱...', border: OutlineInputBorder()),
+        decoration: InputDecoration(hintText: context.l10n.deckNameHint, border: OutlineInputBorder()),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.l10n.cancel)),
         ElevatedButton(
           onPressed: () async {
             final deckName = controller.text.trim();
@@ -507,7 +510,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
               Navigator.pop(context);
 
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('🎉 牌組「$deckName」儲存成功！'), backgroundColor: Colors.green),
+                SnackBar(content: Text(context.l10n.deckSaved(deckName)), backgroundColor: Colors.green),
               );
 
               // 3. 重新整理我的牌組列表
@@ -517,12 +520,12 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
               // 把 ViewModel 已經算好的 errorMessage 秀出來，至少讓使用者知道發生什麼事。
               final errorMessage = ref.read(deckViewModelProvider).errorMessage;
               dialogMessenger.showSnackBar(
-                SnackBar(content: Text(errorMessage ?? '儲存失敗，請稍後再試'), backgroundColor: Colors.red),
+                SnackBar(content: Text(errorMessage ?? context.l10n.saveFailed), backgroundColor: Colors.red),
               );
             }
           },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
-          child: const Text('確認儲存'),
+          child: Text(context.l10n.confirmSave),
         ),
       ],
     ));

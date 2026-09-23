@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/location_platform.dart';
 import '../viewModels/live_location_view_model.dart';
+import '../l10n/l10n_ext.dart';
 
 class LiveLocationScreen extends ConsumerWidget {
   const LiveLocationScreen({super.key});
@@ -26,11 +27,11 @@ class LiveLocationScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(16),
-              child: Text('分享多久？', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(context.l10n.shareDurationTitle, style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            for (final entry in {'30 分鐘': 30, '1 小時': 60, '2 小時': 120}.entries)
+            for (final entry in {context.l10n.durationMinutes(30): 30, context.l10n.durationHours(1): 60, context.l10n.durationHours(2): 120}.entries)
               ListTile(
                 title: Text(entry.key),
                 onTap: () async {
@@ -40,7 +41,7 @@ class LiveLocationScreen extends ConsumerWidget {
                       .startSharing(Duration(minutes: entry.value));
                   if (!context.mounted) return;
                   if (!success) {
-                    final error = ref.read(liveLocationViewModelProvider).errorMessage ?? '分享失敗';
+                    final error = ref.read(liveLocationViewModelProvider).errorMessage ?? context.l10n.shareFailed;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
                     );
@@ -56,11 +57,11 @@ class LiveLocationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!isLocationCapablePlatform) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(32),
           child: Text(
-            '此功能目前僅支援手機（Android / iOS）。桌面版的定位支援不穩定，先不開放。',
+            context.l10n.mobileOnly,
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),
@@ -93,15 +94,15 @@ class LiveLocationScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  state.isSharing ? '分享中' : '目前沒有分享位置',
+                  state.isSharing ? context.l10n.sharing : context.l10n.notSharing,
                   style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                 ),
                 if (state.isSharing && state.sharingUntil != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      '將於 ${state.sharingUntil!.hour.toString().padLeft(2, '0')}:'
-                      '${state.sharingUntil!.minute.toString().padLeft(2, '0')} 自動停止',
+                      context.l10n.autoStopAt('${state.sharingUntil!.hour.toString().padLeft(2, '0')}:'
+                      '${state.sharingUntil!.minute.toString().padLeft(2, '0')}'),
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ),
@@ -112,30 +113,30 @@ class LiveLocationScreen extends ConsumerWidget {
                       ? OutlinedButton(
                           onPressed: () => ref.read(liveLocationViewModelProvider.notifier).stopSharing(),
                           style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent),
-                          child: const Text('停止分享'),
+                          child: Text(context.l10n.stopSharing),
                         )
                       : ElevatedButton(
                           onPressed: state.isLoading ? null : () => _showDurationPicker(context, ref),
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
                           child: state.isLoading
                               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Text('分享我的位置'),
+                              : Text(context.l10n.shareMyLocation),
                         ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-          Text('目前分享中的玩家', style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+          Text(context.l10n.playersSharing, style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
           const SizedBox(height: 8),
           if (others.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text('目前沒有其他人在分享位置', style: TextStyle(color: Colors.grey))),
+              child: Center(child: Text(context.l10n.noOneSharing, style: TextStyle(color: Colors.grey))),
             )
           else
             ...others.map((o) {
-              final name = o['profiles']?['display_name'] ?? '（未命名玩家）';
+              final name = o['profiles']?['display_name'] ?? context.l10n.unnamedPlayer;
               final lat = o['lat'] as double?;
               final lng = o['lng'] as double?;
               return Card(

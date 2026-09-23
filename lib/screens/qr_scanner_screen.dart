@@ -6,6 +6,7 @@ import '../viewModels/deck_view_model.dart';
 import '../viewModels/opponent_view_model.dart';
 import '../models/ua_card.dart';
 import 'deck_detail_screen.dart';
+import '../l10n/l10n_ext.dart';
 
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
@@ -28,7 +29,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('掃描 QR Code'),
+        title: Text(context.l10n.scanQrTitle),
         actions: [
           IconButton(
             icon: ValueListenableBuilder<MobileScannerState>(
@@ -80,6 +81,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 
                   final navigator = Navigator.of(context);
                   final messenger = ScaffoldMessenger.of(context);
+                  final l10n = context.l10n;
                   final success = await ref.read(deckViewModelProvider.notifier).importDeckFromQR(code);
 
                   if (!mounted) return;
@@ -101,19 +103,19 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                     navigator.pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => DeckDetailScreen(
-                          deckName: '掃描導入的牌組',
+                          deckName: context.l10n.importedDeckName,
                           cardsInDeck: expandedCards,
                         ),
                       ),
                     );
 
                     messenger.showSnackBar(
-                      const SnackBar(content: Text('🎉 牌組導入成功！'), backgroundColor: Colors.green),
+                      SnackBar(content: Text(l10n.deckImported), backgroundColor: Colors.green),
                     );
                   } else {
                     setState(() => _isProcessed = false);
                     messenger.showSnackBar(
-                      const SnackBar(content: Text('❌ 導入失敗，格式不正確'), backgroundColor: Colors.redAccent),
+                      SnackBar(content: Text(l10n.importFailed), backgroundColor: Colors.redAccent),
                     );
                   }
                   break;
@@ -122,6 +124,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 
                   final navigator = Navigator.of(context);
                   final messenger = ScaffoldMessenger.of(context);
+                  final l10n = context.l10n;
                   final displayName = await ref.read(opponentViewModelProvider.notifier).addOpponentFromQr(code);
 
                   if (!mounted) return;
@@ -129,11 +132,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                   if (displayName != null) {
                     navigator.pop(); // 掃到人就直接退回上一頁，不用像牌組那樣跳預覽頁
                     messenger.showSnackBar(
-                      SnackBar(content: Text('🎉 已將「$displayName」加為對手！'), backgroundColor: Colors.green),
+                      SnackBar(content: Text(l10n.opponentAdded(displayName)), backgroundColor: Colors.green),
                     );
                   } else {
                     setState(() => _isProcessed = false);
-                    final error = ref.read(opponentViewModelProvider).errorMessage ?? '新增對手失敗';
+                    final error = ref.read(opponentViewModelProvider).errorMessage ?? l10n.addOpponentFailed;
                     messenger.showSnackBar(
                       SnackBar(content: Text('❌ $error'), backgroundColor: Colors.redAccent),
                     );
@@ -154,12 +157,12 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
               ),
             ),
           ),
-          const Positioned(
+          Positioned(
             bottom: 80,
             left: 0,
             right: 0,
             child: Text(
-              '請對準其他玩家分享的牌組或個人 QR Code',
+              context.l10n.scanQrHint,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, backgroundColor: Colors.black54),
             ),
