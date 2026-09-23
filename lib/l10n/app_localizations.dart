@@ -130,12 +130,6 @@ abstract class AppLocalizations {
   /// **'個人'**
   String get navProfile;
 
-  /// No description provided for @fabCreate.
-  ///
-  /// In zh, this message translates to:
-  /// **'出品'**
-  String get fabCreate;
-
   /// No description provided for @searchHint.
   ///
   /// In zh, this message translates to:

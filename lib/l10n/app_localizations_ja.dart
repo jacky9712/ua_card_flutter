@@ -24,9 +24,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navProfile => 'マイページ';
 
   @override
-  String get fabCreate => '作成';
-
-  @override
   String get searchHint => 'カード番号・カード名で検索...';
 
   @override

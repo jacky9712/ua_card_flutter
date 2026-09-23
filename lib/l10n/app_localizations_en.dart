@@ -24,9 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navProfile => 'Profile';
 
   @override
-  String get fabCreate => 'Build';
-
-  @override
   String get searchHint => 'Search card no. or name...';
 
   @override
