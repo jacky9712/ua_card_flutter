@@ -1,4 +1,4 @@
-// lib/screens/test_connection_screen.dart
+// lib/screens/deck_builder_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,14 +10,14 @@ import 'deck_detail_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
 
-class TestConnectionScreen extends ConsumerStatefulWidget {
-  const TestConnectionScreen({super.key});
+class DeckBuilderScreen extends ConsumerStatefulWidget {
+  const DeckBuilderScreen({super.key});
 
   @override
-  ConsumerState<TestConnectionScreen> createState() => _TestConnectionScreenState();
+  ConsumerState<DeckBuilderScreen> createState() => _DeckBuilderScreenState();
 }
 
-class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
+class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
   // 對應 _getCardColor 支援的五色，標籤給顏色篩選器顯示用（跟著介面語言）
   Map<String, String> get _colorLabels => {
     'RED': context.l10n.colorRed,
@@ -506,7 +506,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
               // 第二步：關閉預覽頁面 (DeckDetailScreen)
               Navigator.pop(context);
 
-              // 第三步：關閉編輯頁面 (TestConnectionScreen)
+              // 第三步：關閉編輯頁面 (DeckBuilderScreen)
               Navigator.pop(context);
 
               ScaffoldMessenger.of(context).showSnackBar(

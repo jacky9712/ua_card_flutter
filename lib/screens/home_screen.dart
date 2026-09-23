@@ -15,7 +15,7 @@ import 'my_qr_code_screen.dart';
 import 'qr_scanner_screen.dart';
 import 'my_decks_screen.dart';
 import 'recommended_decks_screen.dart';
-import 'test_connection_screen.dart';
+import 'deck_builder_screen.dart';
 import '../theme/app_theme.dart';
 import '../l10n/app_localizations.dart';
 import '../viewModels/locale_view_model.dart';
@@ -244,7 +244,7 @@ class HomeScreen extends ConsumerWidget {
                 // 這裡先把查詢字串灌進共用的 CardLibraryViewModel，組牌頁面
                 // initState 會從同一個 provider 讀回搜尋框內容，兩邊就對得上。
                 ref.read(cardLibraryViewModelProvider.notifier).updateSearchQuery(query);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const DeckBuilderScreen()));
               },
               // 底色交給 app_theme 的 inputDecorationTheme，這裡只改成膠囊形 + 聚焦金框
               decoration: InputDecoration(
@@ -338,7 +338,7 @@ class HomeScreen extends ConsumerWidget {
             // 原本由「出品」按鈕負責清空編輯器；拿掉按鈕後改在這裡清。不清的話，編輯過既有牌組後
             // 編輯器還留著那副牌組的 editingId，從這裡進去組新牌一儲存就會覆蓋掉舊牌組。
             ProviderScope.containerOf(context, listen: false).read(deckViewModelProvider.notifier).clearEditor();
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TestConnectionScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const DeckBuilderScreen()));
           }),
           _quickButton(Icons.style_outlined, l10n.actionMyDecks, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()));
