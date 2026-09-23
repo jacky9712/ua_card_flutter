@@ -5,7 +5,7 @@ import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
 import '../viewModels/recommended_deck_view_model.dart';
 import 'deck_detail_screen.dart';
-import 'test_connection_screen.dart';
+import 'deck_builder_screen.dart';
 import '../l10n/l10n_ext.dart';
 
 class RecommendedDecksScreen extends ConsumerStatefulWidget {
@@ -25,7 +25,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
   String? _selectedTier;
   bool _onlyMySeries = false;
 
-  // 跟 test_connection_screen.dart 用同一套顏色/標籤對照，維持全站一致。
+  // 跟 deck_builder_screen.dart 用同一套顏色/標籤對照，維持全站一致。
   Map<String, String> get _colorLabels => {
     'RED': context.l10n.colorRed,
     'BLUE': context.l10n.colorBlue,
@@ -290,7 +290,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
               ref.read(cardLibraryViewModelProvider.notifier).updateSelectedColors(colors);
             }
 
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const TestConnectionScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const DeckBuilderScreen()));
           },
         ),
       ),

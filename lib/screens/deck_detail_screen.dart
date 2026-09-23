@@ -6,7 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../models/ua_card.dart';
 import '../utils/deck_exporter.dart';
 import '../viewModels/deck_view_model.dart';
-import 'test_connection_screen.dart';
+import 'deck_builder_screen.dart';
 import '../l10n/l10n_ext.dart';
 
 class DeckDetailScreen extends ConsumerStatefulWidget {
@@ -191,7 +191,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const TestConnectionScreen(),
+                    builder: (context) => const DeckBuilderScreen(),
                   ),
                 );
               },
