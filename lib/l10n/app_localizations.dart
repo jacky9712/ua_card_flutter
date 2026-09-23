@@ -208,6 +208,18 @@ abstract class AppLocalizations {
   /// **'暫無對戰環境資料，下拉重新整理'**
   String get metaEmpty;
 
+  /// No description provided for @loadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入失敗，請檢查網路連線'**
+  String get loadFailed;
+
+  /// No description provided for @retry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重試'**
+  String get retry;
+
   /// No description provided for @unknownSeries.
   ///
   /// In zh, this message translates to:

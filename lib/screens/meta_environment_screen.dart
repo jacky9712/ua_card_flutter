@@ -46,7 +46,19 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.all(40),
-                        child: Center(child: Text(context.l10n.noMetaData, style: TextStyle(color: Colors.grey))),
+                        // 抓取失敗跟真的沒資料要分開講，失敗時給重試
+                        child: metaState.loadFailed
+                            ? Column(
+                                children: [
+                                  Text(context.l10n.loadFailed, style: TextStyle(color: Colors.grey)),
+                                  TextButton.icon(
+                                    onPressed: () => ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment(),
+                                    icon: const Icon(Icons.refresh, size: 18),
+                                    label: Text(context.l10n.retry),
+                                  ),
+                                ],
+                              )
+                            : Center(child: Text(context.l10n.noMetaData, style: TextStyle(color: Colors.grey))),
                       ),
                     )
                   else

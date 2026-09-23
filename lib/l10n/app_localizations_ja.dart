@@ -63,6 +63,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get metaEmpty => '環境データがありません。下に引いて更新してください';
 
   @override
+  String get loadFailed => '読み込みに失敗しました。ネットワーク接続を確認してください';
+
+  @override
+  String get retry => '再試行';
+
+  @override
   String get unknownSeries => '不明なシリーズ';
 
   @override

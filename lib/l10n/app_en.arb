@@ -18,6 +18,8 @@
   "metaTitle": "Meta",
   "seeMore": "See more >",
   "metaEmpty": "No meta data yet. Pull down to refresh",
+  "loadFailed": "Couldn't load. Check your connection",
+  "retry": "Retry",
   "unknownSeries": "Unknown series",
   "guestDialogTitle": "Profile",
   "guestDialogBody": "You're using a guest account. Set a nickname so other players can recognize you, or log in / sign up for a full account.",
