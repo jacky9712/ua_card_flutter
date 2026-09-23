@@ -63,6 +63,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get metaEmpty => 'No meta data yet. Pull down to refresh';
 
   @override
+  String get loadFailed => 'Couldn\'t load. Check your connection';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
   String get unknownSeries => 'Unknown series';
 
   @override

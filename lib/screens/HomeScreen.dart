@@ -199,7 +199,6 @@ class HomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await ref.read(metaViewModelProvider.notifier).fetchRanking();
             await ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment();
           },
           child: SingleChildScrollView(
@@ -212,7 +211,7 @@ class HomeScreen extends ConsumerWidget {
                 _buildSearchArea(context, ref),
                 _buildBanner(context),
                 _buildQuickActions(context),
-                _buildHomeMetaPreview(context, metaState),
+                _buildHomeMetaPreview(context, ref, metaState),
                 const SizedBox(height: 100),
               ],
             ),
@@ -412,7 +411,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHomeMetaPreview(BuildContext context, MetaState metaState) {
+  Widget _buildHomeMetaPreview(BuildContext context, WidgetRef ref, MetaState metaState) {
     final l10n = AppLocalizations.of(context);
     if (metaState.isLoading) {
       return const Padding(padding: EdgeInsets.all(24.0), child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
@@ -446,7 +445,9 @@ class HomeScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.surfaceHigh),
             ),
-            child: previewList.isEmpty
+            child: previewList.isEmpty && metaState.loadFailed
+                ? _MetaLoadError(onRetry: () => ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment())
+                : previewList.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24.0),
                     child: Center(child: Text(l10n.metaEmpty, style: const TextStyle(color: Colors.grey, fontSize: 12))),
@@ -485,6 +486,26 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Icon(icon, color: isActive ? AppColors.gold : Colors.grey, size: 28),
           Text(label, style: TextStyle(fontSize: 10, color: isActive ? AppColors.gold : Colors.grey)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaLoadError extends StatelessWidget {
+  const _MetaLoadError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Column(
+        children: [
+          Text(l10n.loadFailed, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          TextButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh, size: 18), label: Text(l10n.retry)),
         ],
       ),
     );

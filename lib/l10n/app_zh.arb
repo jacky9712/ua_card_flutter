@@ -21,6 +21,8 @@
   "metaTitle": "對戰環境",
   "seeMore": "查看更多 >",
   "metaEmpty": "暫無對戰環境資料，下拉重新整理",
+  "loadFailed": "載入失敗，請檢查網路連線",
+  "retry": "重試",
   "unknownSeries": "未知系列",
   "guestDialogTitle": "個人設定",
   "guestDialogBody": "你目前是訪客身分。可以先設定暱稱讓其他玩家認得你，或是登入/註冊正式帳號。",

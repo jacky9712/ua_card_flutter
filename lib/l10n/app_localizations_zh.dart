@@ -63,6 +63,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get metaEmpty => '暫無對戰環境資料，下拉重新整理';
 
   @override
+  String get loadFailed => '載入失敗，請檢查網路連線';
+
+  @override
+  String get retry => '重試';
+
+  @override
   String get unknownSeries => '未知系列';
 
   @override

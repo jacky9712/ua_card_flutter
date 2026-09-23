@@ -1,18 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class MetaRepository {
-  Future<List<Map<String, dynamic>>> fetchRanking({int limit = 5});
   Future<List<Map<String, dynamic>>> fetchEnvironmentData();
 }
 
 class SupabaseMetaRepository implements MetaRepository {
   final _supabase = Supabase.instance.client;
-
-  @override
-  Future<List<Map<String, dynamic>>> fetchRanking({int limit = 5}) async {
-    final response = await _supabase.from('series_popularity').select().limit(limit);
-    return List<Map<String, dynamic>>.from(response);
-  }
 
   @override
   Future<List<Map<String, dynamic>>> fetchEnvironmentData() async {
