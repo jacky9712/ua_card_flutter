@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewModels/auth_view_model.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -59,15 +60,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF141419) : const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: isDarkMode ? Colors.white : Colors.black),
+          icon: Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -85,7 +85,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w900,
-                  color: isDarkMode ? Colors.white : Colors.black,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
@@ -104,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   prefixIcon: const Icon(Icons.email_outlined),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                   filled: true,
-                  fillColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                  fillColor: AppColors.surface,
                 ),
                 validator: (value) {
                   if (value == null || !value.contains('@')) return context.l10n.invalidEmail;
@@ -126,7 +126,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                   filled: true,
-                  fillColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                  fillColor: AppColors.surface,
                 ),
                 validator: (value) {
                   if (value == null || value.length < 6) return context.l10n.passwordTooShort;
@@ -139,7 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ElevatedButton(
                 onPressed: authState.isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFD700),
+                  backgroundColor: AppColors.gold,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -157,13 +157,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   Text(
                     _isSignUp ? context.l10n.haveAccount : context.l10n.noAccount,
-                    style: TextStyle(color: isDarkMode ? Colors.grey : Colors.black54),
+                    style: TextStyle(color: Colors.grey),
                   ),
                   TextButton(
                     onPressed: () => setState(() => _isSignUp = !_isSignUp),
                     child: Text(
                       _isSignUp ? context.l10n.loginShort : context.l10n.signUpShort,
-                      style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],

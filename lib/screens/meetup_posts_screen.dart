@@ -9,6 +9,7 @@ import '../utils/location_platform.dart';
 import 'create_match_record_screen.dart';
 import 'create_meetup_post_screen.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class MeetupPostsScreen extends ConsumerWidget {
   const MeetupPostsScreen({super.key});
@@ -45,7 +46,6 @@ class MeetupPostsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final meetupState = ref.watch(meetupViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final posts = meetupState.sortedPosts;
     final myUserId = Supabase.instance.client.auth.currentUser?.id;
 
@@ -104,7 +104,7 @@ class MeetupPostsScreen extends ConsumerWidget {
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 12),
-                              color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                              color: AppColors.surface,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               child: ListTile(
                                 leading: const CircleAvatar(

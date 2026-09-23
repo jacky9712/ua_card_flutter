@@ -7,6 +7,7 @@ import '../viewModels/opponent_view_model.dart';
 import 'create_meetup_post_screen.dart' show kDeckTiers;
 import 'qr_scanner_screen.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 /// 記錄一場對戰的勝負。可以單獨從「戰績紀錄」畫面進來，也可以帶著
 /// [initialMeetupPostId] 從約戰貼文串過來（完全選填，見任務規劃裡的「可串可不串」）。
@@ -58,7 +59,6 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
     final opponentState = ref.watch(opponentViewModelProvider);
     final deckState = ref.watch(deckViewModelProvider);
     final matchState = ref.watch(matchRecordViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -115,7 +115,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
                       hintText: context.l10n.opponentNameHint,
                       isDense: true,
                       filled: true,
-                      fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
+                      fillColor: AppColors.surfaceHigh,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                     ),
                   ),
@@ -198,7 +198,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
               decoration: InputDecoration(
                 hintText: context.l10n.matchNoteHint,
                 filled: true,
-                fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
+                fillColor: AppColors.surfaceHigh,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
               ),
             ),

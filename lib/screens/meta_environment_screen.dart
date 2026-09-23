@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../viewModels/meta_view_model.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class MetaEnvironmentScreen extends ConsumerStatefulWidget {
   const MetaEnvironmentScreen({super.key});
@@ -21,7 +22,6 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
   @override
   Widget build(BuildContext context) {
     final metaState = ref.watch(metaViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     final metaData = metaState.metaData;
 
@@ -40,7 +40,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
               child: CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
-                    child: _buildSummaryHeader(metaData, metaState.fetchedAt, isDarkMode),
+                    child: _buildSummaryHeader(metaData, metaState.fetchedAt),
                   ),
                   if (metaData.isEmpty)
                     SliverToBoxAdapter(
@@ -68,7 +68,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
                             final item = metaData[index];
-                            return _buildLeaderboardTile(index + 1, item, isDarkMode);
+                            return _buildLeaderboardTile(index + 1, item);
                           },
                           childCount: metaData.length,
                         ),
@@ -81,12 +81,12 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
     );
   }
 
-  Widget _buildSummaryHeader(List<Map<String, dynamic>> data, DateTime? fetchedAt, bool isDarkMode) {
+  Widget _buildSummaryHeader(List<Map<String, dynamic>> data, DateTime? fetchedAt) {
     final int totalDecks = data.fold(0, (sum, item) => sum + ((item['use_count'] as int?) ?? 0));
     final int activeSeries = data.length;
     return Container(
       padding: const EdgeInsets.all(20),
-      color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      color: AppColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -101,7 +101,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(context.l10n.metaTrend, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+              Text(context.l10n.metaTrend, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               const Spacer(),
               if (fetchedAt != null)
                 Text(context.l10n.updatedAt(DateFormat('MM/dd HH:mm').format(fetchedAt)),
@@ -112,9 +112,9 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem(context.l10n.totalDecks, '$totalDecks', Icons.layers, isDarkMode),
-              _buildStatItem(context.l10n.activeSeries, '$activeSeries', Icons.category, isDarkMode),
-              _buildStatItem(context.l10n.topShare, '${data.isNotEmpty ? data[0]['share_rate'] : 0}%', Icons.pie_chart, isDarkMode),
+              _buildStatItem(context.l10n.totalDecks, '$totalDecks', Icons.layers),
+              _buildStatItem(context.l10n.activeSeries, '$activeSeries', Icons.category),
+              _buildStatItem(context.l10n.topShare, '${data.isNotEmpty ? data[0]['share_rate'] : 0}%', Icons.pie_chart),
             ],
           ),
         ],
@@ -122,30 +122,30 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, bool isDarkMode) {
+  Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
       children: [
         Icon(icon, size: 20, color: Colors.blueGrey),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
         Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
       ],
     );
   }
 
-  Widget _buildLeaderboardTile(int rank, Map<String, dynamic> item, bool isDarkMode) {
+  Widget _buildLeaderboardTile(int rank, Map<String, dynamic> item) {
     Color rankColor = Colors.grey;
-    if (rank == 1) rankColor = const Color(0xFFFFD700);
+    if (rank == 1) rankColor = AppColors.gold;
     if (rank == 2) rankColor = const Color(0xFFC0C0C0);
     if (rank == 3) rankColor = const Color(0xFFCD7F32);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
       child: Padding(
@@ -176,7 +176,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                 children: [
                   Text(
                     item['name_zh'] ?? context.l10n.unknownSeries,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDarkMode ? Colors.white : Colors.black),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
