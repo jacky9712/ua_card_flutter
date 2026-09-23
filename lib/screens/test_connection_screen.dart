@@ -8,6 +8,7 @@ import '../models/ua_card.dart';
 import 'card_detail_dialog.dart';
 import 'deck_detail_screen.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class TestConnectionScreen extends ConsumerStatefulWidget {
   const TestConnectionScreen({super.key});
@@ -51,7 +52,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     }
   }
 
-  void _navigateToPreview(DeckState deckState, bool isDarkMode) {
+  void _navigateToPreview(DeckState deckState) {
     final List<UACard> expandedCards = [];
     deckState.deckMap.forEach((cardId, quantity) {
       final card = deckState.deckCardDetails[cardId];
@@ -65,7 +66,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => DeckDetailScreen(
       deckName: context.l10n.newDeckPreview,
       cardsInDeck: expandedCards,
-      onSavePressed: () => _showSaveDialog(isDarkMode),
+      onSavePressed: () => _showSaveDialog(),
     )));
   }
 
@@ -73,10 +74,9 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
   Widget build(BuildContext context) {
     final libraryState = ref.watch(cardLibraryViewModelProvider);
     final deckState = ref.watch(deckViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    final Color appBarColor = isDarkMode ? const Color(0xFF1E1E24) : Colors.white;
-    final Color textColor = isDarkMode ? Colors.white : Colors.black87;
+    final Color appBarColor = AppColors.surface;
+    final Color textColor = Colors.white;
 
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 處理
@@ -97,7 +97,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                     decoration: InputDecoration(
                       hintText: context.l10n.searchHint,
                       filled: true,
-                      fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
+                      fillColor: AppColors.surfaceHigh,
                       prefixIcon: const Icon(Icons.search, size: 18),
                       suffixIcon: _searchController.text.isNotEmpty 
                         ? IconButton(
@@ -119,7 +119,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.palette_outlined),
-                      onPressed: () => _showColorPicker(isDarkMode),
+                      onPressed: () => _showColorPicker(),
                     ),
                     if (libraryState.selectedColors.isNotEmpty)
                       Positioned(
@@ -135,17 +135,17 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.menu),
-                  onPressed: () => _showSeriesPicker(isDarkMode),
+                  onPressed: () => _showSeriesPicker(),
                 ),
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomSettlement(deckState, isDarkMode),
+      bottomNavigationBar: _buildBottomSettlement(deckState),
       // 🔥 核心修正：始終保持 GridView 結構，不再使用 Center()
       body: libraryState.isLoading && libraryState.allCards.isEmpty
-          ? _buildSkeletonGrid(isDarkMode) // 第一次載入顯示骨架
+          ? _buildSkeletonGrid() // 第一次載入顯示骨架
           : libraryState.filteredCards.isEmpty
               ? Center(child: Text(context.l10n.noCardsFound))
               : Column(
@@ -173,7 +173,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                           itemBuilder: (context, index) {
                             final card = libraryState.filteredCards[index];
                             final qty = deckState.deckMap[card.id] ?? 0;
-                            return _buildCardItem(card, qty, isDarkMode);
+                            return _buildCardItem(card, qty);
                           },
                         ),
                       ),
@@ -189,7 +189,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
   }
 
   // 🦴 骨架屏：完全模擬真實卡片的佈局結構
-  Widget _buildSkeletonGrid(bool isDarkMode) {
+  Widget _buildSkeletonGrid() {
     return GridView.builder(
       padding: const EdgeInsets.all(10),
       physics: const AlwaysScrollableScrollPhysics(), // 保持捲軸物理效果一致
@@ -203,7 +203,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
       itemBuilder: (context, index) => Container(
         // 1. 完全一致的外框裝飾（包含 2px 邊框預留）
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.transparent, width: 2), // 👈 關鍵：必須預留這 2px
         ),
@@ -214,7 +214,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
               child: Container(
                 margin: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
@@ -235,11 +235,11 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     );
   }
 
-  Widget _buildBottomSettlement(DeckState deckState, bool isDarkMode) {
+  Widget _buildBottomSettlement(DeckState deckState) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white, 
+        color: AppColors.surface, 
         border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.2)))
       ),
       child: SafeArea(
@@ -255,7 +255,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
               ],
             ),
             ElevatedButton(
-              onPressed: deckState.totalDeckCount == 50 ? () => _navigateToPreview(deckState, isDarkMode) : null,
+              onPressed: deckState.totalDeckCount == 50 ? () => _navigateToPreview(deckState) : null,
               style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
               child: Text(context.l10n.previewAndSave),
             )
@@ -265,11 +265,11 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     );
   }
 
-  Widget _buildCardItem(UACard card, int qty, bool isDarkMode) {
+  Widget _buildCardItem(UACard card, int qty) {
     final color = _getCardColor(card.color);
     return Container(
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: qty > 0 ? color : Colors.transparent, width: 2),
       ),
@@ -289,7 +289,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                         imageUrl: card.imageUrl ?? '',
                         fit: BoxFit.cover, // 🔥 建議改用 cover 或 fill，配合強制比例更完美
                         placeholder: (context, url) => Container(
-                          color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                           child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 1))),
                         ),
                         errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
@@ -309,7 +309,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.85),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.6), width: 0.8),
+                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.6), width: 0.8),
                       ),
                       child: Text(
                         '¥${card.price}',
@@ -333,7 +333,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     );
   }
 
-  void _showSeriesPicker(bool isDarkMode) {
+  void _showSeriesPicker() {
     final libState = ref.read(cardLibraryViewModelProvider);
     
     // 1. 複製一份清單並進行排序 (字母順序)
@@ -347,7 +347,7 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(20),
@@ -374,10 +374,10 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                   return ActionChip(
                     label: Center(child: Text(series, style: TextStyle(
                       fontSize: 12, 
-                      color: isSelected ? Colors.black : (isDarkMode ? Colors.white70 : Colors.black87),
+                      color: isSelected ? Colors.black : Colors.white70,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ))),
-                    backgroundColor: isSelected ? Colors.amber : (isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4)),
+                    backgroundColor: isSelected ? Colors.amber : AppColors.surfaceHigh,
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     onPressed: () {
@@ -395,13 +395,13 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     );
   }
 
-  void _showColorPicker(bool isDarkMode) {
+  void _showColorPicker() {
     final notifier = ref.read(cardLibraryViewModelProvider.notifier);
     final Set<String> tempSelected = Set.from(ref.read(cardLibraryViewModelProvider).selectedColors);
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Container(
@@ -423,12 +423,12 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
                     avatar: CircleAvatar(backgroundColor: _getCardColor(colorKey), radius: 6),
                     label: Text(entry.value, style: TextStyle(
                       fontSize: 12,
-                      color: isSelected ? Colors.black : (isDarkMode ? Colors.white70 : Colors.black87),
+                      color: isSelected ? Colors.black : Colors.white70,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     )),
                     selected: isSelected,
                     showCheckmark: false,
-                    backgroundColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
+                    backgroundColor: AppColors.surfaceHigh,
                     selectedColor: Colors.amber,
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -473,10 +473,10 @@ class _TestConnectionScreenState extends ConsumerState<TestConnectionScreen> {
     );
   }
 
-  void _showSaveDialog(bool isDarkMode) {
+  void _showSaveDialog() {
     final controller = TextEditingController();
     showDialog(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      backgroundColor: AppColors.surface,
       title: Text(context.l10n.saveDeck, style: TextStyle(fontWeight: FontWeight.bold)),
       content: TextField(
         controller: controller, 

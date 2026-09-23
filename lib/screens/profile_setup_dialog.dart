@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewModels/profile_view_model.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 /// 設定顯示暱稱的小對話框。訪客（匿名）帳號跟正式帳號都能用——
 /// 「分享位置」「紀錄勝敗」都需要對方看得懂「這是誰」，匿名帳號原本
@@ -32,10 +33,9 @@ class _ProfileSetupDialogState extends ConsumerState<ProfileSetupDialog> {
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return AlertDialog(
-      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      backgroundColor: AppColors.surface,
       title: Text(context.l10n.setNickname, style: TextStyle(fontWeight: FontWeight.bold)),
       content: Column(
         mainAxisSize: MainAxisSize.min,

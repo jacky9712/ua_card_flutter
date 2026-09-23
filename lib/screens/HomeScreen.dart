@@ -424,17 +424,17 @@ class HomeScreen extends ConsumerWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: previewList.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFF2C2C35)),
+              separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.surfaceHigh),
               itemBuilder: (context, index) {
                 final item = previewList[index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                   child: Row(
                     children: [
-                      Text('#${index + 1}', style: TextStyle(fontWeight: FontWeight.w900, color: index == 0 ? const Color(0xFFFFD700) : Colors.white.withValues(alpha: 0.7))),
+                      Text('#${index + 1}', style: TextStyle(fontWeight: FontWeight.w900, color: index == 0 ? AppColors.gold : Colors.white.withValues(alpha: 0.7))),
                       const SizedBox(width: 16),
                       Expanded(child: Text('${item['name_zh'] ?? l10n.unknownSeries}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                      Text('${item['share_rate']}%', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                      Text('${item['share_rate']}%', style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 );

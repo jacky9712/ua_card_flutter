@@ -7,6 +7,7 @@ import '../viewModels/recommended_deck_view_model.dart';
 import 'deck_detail_screen.dart';
 import 'test_connection_screen.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class RecommendedDecksScreen extends ConsumerStatefulWidget {
   const RecommendedDecksScreen({super.key});
@@ -122,14 +123,14 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
     }).toList();
   }
 
-  void _showFilterSheet(List<Map<String, dynamic>> decks, bool isDarkMode) {
+  void _showFilterSheet(List<Map<String, dynamic>> decks) {
     final seriesOptions = _availableSeries(decks);
     final tierOptions = _availableTiers(decks);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) {
         return StatefulBuilder(
@@ -303,7 +304,6 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
     // 「只看我的卡組」要跟「我的牌組」頁面的系列比對，這裡直接讀同一個 provider，
     // 不用另外開一支查詢——decks 頁面本來就會被逛過、資料通常已經在了。
     final myDecks = ref.watch(deckViewModelProvider).myDecks;
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final mySeriesIds = _mySeriesIds(myDecks);
     final filteredDecks = _applyFilters(state.decks, mySeriesIds);
 
@@ -320,7 +320,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
               IconButton(
                 icon: const Icon(Icons.filter_list),
                 tooltip: context.l10n.filter,
-                onPressed: () => _showFilterSheet(state.decks, isDarkMode),
+                onPressed: () => _showFilterSheet(state.decks),
               ),
               if (_hasActiveFilter)
                 Positioned(
@@ -377,7 +377,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                        color: AppColors.surface,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: ListTile(
                           onTap: opening ? null : () => _openDeck(deck),
@@ -396,19 +396,19 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                                           height: 48,
                                           fit: BoxFit.cover,
                                           placeholder: (context, url) => Container(
-                                            color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                                            color: Colors.white.withValues(alpha: 0.05),
                                           ),
                                           errorWidget: (context, url, error) => Container(
                                             width: 48,
                                             height: 48,
-                                            color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                                            color: Colors.white.withValues(alpha: 0.05),
                                             child: const Icon(Icons.style, color: Colors.grey, size: 20),
                                           ),
                                         )
                                       : Container(
                                           width: 48,
                                           height: 48,
-                                          color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                                          color: Colors.white.withValues(alpha: 0.05),
                                           child: const Icon(Icons.style, color: Colors.grey, size: 20),
                                         ),
                                 ),
@@ -422,7 +422,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                                     decoration: BoxDecoration(
                                       color: _tierColor(tier),
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white, width: 1.5),
+                                      border: Border.all(color: AppColors.surface, width: 1.5),
                                     ),
                                     child: Text(
                                       tierBadge,
@@ -452,7 +452,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                                   children: [
                                     Text(
                                       '¥ $totalPrice',
-                                      style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.w900),
+                                      style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900),
                                     ),
                                     const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
                                   ],

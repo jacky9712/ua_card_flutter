@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../viewmodels/deck_view_model.dart';
 import 'deck_detail_screen.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class MyDecksScreen extends ConsumerStatefulWidget {
   const MyDecksScreen({super.key});
@@ -23,7 +24,6 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
   @override
   Widget build(BuildContext context) {
     final deckState = ref.watch(deckViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 處理
@@ -82,7 +82,7 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                       },
                       child: Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                        color: AppColors.surface,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: ListTile(
                           leading: SizedBox(
@@ -128,7 +128,7 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                                       height: 18,
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                                        color: AppColors.surface,
                                         shape: BoxShape.circle,
                                         border: Border.all(color: Colors.amber, width: 1),
                                       ),

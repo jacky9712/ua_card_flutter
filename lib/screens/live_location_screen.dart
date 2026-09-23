@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../utils/location_platform.dart';
 import '../viewModels/live_location_view_model.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class LiveLocationScreen extends ConsumerWidget {
   const LiveLocationScreen({super.key});
@@ -70,7 +71,6 @@ class LiveLocationScreen extends ConsumerWidget {
     }
 
     final state = ref.watch(liveLocationViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final myUserId = Supabase.instance.client.auth.currentUser?.id;
     final others = state.nearbyOthers.where((o) => o['user_id'] != myUserId).toList();
 
@@ -82,7 +82,7 @@ class LiveLocationScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -95,7 +95,7 @@ class LiveLocationScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(
                   state.isSharing ? context.l10n.sharing : context.l10n.notSharing,
-                  style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 if (state.isSharing && state.sharingUntil != null)
                   Padding(
@@ -127,7 +127,7 @@ class LiveLocationScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Text(context.l10n.playersSharing, style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+          Text(context.l10n.playersSharing, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 8),
           if (others.isEmpty)
             Padding(
@@ -141,7 +141,7 @@ class LiveLocationScreen extends ConsumerWidget {
               final lng = o['lng'] as double?;
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
-                color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+                color: AppColors.surface,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   leading: const CircleAvatar(backgroundColor: Color(0x33FFC107), child: Icon(Icons.person, color: Colors.amber)),

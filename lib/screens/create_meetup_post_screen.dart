@@ -5,6 +5,7 @@ import '../utils/location_platform.dart';
 import '../viewModels/deck_view_model.dart';
 import '../viewModels/meetup_view_model.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 // Tier1~Tier6 是自評用的，跟「上位卡組推薦」的分級字串同一套慣例，方便畫面共用同一套顏色邏輯。
 const List<String> kDeckTiers = ['Tier1', 'Tier2', 'Tier3', 'Tier4', 'Tier5', 'Tier6'];
@@ -80,7 +81,6 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
   Widget build(BuildContext context) {
     final meetupState = ref.watch(meetupViewModelProvider);
     final deckState = ref.watch(deckViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -103,7 +103,7 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
               decoration: InputDecoration(
                 hintText: context.l10n.locationNameHint,
                 filled: true,
-                fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
+                fillColor: AppColors.surfaceHigh,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
               ),
             ),
@@ -182,7 +182,7 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
               decoration: InputDecoration(
                 hintText: context.l10n.meetupNoteHint,
                 filled: true,
-                fillColor: isDarkMode ? const Color(0xFF2C2C35) : const Color(0xFFEFEFF4),
+                fillColor: AppColors.surfaceHigh,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
               ),
             ),

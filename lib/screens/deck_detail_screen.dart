@@ -8,6 +8,7 @@ import '../utils/deck_exporter.dart';
 import '../viewModels/deck_view_model.dart';
 import 'test_connection_screen.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class DeckDetailScreen extends ConsumerStatefulWidget {
   final int? deckId; // 🔥 新增：牌組 ID，用於編輯模式
@@ -160,7 +161,6 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
       0,
       (sum, card) => sum + (card.price ?? 0),
     );
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // 🎨 統一從主題獲取顏色，確保跟隨系統切換
     final Color textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
@@ -237,7 +237,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
             _buildTabSelector(textColor),
 
             _activeTabIndex == 0
-                ? _buildCardImageGrid(groupedCards, isDarkMode)
+                ? _buildCardImageGrid(groupedCards)
                 : _buildTextAndQRSection(surfaceColor, textColor),
 
             Padding(
@@ -261,7 +261,6 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                     maxEnergyCount,
                     surfaceColor,
                     textColor,
-                    isDarkMode,
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -277,7 +276,6 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                     triggerData,
                     surfaceColor,
                     textColor,
-                    isDarkMode,
                   ),
                 ],
               ),
@@ -374,7 +372,6 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
 
   Widget _buildCardImageGrid(
     Map<String, Map<String, dynamic>> groupedCards,
-    bool isDarkMode,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -401,9 +398,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                   imageUrl: card.imageUrl ?? '',
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    color: isDarkMode
-                        ? Colors.grey.shade900
-                        : Colors.grey.shade200,
+                    color: Colors.grey.shade900,
                   ),
                   errorWidget: (context, url, error) =>
                       const Icon(Icons.broken_image, color: Colors.grey),
@@ -482,7 +477,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
               Text(
                 '¥ $totalPrice',
                 style: const TextStyle(
-                  color: Color(0xFFFFD700),
+                  color: AppColors.gold,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
@@ -499,7 +494,6 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     int maxVal,
     Color surfaceColor,
     Color textColor,
-    bool isDarkMode,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -531,9 +525,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                       Container(
                         height: 16,
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? const Color(0xFF2C2C35)
-                              : Colors.grey.shade200,
+                          color: AppColors.surfaceHigh,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -577,7 +569,6 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     Map<String, int> data,
     Color surfaceColor,
     Color textColor,
-    bool isDarkMode,
   ) {
     final triggerColors = {
       'SPECIAL': Colors.redAccent,
@@ -624,9 +615,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
 
           return Container(
             decoration: BoxDecoration(
-              color: isDarkMode
-                  ? const Color(0xFF2C2C35)
-                  : Colors.grey.shade100,
+              color: AppColors.surfaceHigh,
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
             ),

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../viewModels/match_record_view_model.dart';
 import 'create_match_record_screen.dart';
 import '../l10n/l10n_ext.dart';
+import '../theme/app_theme.dart';
 
 class MatchRecordsScreen extends ConsumerWidget {
   const MatchRecordsScreen({super.key});
@@ -58,7 +59,6 @@ class MatchRecordsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final matchState = ref.watch(matchRecordViewModelProvider);
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final myUserId = Supabase.instance.client.auth.currentUser?.id;
 
     return Scaffold(
@@ -79,7 +79,7 @@ class MatchRecordsScreen extends ConsumerWidget {
               onRefresh: () => ref.read(matchRecordViewModelProvider.notifier).fetchMyMatchRecords(),
               child: CustomScrollView(
                 slivers: [
-                  SliverToBoxAdapter(child: _buildStatsHeader(context, matchState, isDarkMode)),
+                  SliverToBoxAdapter(child: _buildStatsHeader(context, matchState)),
                   if (matchState.records.isEmpty)
                     SliverToBoxAdapter(
                       child: Padding(
@@ -94,7 +94,7 @@ class MatchRecordsScreen extends ConsumerWidget {
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
                             final record = matchState.records[index];
-                            return _buildRecordTile(context, ref, record, myUserId, isDarkMode);
+                            return _buildRecordTile(context, ref, record, myUserId);
                           },
                           childCount: matchState.records.length,
                         ),
@@ -107,33 +107,33 @@ class MatchRecordsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsHeader(BuildContext context, MatchRecordState state, bool isDarkMode) {
+  Widget _buildStatsHeader(BuildContext context, MatchRecordState state) {
     return Container(
       padding: const EdgeInsets.all(20),
-      color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      color: AppColors.surface,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem(context.l10n.totalMatches, '${state.totalCount}', isDarkMode),
-          _buildStatItem(context.l10n.win, '${state.winCount}', isDarkMode, color: Colors.green),
-          _buildStatItem(context.l10n.loss, '${state.lossCount}', isDarkMode, color: Colors.redAccent),
-          _buildStatItem(context.l10n.winRate, '${state.winRate.toStringAsFixed(0)}%', isDarkMode, color: Colors.amber),
+          _buildStatItem(context.l10n.totalMatches, '${state.totalCount}'),
+          _buildStatItem(context.l10n.win, '${state.winCount}', color: Colors.green),
+          _buildStatItem(context.l10n.loss, '${state.lossCount}', color: Colors.redAccent),
+          _buildStatItem(context.l10n.winRate, '${state.winRate.toStringAsFixed(0)}%', color: Colors.amber),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, bool isDarkMode, {Color? color}) {
+  Widget _buildStatItem(String label, String value, {Color? color}) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color ?? (isDarkMode ? Colors.white : Colors.black))),
+        Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color ?? (Colors.white))),
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
       ],
     );
   }
 
-  Widget _buildRecordTile(BuildContext context, WidgetRef ref, Map<String, dynamic> record, String myUserId, bool isDarkMode) {
+  Widget _buildRecordTile(BuildContext context, WidgetRef ref, Map<String, dynamic> record, String myUserId) {
     final result = _resultFromMyPerspective(record, myUserId);
     final opponentName = _opponentNameFromMyPerspective(context, record, myUserId);
     final deckName = record['deck_name_snapshot'] as String?;
@@ -143,10 +143,10 @@ class MatchRecordsScreen extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        onTap: () => _showRecordDetail(context, ref, record, myUserId, isDarkMode),
+        onTap: () => _showRecordDetail(context, ref, record, myUserId),
         leading: CircleAvatar(
           backgroundColor: _resultColor(result).withValues(alpha: 0.15),
           child: Text(_resultLabel(context, result), style: TextStyle(color: _resultColor(result), fontWeight: FontWeight.bold)),
@@ -171,7 +171,6 @@ class MatchRecordsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> record,
     String myUserId,
-    bool isDarkMode,
   ) {
     final result = _resultFromMyPerspective(record, myUserId);
     final opponentName = _opponentNameFromMyPerspective(context, record, myUserId);
@@ -185,7 +184,7 @@ class MatchRecordsScreen extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDarkMode ? const Color(0xFF1E1E24) : Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) {
         return SafeArea(
