@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_repository.dart';
+import 'card_cache_store.dart';
 import 'card_repository.dart';
 import 'deck_repository.dart';
 import 'meta_repository.dart';
@@ -12,6 +13,7 @@ import 'live_location_repository.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) => SupabaseAuthRepository());
 final cardRepositoryProvider = Provider<CardRepository>((ref) => SupabaseCardRepository());
+final cardCacheStoreProvider = Provider<CardCacheStore>((ref) => SharedPrefsCardCacheStore());
 final deckRepositoryProvider = Provider<DeckRepository>((ref) => MixedDeckRepository());
 final metaRepositoryProvider = Provider<MetaRepository>((ref) => SupabaseMetaRepository());
 final recommendedDeckRepositoryProvider = Provider<RecommendedDeckRepository>((ref) => SupabaseRecommendedDeckRepository());
