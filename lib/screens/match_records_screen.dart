@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/app_error.dart';
 import '../viewModels/match_record_view_model.dart';
 import 'create_match_record_screen.dart';
 import '../l10n/l10n_ext.dart';
@@ -84,7 +85,20 @@ class MatchRecordsScreen extends ConsumerWidget {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.all(40),
-                        child: Center(child: Text(context.l10n.noMatchRecords, style: TextStyle(color: Colors.grey))),
+                        child: Center(
+                          child: matchState.error?.code == AppErrorCode.loadMatchesFailed
+                              ? Column(
+                                  children: [
+                                    Text(matchState.error!.localize(context.l10n), style: TextStyle(color: Colors.grey)),
+                                    TextButton.icon(
+                                      onPressed: () => ref.read(matchRecordViewModelProvider.notifier).fetchMyMatchRecords(),
+                                      icon: const Icon(Icons.refresh, size: 18),
+                                      label: Text(context.l10n.retry),
+                                    ),
+                                  ],
+                                )
+                              : Text(context.l10n.noMatchRecords, style: TextStyle(color: Colors.grey)),
+                        ),
                       ),
                     )
                   else if (myUserId != null)
@@ -246,8 +260,17 @@ class MatchRecordsScreen extends ConsumerWidget {
                           ),
                         );
                         if (confirmed != true) return;
-                        await ref.read(matchRecordViewModelProvider.notifier).deleteMatchRecord(recordId);
-                        if (ctx.mounted) Navigator.pop(ctx);
+                        final success = await ref.read(matchRecordViewModelProvider.notifier).deleteMatchRecord(recordId);
+                        if (!ctx.mounted) return;
+                        if (success) {
+                          Navigator.pop(ctx);
+                        } else {
+                          // 刪除失敗就留在選單上並提示，原本不管成功與否都直接關掉。
+                          final error = ref.read(matchRecordViewModelProvider).error!.localize(context.l10n);
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
+                          );
+                        }
                       },
                     ),
                   ),

@@ -27,9 +27,11 @@ class AuthViewModel extends Notifier<UserAuthState> {
   @override
   UserAuthState build() {
     final repo = ref.read(authRepositoryProvider);
-    repo.onAuthStateChange.listen((data) {
+    final subscription = repo.onAuthStateChange.listen((data) {
       state = state.copyWith(user: data.session?.user);
     });
+    // provider 重建時 build() 會再跑一次，不取消的話舊的監聽器會一直累積。
+    ref.onDispose(subscription.cancel);
     return UserAuthState(user: repo.currentUser);
   }
 

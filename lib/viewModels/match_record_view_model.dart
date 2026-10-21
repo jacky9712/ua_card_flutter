@@ -80,14 +80,16 @@ class MatchRecordViewModel extends Notifier<MatchRecordState> {
     }
   }
 
-  Future<void> deleteMatchRecord(int id) async {
+  Future<bool> deleteMatchRecord(int id) async {
     try {
       final repo = ref.read(matchRecordRepositoryProvider);
       await repo.deleteMatchRecord(id);
-      await fetchMyMatchRecords();
     } catch (e) {
       state = state.copyWith(error: AppError(AppErrorCode.deleteFailed, detail: '$e'));
+      return false;
     }
+    await fetchMyMatchRecords();
+    return true;
   }
 }
 

@@ -117,14 +117,16 @@ class MeetupViewModel extends Notifier<MeetupState> {
     }
   }
 
-  Future<void> deleteMeetupPost(int id) async {
+  Future<bool> deleteMeetupPost(int id) async {
     try {
       final repo = ref.read(meetupRepositoryProvider);
       await repo.deleteMeetupPost(id);
-      await fetchOpenMeetupPosts();
     } catch (e) {
       state = state.copyWith(error: AppError(AppErrorCode.deleteFailed, detail: '$e'));
+      return false;
     }
+    await fetchOpenMeetupPosts();
+    return true;
   }
 }
 

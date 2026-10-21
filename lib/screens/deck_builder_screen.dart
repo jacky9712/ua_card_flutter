@@ -494,9 +494,15 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
             // 不然 await 之後直接用 ctx 會被 lint 當成「context 可能已經失效」。
             final dialogNavigator = Navigator.of(ctx);
             final dialogMessenger = ScaffoldMessenger.of(ctx);
+            // 編輯頁自己的 Navigator/Messenger/ViewModel 也先取好：成功後這一頁會被 pop 掉，
+            // pop 之後就不該再用這頁的 context 和 ref。
+            final navigator = Navigator.of(context);
+            final messenger = ScaffoldMessenger.of(context);
+            final l10n = context.l10n;
+            final deckViewModel = ref.read(deckViewModelProvider.notifier);
 
             // 1. 呼叫 ViewModel 執行儲存
-            final success = await ref.read(deckViewModelProvider.notifier).saveCurrentDeck(deckName);
+            final success = await deckViewModel.saveCurrentDeck(deckName);
 
             if (success && mounted) {
               // 2. ✨ 核心修正：連退三步
@@ -504,17 +510,17 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
               dialogNavigator.pop();
 
               // 第二步：關閉預覽頁面 (DeckDetailScreen)
-              Navigator.pop(context);
+              navigator.pop();
 
               // 第三步：關閉編輯頁面 (DeckBuilderScreen)
-              Navigator.pop(context);
+              navigator.pop();
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(context.l10n.deckSaved(deckName)), backgroundColor: Colors.green),
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.deckSaved(deckName)), backgroundColor: Colors.green),
               );
 
               // 3. 重新整理我的牌組列表
-              ref.read(deckViewModelProvider.notifier).fetchMyDecks();
+              deckViewModel.fetchMyDecks();
             } else if (!success && mounted) {
               // 🔥 儲存失敗時原本完全沒有任何提示，對話框只是卡住不動。
               // 把 ViewModel 回報的錯誤秀出來，至少讓使用者知道發生什麼事。

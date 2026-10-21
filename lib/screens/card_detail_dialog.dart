@@ -45,13 +45,14 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
           .order('created_at', ascending: true)
           .limit(20);
 
+      if (!mounted) return;
       setState(() {
         _priceHistory = List<Map<String, dynamic>>.from(response);
         _isLoadingHistory = false;
       });
     } catch (e) {
       debugPrint('抓取歷史價格失敗: $e');
-      setState(() => _isLoadingHistory = false);
+      if (mounted) setState(() => _isLoadingHistory = false);
     }
   }
 
@@ -85,13 +86,13 @@ class _CardDetailDialogState extends State<CardDetailDialog> {
         final triggerResult = await _translator.translate(widget.card.triggerText!, to: target);
         _translatedTrigger = triggerResult.text;
       }
-      setState(() => _showTranslation = true);
+      if (mounted) setState(() => _showTranslation = true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.translationFailed)));
       }
     } finally {
-      setState(() => _isTranslating = false);
+      if (mounted) setState(() => _isTranslating = false);
     }
   }
 
