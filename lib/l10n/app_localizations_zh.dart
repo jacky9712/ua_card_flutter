@@ -673,6 +673,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectSeries => '選擇系列';
 
   @override
+  String get loadingSeries => '系列載入中…';
+
+  @override
   String get selectColor => '選擇顏色';
 
   @override

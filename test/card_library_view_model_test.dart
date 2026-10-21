@@ -17,6 +17,8 @@ class _FakeCardRepository implements CardRepository {
 
   Completer<List<String>>? seriesCompleter;
   bool failSeries = false;
+  int seriesCalls = 0;
+  List<String> seriesResult = const [];
 
   List<UACard> browseResult = const [];
   Completer<List<UACard>>? browseCompleter;
@@ -26,9 +28,10 @@ class _FakeCardRepository implements CardRepository {
 
   @override
   Future<List<String>> fetchSeriesList() async {
+    seriesCalls++;
     if (failSeries) throw Exception('series down');
     if (seriesCompleter != null) return seriesCompleter!.future;
-    return [];
+    return seriesResult;
   }
 
   @override
@@ -236,6 +239,106 @@ void main() {
       vm.retryIfInitialLoadFailed(); // 已經有卡片、沒有錯誤，不再重抓
       async.flushMicrotasks();
       expect(repo.fetchCalls, 2);
+      container.dispose();
+    });
+  });
+
+  test('系列清單失敗後 retrySeriesIfEmpty 重抓成功', () {
+    fakeAsync((async) {
+      repo.failSeries = true;
+      final container = makeContainer(async);
+      final vm = container.read(cardLibraryViewModelProvider.notifier);
+      expect(container.read(cardLibraryViewModelProvider).availableSeries, isEmpty);
+      expect(repo.seriesCalls, 1);
+
+      repo.failSeries = false;
+      repo.seriesResult = ['UA01', 'UA02'];
+      vm.retrySeriesIfEmpty();
+      async.flushMicrotasks();
+
+      final state = container.read(cardLibraryViewModelProvider);
+      expect(repo.seriesCalls, 2);
+      expect(state.availableSeries, ['UA01', 'UA02']);
+      expect(state.isLoadingSeries, isFalse);
+
+      vm.retrySeriesIfEmpty(); // 已經有清單，不再重抓
+      async.flushMicrotasks();
+      expect(repo.seriesCalls, 2);
+      container.dispose();
+    });
+  });
+
+  test('系列請求進行中重複觸發只送一次', () {
+    fakeAsync((async) {
+      final seriesCompleter = Completer<List<String>>();
+      repo.seriesCompleter = seriesCompleter;
+      final container = makeContainer(async);
+      final vm = container.read(cardLibraryViewModelProvider.notifier);
+      expect(repo.seriesCalls, 1);
+      expect(container.read(cardLibraryViewModelProvider).isLoadingSeries, isTrue);
+
+      vm.retrySeriesIfEmpty();
+      vm.retrySeriesIfEmpty();
+      async.flushMicrotasks();
+      expect(repo.seriesCalls, 1);
+
+      seriesCompleter.complete(['UA01']);
+      async.flushMicrotasks();
+
+      final state = container.read(cardLibraryViewModelProvider);
+      expect(state.availableSeries, ['UA01']);
+      expect(state.isLoadingSeries, isFalse);
+      container.dispose();
+    });
+  });
+
+  test('重抓系列不清掉卡片錯誤、不動卡片狀態', () {
+    fakeAsync((async) {
+      repo.failFetch = true;
+      repo.failSeries = true;
+      final container = makeContainer(async);
+      final vm = container.read(cardLibraryViewModelProvider.notifier);
+      final failed = container.read(cardLibraryViewModelProvider);
+      expect(failed.error?.code, AppErrorCode.dbConnectionFailed);
+      expect(failed.isLoading, isFalse);
+      expect(failed.allCards, isEmpty);
+
+      repo.failSeries = false;
+      repo.seriesResult = ['UA01'];
+      vm.retrySeriesIfEmpty();
+      async.flushMicrotasks();
+
+      final state = container.read(cardLibraryViewModelProvider);
+      expect(state.error?.code, AppErrorCode.dbConnectionFailed);
+      expect(state.isLoading, isFalse);
+      expect(state.allCards, isEmpty);
+      expect(repo.fetchCalls, 1);
+      expect(state.availableSeries, ['UA01']);
+      container.dispose();
+    });
+  });
+
+  test('重抓系列不影響進行中的卡片請求（_requestId 不變）', () {
+    fakeAsync((async) {
+      repo.failSeries = true;
+      final browseCompleter = Completer<List<UACard>>();
+      repo.browseCompleter = browseCompleter;
+      final container = makeContainer(async);
+      final vm = container.read(cardLibraryViewModelProvider.notifier);
+
+      repo.failSeries = false;
+      repo.seriesResult = ['UA01'];
+      vm.retrySeriesIfEmpty();
+      async.flushMicrotasks();
+      expect(container.read(cardLibraryViewModelProvider).isLoading, isTrue);
+
+      browseCompleter.complete([UACard(id: 1, cardNumber: 'UA01BT-001')]);
+      async.flushMicrotasks();
+
+      final state = container.read(cardLibraryViewModelProvider);
+      expect(state.allCards, hasLength(1));
+      expect(state.isLoading, isFalse);
+      expect(repo.fetchCalls, 1);
       container.dispose();
     });
   });
