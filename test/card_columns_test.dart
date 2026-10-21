@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ua_card_flutter/models/ua_card.dart';
@@ -30,11 +32,44 @@ Map<String, dynamic> rowFromColumns(dynamic latestPrices) {
   return {for (final c in selectedColumns()) c: values[c]};
 }
 
+/// fromJson 有讀、但刻意不抓的欄位（model 以外沒人用，沒抓到就用預設值）。
+const Set<String> intentionallyUnfetched = {
+  'rarity', 'is_parallel', 'star_count', 'has_signature', 'tags', 'energy_generated', 'card_type',
+};
+
+/// 記下 fromJson 讀了哪些 key 的 Map，讀到的值一律是 null。
+class _KeyRecordingMap extends MapBase<String, dynamic> {
+  final Set<String> readKeys = {};
+
+  @override
+  dynamic operator [](Object? key) {
+    readKeys.add(key as String);
+    return null;
+  }
+
+  @override
+  void operator []=(String key, dynamic value) {}
+  @override
+  void clear() {}
+  @override
+  Iterable<String> get keys => const [];
+  @override
+  dynamic remove(Object? key) => null;
+}
+
 void main() {
   group('cardSelectColumns', () {
     test('常數欄位與 fixture 一致', () {
       expect(selectedColumns().toSet(), sample.keys.toSet());
       expect(selectedColumns().length, 12);
+    });
+
+    test('fromJson 讀的每個 key 不是在常數裡，就是列在刻意不抓的清單', () {
+      // UACard.fromJson 新讀一個欄位、卻忘了加進 cardSelectColumns 時，這裡會失敗。
+      final recorder = _KeyRecordingMap();
+      UACard.fromJson(recorder);
+      expect(recorder.readKeys.difference(intentionallyUnfetched), selectedColumns().toSet());
+      expect(intentionallyUnfetched.intersection(selectedColumns().toSet()), isEmpty);
     });
 
     test('latest_prices 為 List 時每個欄位都正確解析', () {
