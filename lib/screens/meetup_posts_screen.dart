@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../viewModels/meetup_view_model.dart';
+import '../utils/app_error.dart';
 import '../utils/location_platform.dart';
 import 'create_match_record_screen.dart';
 import 'create_meetup_post_screen.dart';
@@ -40,7 +41,13 @@ class MeetupPostsScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    await ref.read(meetupViewModelProvider.notifier).deleteMeetupPost(postId);
+    final success = await ref.read(meetupViewModelProvider.notifier).deleteMeetupPost(postId);
+    if (!success && context.mounted) {
+      final error = ref.read(meetupViewModelProvider).error!.localize(context.l10n);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
+      );
+    }
   }
 
   @override
@@ -88,7 +95,21 @@ class MeetupPostsScreen extends ConsumerWidget {
             child: meetupState.isLoading && posts.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : posts.isEmpty
-                    ? Center(child: Text(context.l10n.noMeetups, style: TextStyle(color: Colors.grey)))
+                    ? Center(
+                        child: meetupState.error?.code == AppErrorCode.loadMeetupsFailed
+                            ? Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(meetupState.error!.localize(context.l10n), style: TextStyle(color: Colors.grey)),
+                                  TextButton.icon(
+                                    onPressed: () => ref.read(meetupViewModelProvider.notifier).fetchOpenMeetupPosts(),
+                                    icon: const Icon(Icons.refresh, size: 18),
+                                    label: Text(context.l10n.retry),
+                                  ),
+                                ],
+                              )
+                            : Text(context.l10n.noMeetups, style: TextStyle(color: Colors.grey)),
+                      )
                     : RefreshIndicator(
                         onRefresh: () => ref.read(meetupViewModelProvider.notifier).fetchOpenMeetupPosts(),
                         child: ListView.builder(
