@@ -137,8 +137,8 @@ class LiveLocationScreen extends ConsumerWidget {
           else
             ...others.map((o) {
               final name = o['profiles']?['display_name'] ?? context.l10n.unnamedPlayer;
-              final lat = o['lat'] as double?;
-              final lng = o['lng'] as double?;
+              final lat = (o['lat'] as num?)?.toDouble();
+              final lng = (o['lng'] as num?)?.toDouble();
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 color: AppColors.surface,
