@@ -45,4 +45,11 @@ void main() {
       expect(counts, {'A-1': 2});
     });
   });
+
+  group('DeckQrCodec.encodeDeck', () {
+    test('deckMap 配卡片清單直接編成 QR 字串，找不到的卡跳過', () {
+      final data = DeckQrCodec.encodeDeck({1: 2, 99: 3}, [UACard(id: 1, cardNumber: 'A-1')]);
+      expect(data, 'UA_DECK|A-1:2');
+    });
+  });
 }

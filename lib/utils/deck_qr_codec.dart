@@ -40,4 +40,8 @@ class DeckQrCodec {
     });
     return result;
   }
+
+  /// deckMap (cardId -> qty) 配上卡片清單，直接編成 QR 字串。
+  static String encodeDeck(Map<int, int> deckMap, Iterable<UACard> cards) =>
+      encode(countsFromDeck(deckMap, cards));
 }

@@ -293,7 +293,7 @@ class DeckViewModel extends Notifier<DeckState> {
       for (var card in cards) {
         if (processedNumbers.contains(card.cardNumber)) continue;
         final int? qty = targetCounts[card.cardNumber];
-        if (card.id != null && qty != null && qty > 0) {
+        if (card.id != null && qty != null) {
           newDeckMap[card.id!] = qty;
           newDetails[card.id!] = card;
           processedNumbers.add(card.cardNumber);

@@ -314,7 +314,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
   }
 
   Widget _buildTextAndQRSection(Color surfaceColor, Color textColor) {
-    final String deckData = DeckQrCodec.encode(DeckQrCodec.countsFromDeck(_getDeckMap(), widget.cardsInDeck));
+    final String deckData = DeckQrCodec.encodeDeck(_getDeckMap(), widget.cardsInDeck);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
