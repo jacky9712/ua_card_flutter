@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ua_card_flutter/main.dart';
 import 'package:ua_card_flutter/models/ua_card.dart';
 import 'package:ua_card_flutter/repositories/auth_repository.dart';
+import 'package:ua_card_flutter/repositories/card_cache_store.dart';
 import 'package:ua_card_flutter/repositories/card_repository.dart';
 import 'package:ua_card_flutter/repositories/meta_repository.dart';
 import 'package:ua_card_flutter/repositories/providers.dart';
@@ -28,6 +29,21 @@ class _FakeAuthRepository implements AuthRepository {
 class _FakeMetaRepository implements MetaRepository {
   @override
   Future<List<Map<String, dynamic>>> fetchEnvironmentData() async => [];
+}
+
+// 空的快取：widget 測試不碰 SharedPreferences 平台通道。
+class _EmptyCardCacheStore implements CardCacheStore {
+  @override
+  Future<List<UACard>?> loadFirstPage() async => null;
+
+  @override
+  Future<List<String>?> loadSeries() async => null;
+
+  @override
+  Future<void> saveFirstPage(List<UACard> cards) async {}
+
+  @override
+  Future<void> saveSeries(List<String> series) async {}
 }
 
 class _FakeCardRepository implements CardRepository {
@@ -66,6 +82,7 @@ void main() {
       authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
       metaRepositoryProvider.overrideWithValue(_FakeMetaRepository()),
       cardRepositoryProvider.overrideWithValue(repo),
+      cardCacheStoreProvider.overrideWithValue(_EmptyCardCacheStore()),
     ]);
     addTearDown(container.dispose);
     return container;

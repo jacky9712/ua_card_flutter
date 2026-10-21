@@ -81,6 +81,9 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   // 系列請求進行中就共用同一個 Future，不重複送出（_initData、組牌頁、系列選單都可能觸發）。
   Future<void>? _seriesRequest;
 
+  // true：allCards 還是本機快取的第一頁，還沒被任何網路結果換掉。
+  bool _showingCache = false;
+
   // 搜尋框每打一個字都會呼叫 updateSearchQuery，等使用者停手一小段時間再送遠端查詢。
   static const Duration searchDebounce = Duration(milliseconds: 300);
   Timer? _searchDebounceTimer;
@@ -99,6 +102,39 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     // 系列清單只給篩選下拉選單用，不該擋住第一頁卡片：兩個並行抓。
     unawaited(_fetchSeriesList());
     unawaited(fetchCards());
+    // fetchCards() 在第一個 await 前就把 _requestId 加一，這裡抓到的就是初始瀏覽那輪的 id。
+    unawaited(_restoreCache(_requestId));
+  }
+
+  Future<void> _restoreCache(int request) async {
+    List<UACard>? cards;
+    List<String>? series;
+    try {
+      final store = ref.read(cardCacheStoreProvider);
+      cards = await store.loadFirstPage();
+      series = await store.loadSeries();
+    } catch (e) {
+      debugPrint('讀取快取失敗: $e');
+      return;
+    }
+    if (!ref.mounted) return;
+    if (series != null && series.isNotEmpty && state.availableSeries.isEmpty) {
+      state = state.copyWith(availableSeries: series, error: state.error);
+    }
+    // 只在「還是同一輪初始預設瀏覽、而且網路還沒給卡片」時套用，不能蓋掉搜尋/篩選/新資料。
+    if (cards != null &&
+        cards.isNotEmpty &&
+        request == _requestId &&
+        !_isSearchMode &&
+        state.selectedSeries.isEmpty &&
+        state.selectedColors.isEmpty &&
+        state.allCards.isEmpty) {
+      _showingCache = true;
+      // 同一輪請求如果已經失敗（離線時常比讀快取還快），有快取就不算失敗：清掉 error。
+      // 快取顯示中 hasMore 固定 false：不然 loadMore 會把 _offset 推到 60，第一頁刷新回來後就跳頁。
+      state = state.copyWith(allCards: cards, hasMore: false);
+      _applyFilters();
+    }
   }
 
   Future<void> _fetchSeriesList() {
@@ -115,6 +151,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       if (!ref.mounted) return;
       // 系列清單跟卡片並行，可能比失敗的卡片晚回來，不能把卡片的錯誤洗掉。
       state = state.copyWith(availableSeries: list, isLoadingSeries: false, error: state.error);
+      if (list.isNotEmpty) unawaited(ref.read(cardCacheStoreProvider).saveSeries(list));
     } catch (e) {
       debugPrint('載入系列失敗: $e');
       if (!ref.mounted) return;
@@ -122,10 +159,17 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     }
   }
 
-  Future<void> fetchCards() async {
+  Future<void> fetchCards() => _fetchFirstPage(refreshingCache: false);
+
+  /// refreshingCache：只有「快取顯示中、打開組牌頁時的背景刷新」傳 true，這時失敗保留快取、不報錯；
+  /// 其他新請求（初始載入、換系列/顏色、清空搜尋）一律重設 _showingCache，失敗照常回報。
+  Future<void> _fetchFirstPage({required bool refreshingCache}) async {
     final int myRequest = ++_requestId;
     _offset = 0;
     _isSearchMode = false;
+    final bool isDefaultBrowse =
+        state.selectedSeries.isEmpty && state.selectedColors.isEmpty && state.searchQuery.isEmpty;
+    if (!refreshingCache) _showingCache = false;
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(cardRepositoryProvider);
@@ -136,17 +180,32 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
         offset: 0,
       );
       if (myRequest != _requestId) return; // 這筆結果已經被更新的查詢蓋過，丟棄
+      _showingCache = false;
       state = state.copyWith(allCards: cards, isLoading: false, hasMore: cards.length == _pageSize);
       _applyFilters();
+      // 只快取預設瀏覽（無系列、無顏色、無搜尋字）的第一頁。
+      if (isDefaultBrowse && cards.isNotEmpty) unawaited(ref.read(cardCacheStoreProvider).saveFirstPage(cards));
     } catch (e) {
       if (myRequest != _requestId) return;
+      if (_showingCache) {
+        // 畫面上還是快取：保留快取、不設 error（不跳 SnackBar）；_showingCache 留著，下次打開組牌頁再試。
+        state = state.copyWith(isLoading: false);
+        return;
+      }
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.dbConnectionFailed));
     }
   }
 
-  /// 預載失敗（還沒有任何卡片、且留著錯誤）時重抓一次；組牌頁打開時呼叫。
+  /// 組牌頁打開時呼叫：預載失敗（還沒有任何卡片、且留著錯誤）時重抓一次；
+  /// 畫面上還是快取（離線開 App 等情況）時，背景再刷新一次預設瀏覽第一頁，失敗也不報錯。
+  /// 已經有請求在飛（isLoading）就不重複送。
   void retryIfInitialLoadFailed() {
-    if (state.isLoading || state.allCards.isNotEmpty || state.error == null) return;
+    if (state.isLoading) return;
+    if (_showingCache) {
+      if (!_isSearchMode) unawaited(_fetchFirstPage(refreshingCache: true));
+      return;
+    }
+    if (state.allCards.isNotEmpty || state.error == null) return;
     if (_isSearchMode) {
       _remoteSearch(state.searchQuery);
     } else {
@@ -180,6 +239,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     final int myRequest = ++_requestId;
     _offset = 0;
     _isSearchMode = true;
+    _showingCache = false;
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(cardRepositoryProvider);

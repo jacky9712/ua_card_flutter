@@ -91,4 +91,29 @@ class UACard {
       price: parsedPrice,
     );
   }
+
+  // key 名稱必須跟 fromJson 讀的一致：本機卡片快取靠 toJson → fromJson 還原。
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'series_id': seriesId,
+      'card_number': cardNumber,
+      'name': name,
+      'rarity': rarity,
+      'is_parallel': isParallel,
+      'star_count': starCount,
+      'has_signature': hasSignature,
+      'color': color,
+      'image_url': imageUrl,
+      'card_type': cardType,
+      'bp': bp,
+      'ap_cost': apCost,
+      'energy_req': energyReq,
+      'energy_generated': energyGenerated,
+      'tags': tags,
+      'effect_text': effectText,
+      'trigger_text': triggerText,
+      'latest_prices': price == null ? null : {'price_jpy': price},
+    };
+  }
 }
