@@ -84,6 +84,9 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   // true：allCards 還是本機快取的第一頁，還沒被任何網路結果換掉。
   bool _showingCache = false;
 
+  // true：availableSeries 還是本機快取的系列清單，還沒被網路結果換掉（retrySeriesIfEmpty 要繼續重抓）。
+  bool _seriesFromCache = false;
+
   // 搜尋框每打一個字都會呼叫 updateSearchQuery，等使用者停手一小段時間再送遠端查詢。
   static const Duration searchDebounce = Duration(milliseconds: 300);
   Timer? _searchDebounceTimer;
@@ -119,6 +122,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     }
     if (!ref.mounted) return;
     if (series != null && series.isNotEmpty && state.availableSeries.isEmpty) {
+      _seriesFromCache = true;
       state = state.copyWith(availableSeries: series, error: state.error);
     }
     // 只在「還是同一輪初始預設瀏覽、而且網路還沒給卡片」時套用，不能蓋掉搜尋/篩選/新資料。
@@ -132,7 +136,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       _showingCache = true;
       // 同一輪請求如果已經失敗（離線時常比讀快取還快），有快取就不算失敗：清掉 error。
       // 快取顯示中 hasMore 固定 false：不然 loadMore 會把 _offset 推到 60，第一頁刷新回來後就跳頁。
-      state = state.copyWith(allCards: cards, hasMore: false);
+      state = state.copyWith(allCards: cards, hasMore: false, error: null);
       _applyFilters();
     }
   }
@@ -150,6 +154,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       final list = await repo.fetchSeriesList();
       if (!ref.mounted) return;
       // 系列清單跟卡片並行，可能比失敗的卡片晚回來，不能把卡片的錯誤洗掉。
+      _seriesFromCache = false;
       state = state.copyWith(availableSeries: list, isLoadingSeries: false, error: state.error);
       if (list.isNotEmpty) unawaited(ref.read(cardCacheStoreProvider).saveSeries(list));
     } catch (e) {
@@ -213,9 +218,9 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     }
   }
 
-  /// 系列清單還是空的時候重抓一次（組牌頁打開、打開系列選單時呼叫）；請求進行中不會重複送。
+  /// 系列清單還是空的、或還是本機快取時重抓一次（組牌頁打開、打開系列選單時呼叫）；請求進行中不會重複送。
   void retrySeriesIfEmpty() {
-    if (state.availableSeries.isNotEmpty) return;
+    if (state.availableSeries.isNotEmpty && !_seriesFromCache) return;
     unawaited(_fetchSeriesList());
   }
 

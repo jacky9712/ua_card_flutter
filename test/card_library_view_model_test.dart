@@ -438,6 +438,34 @@ void main() {
       });
     });
 
+    test('系列清單是快取來的：retrySeriesIfEmpty 會繼續重抓，抓到新的就停', () {
+      fakeAsync((async) {
+        cache.series = ['OLD'];
+        repo.failSeries = true;
+        final container = makeContainer(async);
+        final vm = container.read(cardLibraryViewModelProvider.notifier);
+        expect(container.read(cardLibraryViewModelProvider).availableSeries, ['OLD']);
+        expect(repo.seriesCalls, 1);
+
+        vm.retrySeriesIfEmpty(); // 仍是快取，就算清單不是空的也要重抓；失敗則保留快取
+        async.flushMicrotasks();
+        expect(repo.seriesCalls, 2);
+        expect(container.read(cardLibraryViewModelProvider).availableSeries, ['OLD']);
+
+        repo.failSeries = false;
+        repo.seriesResult = ['UA01', 'UA02'];
+        vm.retrySeriesIfEmpty();
+        async.flushMicrotasks();
+        expect(repo.seriesCalls, 3);
+        expect(container.read(cardLibraryViewModelProvider).availableSeries, ['UA01', 'UA02']);
+
+        vm.retrySeriesIfEmpty(); // 已經換成網路結果，不再重抓
+        async.flushMicrotasks();
+        expect(repo.seriesCalls, 3);
+        container.dispose();
+      });
+    });
+
     test('有快取：背景失敗保留快取、沒有 error', () {
       fakeAsync((async) {
         final errors = <AppError?>[];
