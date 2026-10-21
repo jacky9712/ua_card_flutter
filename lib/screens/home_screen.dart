@@ -139,6 +139,9 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authViewModelProvider);
     final metaState = ref.watch(metaViewModelProvider);
+    // 首頁一顯示就建立（非 autoDispose 的）卡片庫 provider，在背景先載第一頁卡片，
+    // 使用者點進組牌頁時不用從零開始等；用 listen 而不是 watch，首頁不會跟著卡片庫狀態重建。
+    ref.listen(cardLibraryViewModelProvider, (_, _) {});
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(

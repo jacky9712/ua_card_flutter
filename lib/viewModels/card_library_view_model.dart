@@ -65,11 +65,11 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   int _offset = 0;
   bool _isSearchMode = false; // 目前 allCards 是系列瀏覽來的還是關鍵字搜尋來的，loadMore() 要知道呼叫哪個 repo 方法
 
-  // 🔥 賽跑保護：冷啟動時 build() 會非同步觸發 _initData()（先抓系列、再抓第一頁瀏覽），
-  // 如果使用者在這個還沒跑完的當下就直接打關鍵字搜尋（例如從首頁搜尋框第一次進來，
-  // provider 剛初始化），_initData() 裡的 fetchCards() 跟 _remoteSearch() 會同時在跑，
-  // 誰後完成就用誰的結果覆蓋 allCards——如果是瀏覽的那次後完成，就會把「跟搜尋字完全
-  // 無關的瀏覽結果」套用搜尋文字篩選，結果幾乎必定是空的，使用者體感就是「打名字找不到」。
+  // 🔥 賽跑保護：build() 會用 microtask 觸發 _initData()，同時並行抓系列清單與第一頁瀏覽
+  // （卡片不再等系列清單）。provider 可能在首頁一顯示時就被 HomeScreen 建立、在背景預載，
+  // 所以使用者從首頁搜尋框送出搜尋時，預載的 fetchCards() 很可能還在跑，跟 _remoteSearch()
+  // 同時進行，誰後完成就用誰的結果覆蓋 allCards——如果是瀏覽的那次後完成，就會把「跟搜尋字
+  // 完全無關的瀏覽結果」套用搜尋文字篩選，結果幾乎必定是空的，使用者體感就是「打名字找不到」。
   // 每次真正發起新的一輪查詢（fetchCards/_remoteSearch）就換一個 request id，
   // 非同步結果回來時如果 id 已經被更新的請求蓋過，直接丟棄，不寫回 state。
   int _requestId = 0;
@@ -81,20 +81,25 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   @override
   CardLibraryState build() {
     ref.onDispose(() => _searchDebounceTimer?.cancel());
-    _initData();
+    // fetchCards() 在第一個 await 前就會寫 state，build() 裡直接呼叫會讀到未初始化的 provider，
+    // 所以延到 microtask（同 meta_view_model.dart 的做法）。
+    Future.microtask(_initData);
     return CardLibraryState(isLoading: true);
   }
 
-  Future<void> _initData() async {
-    await _fetchSeriesList();
-    await fetchCards();
+  void _initData() {
+    if (!ref.mounted) return; // microtask 跑之前 provider 可能已經被 dispose
+    // 系列清單只給篩選下拉選單用，不該擋住第一頁卡片：兩個並行抓。
+    unawaited(_fetchSeriesList());
+    unawaited(fetchCards());
   }
 
   Future<void> _fetchSeriesList() async {
     try {
       final repo = ref.read(cardRepositoryProvider);
       final list = await repo.fetchSeriesList();
-      state = state.copyWith(availableSeries: list);
+      // 系列清單跟卡片並行，可能比失敗的卡片晚回來，不能把卡片的錯誤洗掉。
+      state = state.copyWith(availableSeries: list, error: state.error);
     } catch (e) {
       debugPrint('載入系列失敗: $e');
     }
@@ -119,6 +124,16 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     } catch (e) {
       if (myRequest != _requestId) return;
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.dbConnectionFailed));
+    }
+  }
+
+  /// 預載失敗（還沒有任何卡片、且留著錯誤）時重抓一次；組牌頁打開時呼叫。
+  void retryIfInitialLoadFailed() {
+    if (state.isLoading || state.allCards.isNotEmpty || state.error == null) return;
+    if (_isSearchMode) {
+      _remoteSearch(state.searchQuery);
+    } else {
+      fetchCards();
     }
   }
 
