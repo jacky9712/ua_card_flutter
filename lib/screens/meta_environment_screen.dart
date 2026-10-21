@@ -136,8 +136,8 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
   Widget _buildLeaderboardTile(int rank, Map<String, dynamic> item) {
     Color rankColor = Colors.grey;
     if (rank == 1) rankColor = AppColors.gold;
-    if (rank == 2) rankColor = const Color(0xFFC0C0C0);
-    if (rank == 3) rankColor = const Color(0xFFCD7F32);
+    if (rank == 2) rankColor = AppColors.rankSilver;
+    if (rank == 3) rankColor = AppColors.rankBronze;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

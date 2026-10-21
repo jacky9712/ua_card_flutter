@@ -18,7 +18,7 @@ class DeckBuilderScreen extends ConsumerStatefulWidget {
 }
 
 class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
-  // 對應 _getCardColor 支援的五色，標籤給顏色篩選器顯示用（跟著介面語言）
+  // 對應 AppColors.cardColor 支援的五色，標籤給顏色篩選器顯示用（跟著介面語言）
   Map<String, String> get _colorLabels => {
     'RED': context.l10n.colorRed,
     'BLUE': context.l10n.colorBlue,
@@ -39,17 +39,6 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  Color _getCardColor(String? colorStr) {
-    switch (colorStr?.toUpperCase()) {
-      case 'RED': return const Color(0xFFE53935);
-      case 'BLUE': return const Color(0xFF1E88E5);
-      case 'GREEN': return const Color(0xFF43A047);
-      case 'YELLOW': return const Color(0xFFFFB300);
-      case 'PURPLE': return const Color(0xFF8E24AA);
-      default: return const Color(0xFF757575);
-    }
   }
 
   void _navigateToPreview(DeckState deckState) {
@@ -266,7 +255,7 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
   }
 
   Widget _buildCardItem(UACard card, int qty) {
-    final color = _getCardColor(card.color);
+    final color = AppColors.cardColor(card.color);
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -313,7 +302,7 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
                       ),
                       child: Text(
                         '¥${card.price}',
-                        style: const TextStyle(color: Color(0xFFFFE082), fontSize: 10, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: AppColors.priceText, fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -420,7 +409,7 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
                   final bool isSelected = tempSelected.contains(colorKey);
 
                   return FilterChip(
-                    avatar: CircleAvatar(backgroundColor: _getCardColor(colorKey), radius: 6),
+                    avatar: CircleAvatar(backgroundColor: AppColors.cardColor(colorKey), radius: 6),
                     label: Text(entry.value, style: TextStyle(
                       fontSize: 12,
                       color: isSelected ? Colors.black : Colors.white70,

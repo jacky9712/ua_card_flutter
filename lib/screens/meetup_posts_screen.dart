@@ -129,7 +129,7 @@ class MeetupPostsScreen extends ConsumerWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               child: ListTile(
                                 leading: const CircleAvatar(
-                                  backgroundColor: Color(0x33FFC107),
+                                  backgroundColor: AppColors.amberTint,
                                   child: Icon(Icons.location_on, color: Colors.amber),
                                 ),
                                 title: Text(post['location_name'] ?? context.l10n.unnamedLocation, style: const TextStyle(fontWeight: FontWeight.bold)),

@@ -144,7 +144,7 @@ class LiveLocationScreen extends ConsumerWidget {
                 color: AppColors.surface,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
-                  leading: const CircleAvatar(backgroundColor: Color(0x33FFC107), child: Icon(Icons.person, color: Colors.amber)),
+                  leading: const CircleAvatar(backgroundColor: AppColors.amberTint, child: Icon(Icons.person, color: Colors.amber)),
                   title: Text(name),
                   trailing: (lat != null && lng != null)
                       ? IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => _openInMaps(lat, lng, name))

@@ -7,6 +7,43 @@ class AppColors {
   static const surfaceHigh = Color(0xFF2C2C35);
   static const gold = Color(0xFFFFD700);
   static const amber = Color(0xFFFFB300);
+
+  // 卡片顏色（卡片圖鑑 / 組牌 / 推薦牌組共用）
+  static const cardRed = Color(0xFFE53935);
+  static const cardBlue = Color(0xFF1E88E5);
+  static const cardGreen = Color(0xFF43A047);
+  static const cardYellow = Color(0xFFFFB300);
+  static const cardPurple = Color(0xFF8E24AA);
+  static const cardUnknown = Color(0xFF757575);
+
+  // 推薦牌組 Tier 分級
+  static const tier1 = Color(0xFFE53935);
+  static const tier2 = Color(0xFFFF9800);
+  static const tier3 = Color(0xFF1E88E5);
+
+  // 對戰環境排行榜 2、3 名（第 1 名用 gold）
+  static const rankSilver = Color(0xFFC0C0C0);
+  static const rankBronze = Color(0xFFCD7F32);
+
+  // 頭像 / 圖示底色（20% 透明的 amber）
+  static const amberTint = Color(0x33FFC107);
+
+  // 卡價文字
+  static const priceText = Color(0xFFFFE082);
+
+  // 主要行動按鈕（儲存牌組）
+  static const actionRed = Color(0xFFE53935);
+
+  /// 卡片顏色字串（RED/BLUE/GREEN/YELLOW/PURPLE，不分大小寫）→ 色碼；
+  /// null 或不認得的字串回傳 [cardUnknown]。
+  static Color cardColor(String? color) => switch (color?.toUpperCase()) {
+        'RED' => cardRed,
+        'BLUE' => cardBlue,
+        'GREEN' => cardGreen,
+        'YELLOW' => cardYellow,
+        'PURPLE' => cardPurple,
+        _ => cardUnknown,
+      };
 }
 
 ThemeData buildTcgTheme() {
