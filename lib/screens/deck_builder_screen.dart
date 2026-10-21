@@ -33,6 +33,11 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
   void initState() {
     super.initState();
     _searchController = TextEditingController(text: ref.read(cardLibraryViewModelProvider).searchQuery);
+    // 預載失敗的話打開組牌頁時重抓一次；在 initState/build 期間改 provider 會丟例外，所以延到這一幀畫完。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(cardLibraryViewModelProvider.notifier).retryIfInitialLoadFailed();
+    });
   }
 
   @override
