@@ -35,17 +35,6 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
     'PURPLE': context.l10n.colorPurple,
   };
 
-  Color _getCardColor(String colorStr) {
-    switch (colorStr.toUpperCase()) {
-      case 'RED': return const Color(0xFFE53935);
-      case 'BLUE': return const Color(0xFF1E88E5);
-      case 'GREEN': return const Color(0xFF43A047);
-      case 'YELLOW': return const Color(0xFFFFB300);
-      case 'PURPLE': return const Color(0xFF8E24AA);
-      default: return const Color(0xFF757575);
-    }
-  }
-
   bool get _hasActiveFilter =>
       _selectedSeriesCode != null || _selectedColors.isNotEmpty || _selectedTier != null || _onlyMySeries;
 
@@ -53,9 +42,9 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
   Color _tierColor(String tier) {
     final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(tier);
     final double rank = match != null ? double.tryParse(match.group(1)!) ?? 99 : 99;
-    if (rank <= 1) return const Color(0xFFE53935);
-    if (rank <= 2) return const Color(0xFFFF9800);
-    if (rank <= 3) return const Color(0xFF1E88E5);
+    if (rank <= 1) return AppColors.tier1;
+    if (rank <= 2) return AppColors.tier2;
+    if (rank <= 3) return AppColors.tier3;
     return Colors.grey;
   }
 
@@ -201,7 +190,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                         children: _colorLabels.entries.map((entry) {
                           final bool selected = _selectedColors.contains(entry.key);
                           return ChoiceChip(
-                            avatar: CircleAvatar(backgroundColor: _getCardColor(entry.key), radius: 6),
+                            avatar: CircleAvatar(backgroundColor: AppColors.cardColor(entry.key), radius: 6),
                             label: Text(entry.value),
                             selected: selected,
                             onSelected: (_) {

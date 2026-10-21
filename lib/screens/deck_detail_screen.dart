@@ -215,7 +215,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                 child: ElevatedButton(
                   onPressed: widget.onSavePressed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53935),
+                    backgroundColor: AppColors.actionRed,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
