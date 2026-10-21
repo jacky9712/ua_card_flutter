@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,6 +50,8 @@ class _EmptyCardCacheStore implements CardCacheStore {
 class _FakeCardRepository implements CardRepository {
   int fetchCalls = 0;
   bool failFetch = false;
+  List<UACard> browseResult = const [];
+  Completer<List<UACard>>? searchCompleter;
 
   @override
   Future<List<String>> fetchSeriesList() async => [];
@@ -56,11 +60,14 @@ class _FakeCardRepository implements CardRepository {
   Future<List<UACard>> fetchCards({String? series, List<String>? colors, int limit = 60, int offset = 0}) async {
     fetchCalls++;
     if (failFetch) throw Exception('network down');
-    return [];
+    return browseResult;
   }
 
   @override
-  Future<List<UACard>> searchCards(String query, {String? series, List<String>? colors, int limit = 60, int offset = 0}) async => [];
+  Future<List<UACard>> searchCards(String query, {String? series, List<String>? colors, int limit = 60, int offset = 0}) async {
+    if (searchCompleter != null) return searchCompleter!.future;
+    return [];
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -129,5 +136,31 @@ void main() {
     // 重抓還是失敗，但不會一直重試
     await tester.pump(const Duration(seconds: 1));
     expect(repo.fetchCalls, 2);
+  });
+
+  testWidgets('已經有卡片時重新查詢，頂端顯示進度條；查完就消失', (tester) async {
+    // 卡片名稱刻意對不上搜尋字，畫面停在「找不到卡片」，測試不會建出卡圖（CachedNetworkImage）。
+    repo.browseResult = [UACard(id: 1, cardNumber: 'UA01BT-001', name: 'abc')];
+    final container = makeContainer();
+    container.listen(cardLibraryViewModelProvider, (_, _) {});
+    final vm = container.read(cardLibraryViewModelProvider.notifier);
+    vm.updateSearchQuery('zzz');
+    repo.searchCompleter = Completer();
+
+    await tester.pumpWidget(wrap(container, const DeckBuilderScreen()));
+    await tester.pump();
+    await tester.pump();
+    expect(container.read(cardLibraryViewModelProvider).allCards, isNotEmpty);
+    expect(find.byKey(const Key('cardLibraryLoadingBar')), findsNothing);
+
+    await tester.pump(CardLibraryViewModel.searchDebounce); // 遠端搜尋送出，結果還沒回來
+    await tester.pump();
+    expect(container.read(cardLibraryViewModelProvider).isLoading, isTrue);
+    expect(find.byKey(const Key('cardLibraryLoadingBar')), findsOneWidget);
+
+    repo.searchCompleter!.complete([]);
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const Key('cardLibraryLoadingBar')), findsNothing);
   });
 }

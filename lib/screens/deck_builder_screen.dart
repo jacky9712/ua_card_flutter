@@ -143,45 +143,49 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
       // 🔥 核心修正：始終保持 GridView 結構，不再使用 Center()
       body: libraryState.isLoading && libraryState.allCards.isEmpty
           ? _buildSkeletonGrid() // 第一次載入顯示骨架
-          : libraryState.filteredCards.isEmpty
-              ? Center(child: Text(context.l10n.noCardsFound))
-              : Column(
-                  children: [
-                    Expanded(
-                      child: NotificationListener<ScrollNotification>(
-                        // 捲到接近底部（剩 300px 內）就載入下一頁；loadMore() 內部
-                        // 自己擋 isLoadingMore/hasMore，這裡不用另外 debounce。
-                        onNotification: (notification) {
-                          if (notification.metrics.pixels >= notification.metrics.maxScrollExtent - 300) {
-                            ref.read(cardLibraryViewModelProvider.notifier).loadMore();
-                          }
-                          return false;
-                        },
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(10),
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            childAspectRatio: 0.54,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8
-                          ),
-                          itemCount: libraryState.filteredCards.length,
-                          itemBuilder: (context, index) {
-                            final card = libraryState.filteredCards[index];
-                            final qty = deckState.deckMap[card.id] ?? 0;
-                            return _buildCardItem(card, qty);
+          : Column(
+              children: [
+                // 已經有卡片時重新查詢（換系列/顏色、搜尋、背景刷新快取）不會進骨架，
+                // 頂端一條細進度條讓使用者知道還在載入。
+                if (libraryState.isLoading)
+                  const LinearProgressIndicator(key: Key('cardLibraryLoadingBar'), minHeight: 2),
+                Expanded(
+                  child: libraryState.filteredCards.isEmpty
+                      ? Center(child: Text(context.l10n.noCardsFound))
+                      : NotificationListener<ScrollNotification>(
+                          // 捲到接近底部（剩 300px 內）就載入下一頁；loadMore() 內部
+                          // 自己擋 isLoadingMore/hasMore，這裡不用另外 debounce。
+                          onNotification: (notification) {
+                            if (notification.metrics.pixels >= notification.metrics.maxScrollExtent - 300) {
+                              ref.read(cardLibraryViewModelProvider.notifier).loadMore();
+                            }
+                            return false;
                           },
+                          child: GridView.builder(
+                            padding: const EdgeInsets.all(10),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              childAspectRatio: 0.54,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8
+                            ),
+                            itemCount: libraryState.filteredCards.length,
+                            itemBuilder: (context, index) {
+                              final card = libraryState.filteredCards[index];
+                              final qty = deckState.deckMap[card.id] ?? 0;
+                              return _buildCardItem(card, qty);
+                            },
+                          ),
                         ),
-                      ),
-                    ),
-                    if (libraryState.isLoadingMore)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                      ),
-                  ],
                 ),
+                if (libraryState.isLoadingMore)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
+              ],
+            ),
     );
   }
 
