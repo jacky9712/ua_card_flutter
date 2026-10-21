@@ -3,6 +3,7 @@ import '../models/ua_card.dart';
 import '../repositories/providers.dart';
 import 'auth_view_model.dart';
 import '../utils/app_error.dart';
+import '../utils/deck_qr_codec.dart';
 
 class DeckState {
   final Map<int, int> deckMap;
@@ -30,6 +31,20 @@ class DeckState {
       if (card?.price != null) total += card!.price! * qty;
     });
     return total;
+  }
+
+  /// 把 deckMap 依張數展開成卡片清單（給預覽畫面用）；沒有詳細資料的卡跳過。
+  List<UACard> get expandedCards {
+    final List<UACard> expandedCards = [];
+    deckMap.forEach((cardId, quantity) {
+      final card = deckCardDetails[cardId];
+      if (card != null) {
+        for (int i = 0; i < quantity; i++) {
+          expandedCards.add(card);
+        }
+      }
+    });
+    return expandedCards;
   }
 
   DeckState copyWith({
@@ -194,6 +209,7 @@ class DeckViewModel extends Notifier<DeckState> {
               'id': c.id, 'card_number': c.cardNumber, 'name': c.name, 
               'image_url': c.imageUrl, 'color': c.color, 'energy_req': c.energyReq,
               'trigger_text': c.triggerText, 'price': c.price, 'series_id': c.seriesId,
+              'effect_text': c.effectText,
             }
           });
         });
@@ -247,6 +263,7 @@ class DeckViewModel extends Notifier<DeckState> {
             color: cardData['color'], energyReq: cardData['energy_req'],
             triggerText: cardData['trigger_text'], price: cardData['price'],
             seriesId: cardData['series_id'],
+            effectText: cardData['effect_text'],
           );
           for (int i = 0; i < item['quantity']; i++) {
             expanded.add(card);
@@ -261,16 +278,13 @@ class DeckViewModel extends Notifier<DeckState> {
   }
 
   Future<bool> importDeckFromQR(String qrData) async {
-    if (!qrData.startsWith('UA_DECK|')) return false;
+    final targetCounts = DeckQrCodec.decode(qrData);
+    if (targetCounts == null) {
+      state = state.copyWith(error: const AppError(AppErrorCode.importDeckFailed));
+      return false;
+    }
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final String content = qrData.substring(8);
-      final List<String> pairs = content.split(',');
-      final Map<String, int> targetCounts = {};
-      for (var pair in pairs) {
-        final List<String> parts = pair.split(':');
-        if (parts.length == 2) targetCounts[parts[0]] = int.tryParse(parts[1]) ?? 0;
-      }
       final cardRepo = ref.read(cardRepositoryProvider);
       final List<UACard> cards = await cardRepo.fetchCardsByNumbers(targetCounts.keys.toList());
       final Map<int, int> newDeckMap = {};
@@ -284,6 +298,11 @@ class DeckViewModel extends Notifier<DeckState> {
           newDetails[card.id!] = card;
           processedNumbers.add(card.cardNumber);
         }
+      }
+      if (newDeckMap.isEmpty) {
+        // 沒有任何卡對得上：視為失敗，保留目前正在編輯的牌組
+        state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.importDeckFailed));
+        return false;
       }
       state = state.copyWith(deckMap: newDeckMap, deckCardDetails: newDetails, isLoading: false, clearEditingId: true);
       return true;

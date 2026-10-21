@@ -53,19 +53,9 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
   }
 
   void _navigateToPreview(DeckState deckState) {
-    final List<UACard> expandedCards = [];
-    deckState.deckMap.forEach((cardId, quantity) {
-      final card = deckState.deckCardDetails[cardId];
-      if (card != null) {
-        for (int i = 0; i < quantity; i++) {
-          expandedCards.add(card);
-        }
-      }
-    });
-
     Navigator.push(context, MaterialPageRoute(builder: (context) => DeckDetailScreen(
       deckName: context.l10n.newDeckPreview,
-      cardsInDeck: expandedCards,
+      cardsInDeck: deckState.expandedCards,
       onSavePressed: () => _showSaveDialog(),
     )));
   }

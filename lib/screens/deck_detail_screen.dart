@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/ua_card.dart';
 import '../utils/deck_exporter.dart';
+import '../utils/deck_qr_codec.dart';
 import '../viewModels/deck_view_model.dart';
 import 'deck_builder_screen.dart';
 import '../l10n/l10n_ext.dart';
@@ -42,20 +43,6 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
       }
     }
     return map;
-  }
-
-  String _generateDeckData() {
-    final Map<int, int> deckMap = _getDeckMap();
-    final List<String> parts = [];
-    final List<UACard> uniqueCards = widget.cardsInDeck.toSet().toList();
-
-    deckMap.forEach((cardId, quantity) {
-      try {
-        final card = uniqueCards.firstWhere((c) => c.id == cardId);
-        parts.add('${card.cardNumber}:$quantity');
-      } catch (_) {}
-    });
-    return 'UA_DECK|${parts.join(',')}';
   }
 
   // 🧮 數據處理：將 50 張卡片按卡號分組，用於顯示卡表
@@ -327,7 +314,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
   }
 
   Widget _buildTextAndQRSection(Color surfaceColor, Color textColor) {
-    final String deckData = _generateDeckData();
+    final String deckData = DeckQrCodec.encode(DeckQrCodec.countsFromDeck(_getDeckMap(), widget.cardsInDeck));
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
