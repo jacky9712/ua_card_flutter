@@ -1336,6 +1336,12 @@ abstract class AppLocalizations {
   /// **'選擇系列'**
   String get selectSeries;
 
+  /// No description provided for @loadingSeries.
+  ///
+  /// In zh, this message translates to:
+  /// **'系列載入中…'**
+  String get loadingSeries;
+
   /// No description provided for @selectColor.
   ///
   /// In zh, this message translates to:

@@ -206,6 +206,7 @@
   "previewAndSave": "プレビューして保存",
   "allSeries": "すべてのシリーズ",
   "selectSeries": "シリーズを選択",
+  "loadingSeries": "シリーズを読み込み中…",
   "selectColor": "色を選択",
   "allColors": "すべての色",
   "saveDeck": "デッキを保存",

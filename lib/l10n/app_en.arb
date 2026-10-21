@@ -206,6 +206,7 @@
   "previewAndSave": "Preview & Save",
   "allSeries": "All series",
   "selectSeries": "Select series",
+  "loadingSeries": "Loading series…",
   "selectColor": "Select color",
   "allColors": "All colors",
   "saveDeck": "Save deck",

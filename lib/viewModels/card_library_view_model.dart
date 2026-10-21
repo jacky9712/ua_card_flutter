@@ -15,6 +15,7 @@ class CardLibraryState {
   final String searchQuery;
   final bool isLoading;
   final bool isLoadingMore;
+  final bool isLoadingSeries;
   final bool hasMore;
   final AppError? error;
 
@@ -27,6 +28,7 @@ class CardLibraryState {
     this.searchQuery = '',
     this.isLoading = false,
     this.isLoadingMore = false,
+    this.isLoadingSeries = false,
     this.hasMore = false,
     this.error,
   });
@@ -40,6 +42,7 @@ class CardLibraryState {
     String? searchQuery,
     bool? isLoading,
     bool? isLoadingMore,
+    bool? isLoadingSeries,
     bool? hasMore,
     AppError? error,
   }) {
@@ -52,6 +55,7 @@ class CardLibraryState {
       searchQuery: searchQuery ?? this.searchQuery,
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      isLoadingSeries: isLoadingSeries ?? this.isLoadingSeries,
       hasMore: hasMore ?? this.hasMore,
       error: error,
     );
@@ -74,6 +78,9 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   // 非同步結果回來時如果 id 已經被更新的請求蓋過，直接丟棄，不寫回 state。
   int _requestId = 0;
 
+  // 系列請求進行中就共用同一個 Future，不重複送出（_initData、組牌頁、系列選單都可能觸發）。
+  Future<void>? _seriesRequest;
+
   // 搜尋框每打一個字都會呼叫 updateSearchQuery，等使用者停手一小段時間再送遠端查詢。
   static const Duration searchDebounce = Duration(milliseconds: 300);
   Timer? _searchDebounceTimer;
@@ -94,14 +101,24 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     unawaited(fetchCards());
   }
 
-  Future<void> _fetchSeriesList() async {
+  Future<void> _fetchSeriesList() {
+    return _seriesRequest ??= _loadSeriesList().whenComplete(() => _seriesRequest = null);
+  }
+
+  Future<void> _loadSeriesList() async {
+    // 系列清單只動 availableSeries/isLoadingSeries：不碰 _requestId、isLoading、allCards，
+    // 而且 copyWith 預設會清掉 error，每次都要帶 state.error 保留卡片的錯誤。
+    state = state.copyWith(isLoadingSeries: true, error: state.error);
     try {
       final repo = ref.read(cardRepositoryProvider);
       final list = await repo.fetchSeriesList();
+      if (!ref.mounted) return;
       // 系列清單跟卡片並行，可能比失敗的卡片晚回來，不能把卡片的錯誤洗掉。
-      state = state.copyWith(availableSeries: list, error: state.error);
+      state = state.copyWith(availableSeries: list, isLoadingSeries: false, error: state.error);
     } catch (e) {
       debugPrint('載入系列失敗: $e');
+      if (!ref.mounted) return;
+      state = state.copyWith(isLoadingSeries: false, error: state.error);
     }
   }
 
@@ -135,6 +152,12 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     } else {
       fetchCards();
     }
+  }
+
+  /// 系列清單還是空的時候重抓一次（組牌頁打開、打開系列選單時呼叫）；請求進行中不會重複送。
+  void retrySeriesIfEmpty() {
+    if (state.availableSeries.isNotEmpty) return;
+    unawaited(_fetchSeriesList());
   }
 
   void updateSearchQuery(String query) {

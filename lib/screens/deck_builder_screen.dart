@@ -33,10 +33,13 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
   void initState() {
     super.initState();
     _searchController = TextEditingController(text: ref.read(cardLibraryViewModelProvider).searchQuery);
-    // 預載失敗的話打開組牌頁時重抓一次；在 initState/build 期間改 provider 會丟例外，所以延到這一幀畫完。
+    // 卡片預載失敗、或系列清單還是空的話，打開組牌頁時各重抓一次；
+    // 在 initState/build 期間改 provider 會丟例外，所以延到這一幀畫完。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(cardLibraryViewModelProvider.notifier).retryIfInitialLoadFailed();
+      final vm = ref.read(cardLibraryViewModelProvider.notifier);
+      vm.retryIfInitialLoadFailed();
+      vm.retrySeriesIfEmpty();
     });
   }
 
@@ -328,28 +331,44 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
   }
 
   void _showSeriesPicker() {
-    final libState = ref.read(cardLibraryViewModelProvider);
-    
-    // 1. 複製一份清單並進行排序 (字母順序)
-    List<String> sortedSeries = List.from(libState.availableSeries);
-    sortedSeries.sort((a, b) => a.compareTo(b));
+    // 系列清單還是空的（預載失敗）就重抓一次；sheet 會 watch provider，資料回來選單跟著更新。
+    ref.read(cardLibraryViewModelProvider.notifier).retrySeriesIfEmpty();
 
-    // 2. 在最前面插入「全部系列」。這個字串同時拿來判斷是不是「不篩選」，
-    //    所以整個函式用同一個變數，不能各自再去翻譯一次。
+    // 「全部系列」這個字串同時拿來判斷是不是「不篩選」，
+    // 所以整個函式用同一個變數，不能各自再去翻譯一次。
     final allSeries = context.l10n.allSeries;
-    final List<String> displayList = [allSeries, ...sortedSeries];
 
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => Container(
+      builder: (ctx) => Consumer(builder: (ctx, sheetRef, _) {
+        final libState = sheetRef.watch(cardLibraryViewModelProvider);
+
+        // 1. 複製一份清單並進行排序 (字母順序)
+        List<String> sortedSeries = List.from(libState.availableSeries);
+        sortedSeries.sort((a, b) => a.compareTo(b));
+
+        // 2. 在最前面插入「全部系列」
+        final List<String> displayList = [allSeries, ...sortedSeries];
+
+        return Container(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(context.l10n.selectSeries, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            if (libState.isLoadingSeries && libState.availableSeries.isEmpty)
+              Padding(
+                key: const Key('seriesPickerLoading'),
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(children: [
+                  const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                  const SizedBox(width: 8),
+                  Text(context.l10n.loadingSeries, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                ]),
+              ),
             const SizedBox(height: 16),
             Flexible(
               child: GridView.builder(
@@ -385,7 +404,8 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
             ),
           ],
         ),
-      ),
+        );
+      }),
     );
   }
 

@@ -683,6 +683,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectSeries => 'Select series';
 
   @override
+  String get loadingSeries => 'Loading series…';
+
+  @override
   String get selectColor => 'Select color';
 
   @override

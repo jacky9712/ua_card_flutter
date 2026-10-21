@@ -370,6 +370,7 @@
   "previewAndSave": "預覽並儲存",
   "allSeries": "全部系列",
   "selectSeries": "選擇系列",
+  "loadingSeries": "系列載入中…",
   "selectColor": "選擇顏色",
   "allColors": "全部顏色",
   "saveDeck": "儲存牌組",

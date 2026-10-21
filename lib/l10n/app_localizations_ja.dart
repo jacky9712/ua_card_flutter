@@ -675,6 +675,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get selectSeries => 'シリーズを選択';
 
   @override
+  String get loadingSeries => 'シリーズを読み込み中…';
+
+  @override
   String get selectColor => '色を選択';
 
   @override
