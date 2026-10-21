@@ -33,7 +33,7 @@ class DeckExportWidget extends StatelessWidget {
     // 將卡片依照卡號排序，畫面更整齊
     groupedCards.sort((a, b) => a.key.cardNumber.compareTo(b.key.cardNumber));
 
-    final String deckData = DeckQrCodec.encode(DeckQrCodec.countsFromDeck(deckMap, allCards));
+    final String deckData = DeckQrCodec.encodeDeck(deckMap, allCards);
 
     return Container(
       width: 1000,
