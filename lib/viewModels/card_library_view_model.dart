@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ua_card.dart';
@@ -72,8 +74,13 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
   // 非同步結果回來時如果 id 已經被更新的請求蓋過，直接丟棄，不寫回 state。
   int _requestId = 0;
 
+  // 搜尋框每打一個字都會呼叫 updateSearchQuery，等使用者停手一小段時間再送遠端查詢。
+  static const Duration searchDebounce = Duration(milliseconds: 300);
+  Timer? _searchDebounceTimer;
+
   @override
   CardLibraryState build() {
+    ref.onDispose(() => _searchDebounceTimer?.cancel());
     _initData();
     return CardLibraryState(isLoading: true);
   }
@@ -121,8 +128,11 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     // 🔥 原本要打超過 2 個字才會觸發遠端搜尋，中日文卡名 2 個字往往就是很明確的關鍵字
     // （例如「紫雲」），卡在這個門檻下只會在「目前已經載入的那一小頁」裡面本地篩選，
     // 幾乎必定找不到——搜尋分頁後單頁資料量已經很小，不用再靠字數門檻擋遠端查詢。
+    _searchDebounceTimer?.cancel();
     if (query.isNotEmpty) {
-      _remoteSearch(query);
+      _searchDebounceTimer = Timer(searchDebounce, () => _remoteSearch(query));
+    } else if (_isSearchMode) {
+      fetchCards(); // 清空搜尋字立刻回到系列瀏覽，不等 debounce；同時換 request id 丟棄還在飛的搜尋結果
     } else {
       _applyFilters();
     }
@@ -147,7 +157,7 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
       _applyFilters();
     } catch (e) {
       if (myRequest != _requestId) return;
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.searchCardsFailed));
     }
   }
 

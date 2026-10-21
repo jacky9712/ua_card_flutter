@@ -51,6 +51,16 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 搜尋失敗時 filteredCards 還是上一次的結果，空狀態文字不會出現，所以用 SnackBar 提示。
+    // copyWith 每次都會把 error 重設成 null，所以每次新的失敗都是 null → 非 null。
+    ref.listen(cardLibraryViewModelProvider.select((s) => s.error), (prev, next) {
+      if (next != null && prev == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.localize(context.l10n)), backgroundColor: Colors.redAccent),
+        );
+      }
+    });
+
     final libraryState = ref.watch(cardLibraryViewModelProvider);
     final deckState = ref.watch(deckViewModelProvider);
 
