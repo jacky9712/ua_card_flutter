@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/ua_card.dart';
 import '../utils/postgrest_filter.dart';
+import 'card_columns.dart';
 
 abstract class CardRepository {
   Future<List<String>> fetchSeriesList();
@@ -28,7 +29,7 @@ class SupabaseCardRepository implements CardRepository {
 
   @override
   Future<List<UACard>> fetchCards({String? series, List<String>? colors, int limit = 60, int offset = 0}) async {
-    var query = _supabase.from('cards').select('*, latest_prices(price_jpy)');
+    var query = _supabase.from('cards').select(cardSelectColumns);
     if (series != null && series.isNotEmpty) {
       query = query.ilike('card_number', '$series%');
     }
@@ -47,7 +48,7 @@ class SupabaseCardRepository implements CardRepository {
     final pattern = escapePostgrestIlikeValue(query);
     var q = _supabase
         .from('cards')
-        .select('*, latest_prices(price_jpy)')
+        .select(cardSelectColumns)
         .or('card_number.ilike.%$pattern%,name.ilike.%$pattern%');
     // 系列篩選原本沒接進來，套了系列篩選（不管自動帶入還是手動選）後只要打字搜尋，
     // 就會忽略系列限制、變成整個資料庫下去搜──跟 fetchCards() 一樣補上 series 條件。
@@ -68,7 +69,7 @@ class SupabaseCardRepository implements CardRepository {
     
     final response = await _supabase
         .from('cards')
-        .select('*, latest_prices(price_jpy)')
+        .select(cardSelectColumns)
         .inFilter('card_number', cardNumbers);
 
     return (response as List).map((json) => UACard.fromJson(json)).toList();
