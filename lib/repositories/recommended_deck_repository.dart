@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/ua_card.dart';
+import 'card_columns.dart';
 
 abstract class RecommendedDeckRepository {
   Future<List<Map<String, dynamic>>> fetchRecommendedDecks();
@@ -77,7 +78,7 @@ class SupabaseRecommendedDeckRepository implements RecommendedDeckRepository {
   Future<List<UACard>> fetchRecommendedDeckCards(int deckId) async {
     final response = await _supabase
         .from('recommended_deck_cards')
-        .select('quantity, cards(*, latest_prices(price_jpy))')
+        .select('quantity, cards($cardSelectColumns)')
         .eq('recommended_deck_id', deckId);
 
     final List<UACard> expandedCards = [];
