@@ -44,11 +44,28 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
   @override
   LiveLocationState build() {
     // 🔥 build() 不能同步呼叫會馬上改 state 的 async function，見 profile_view_model.dart 的註解。
-    Future.microtask(fetchNearbyOthers);
+    Future.microtask(() async {
+      await _restoreSharing();
+      await fetchNearbyOthers();
+    });
     // provider 被丟棄時（例如畫面關掉、狀態重置）順便把還在跑的 Timer 停掉，
     // 不然背景會一直嘗試更新一個沒人在看的分享狀態。
     ref.onDispose(() => _pingTimer?.cancel());
     return LiveLocationState();
+  }
+
+  /// App 重開（或 provider 重建）時，伺服器上的位置在到期前都還是公開的；
+  /// 不恢復的話畫面會顯示「未分享」、停止按鈕也不見，使用者沒辦法關掉。
+  Future<void> _restoreSharing() async {
+    if (!isLocationCapablePlatform) return;
+    try {
+      final until = await ref.read(liveLocationRepositoryProvider).fetchMySharingUntil();
+      if (until == null || !DateTime.now().isBefore(until)) return;
+      state = state.copyWith(isSharing: true, sharingUntil: until);
+      _startPingTimer(until);
+    } catch (_) {
+      // 查不到就當作沒在分享，不擋畫面。
+    }
   }
 
   Future<void> fetchNearbyOthers() async {
@@ -78,7 +95,11 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
     }
 
     state = state.copyWith(isSharing: true, sharingUntil: until, isLoading: false);
+    _startPingTimer(until);
+    return true;
+  }
 
+  void _startPingTimer(DateTime until) {
     _pingTimer?.cancel();
     _pingTimer = Timer.periodic(const Duration(seconds: 45), (timer) async {
       if (DateTime.now().isAfter(until)) {
@@ -87,7 +108,6 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
       }
       await _pingOnce(until);
     });
-    return true;
   }
 
   Future<bool> _pingOnce(DateTime until) async {
