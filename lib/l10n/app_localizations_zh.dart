@@ -765,6 +765,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errLoadTopDecksFailed => '載入上位卡組失敗';
 
   @override
+  String get errSearchCardsFailed => '搜尋卡片失敗';
+
+  @override
   String errorWithDetail(String message, String detail) {
     return '$message: $detail';
   }

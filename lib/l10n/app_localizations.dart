@@ -1516,6 +1516,12 @@ abstract class AppLocalizations {
   /// **'載入上位卡組失敗'**
   String get errLoadTopDecksFailed;
 
+  /// No description provided for @errSearchCardsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜尋卡片失敗'**
+  String get errSearchCardsFailed;
+
   /// 錯誤訊息後面接原始例外內容（技術細節，不翻譯）
   ///
   /// In zh, this message translates to:

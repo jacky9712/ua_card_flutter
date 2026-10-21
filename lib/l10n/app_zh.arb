@@ -407,6 +407,7 @@
   "errLoadProfileFailed": "載入個人資料失敗",
   "errUpdateNicknameFailed": "更新暱稱失敗",
   "errLoadTopDecksFailed": "載入上位卡組失敗",
+  "errSearchCardsFailed": "搜尋卡片失敗",
   "errorWithDetail": "{message}: {detail}",
   "@errorWithDetail": {
     "description": "錯誤訊息後面接原始例外內容（技術細節，不翻譯）",

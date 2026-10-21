@@ -768,6 +768,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errLoadTopDecksFailed => '上位デッキの読み込みに失敗しました';
 
   @override
+  String get errSearchCardsFailed => 'カードの検索に失敗しました';
+
+  @override
   String errorWithDetail(String message, String detail) {
     return '$message: $detail';
   }

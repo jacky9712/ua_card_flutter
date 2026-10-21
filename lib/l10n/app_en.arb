@@ -236,5 +236,6 @@
   "errLoadProfileFailed": "Failed to load profile",
   "errUpdateNicknameFailed": "Failed to update nickname",
   "errLoadTopDecksFailed": "Failed to load top decks",
+  "errSearchCardsFailed": "Card search failed",
   "errorWithDetail": "{message}: {detail}"
 }

@@ -236,5 +236,6 @@
   "errLoadProfileFailed": "プロフィールの読み込みに失敗しました",
   "errUpdateNicknameFailed": "ニックネームの更新に失敗しました",
   "errLoadTopDecksFailed": "上位デッキの読み込みに失敗しました",
+  "errSearchCardsFailed": "カードの検索に失敗しました",
   "errorWithDetail": "{message}: {detail}"
 }

@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/ua_card.dart';
+import '../utils/postgrest_filter.dart';
 
 abstract class CardRepository {
   Future<List<String>> fetchSeriesList();
@@ -28,7 +29,7 @@ class SupabaseCardRepository implements CardRepository {
   @override
   Future<List<UACard>> fetchCards({String? series, List<String>? colors, int limit = 60, int offset = 0}) async {
     var query = _supabase.from('cards').select('*, latest_prices(price_jpy)');
-    if (series != null && series.isNotEmpty && series != '全部系列') {
+    if (series != null && series.isNotEmpty) {
       query = query.ilike('card_number', '$series%');
     }
     final colorFilter = _colorOrFilter(colors);
@@ -42,13 +43,15 @@ class SupabaseCardRepository implements CardRepository {
 
   @override
   Future<List<UACard>> searchCards(String query, {String? series, List<String>? colors, int limit = 60, int offset = 0}) async {
+    // 使用者輸入不能直接拼進 or() 篩選字串：, ( ) 會切壞邏輯樹、% _ 會被當成萬用字元。
+    final pattern = escapePostgrestIlikeValue(query);
     var q = _supabase
         .from('cards')
         .select('*, latest_prices(price_jpy)')
-        .or('card_number.ilike.%$query%,name.ilike.%$query%');
+        .or('card_number.ilike.%$pattern%,name.ilike.%$pattern%');
     // 系列篩選原本沒接進來，套了系列篩選（不管自動帶入還是手動選）後只要打字搜尋，
     // 就會忽略系列限制、變成整個資料庫下去搜──跟 fetchCards() 一樣補上 series 條件。
-    if (series != null && series.isNotEmpty && series != '全部系列') {
+    if (series != null && series.isNotEmpty) {
       q = q.ilike('card_number', '$series%');
     }
     final colorFilter = _colorOrFilter(colors);
