@@ -353,57 +353,57 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
         final List<String> displayList = [allSeries, ...sortedSeries];
 
         return Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(context.l10n.selectSeries, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            if (libState.isLoadingSeries && libState.availableSeries.isEmpty)
-              Padding(
-                key: const Key('seriesPickerLoading'),
-                padding: const EdgeInsets.only(top: 12),
-                child: Row(children: [
-                  const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                  const SizedBox(width: 8),
-                  Text(context.l10n.loadingSeries, style: const TextStyle(fontSize: 12, color: Colors.white70)),
-                ]),
-              ),
-            const SizedBox(height: 16),
-            Flexible(
-              child: GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3, 
-                  childAspectRatio: 2.5,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(context.l10n.selectSeries, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              if (libState.isLoadingSeries && libState.availableSeries.isEmpty)
+                Padding(
+                  key: const Key('seriesPickerLoading'),
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(children: [
+                    const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                    const SizedBox(width: 8),
+                    Text(context.l10n.loadingSeries, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                  ]),
                 ),
-                itemCount: displayList.length,
-                itemBuilder: (ctx, i) {
-                  final series = displayList[i];
-                  final bool isSelected = libState.selectedSeries == series || (series == allSeries && libState.selectedSeries.isEmpty);
-                  
-                  return ActionChip(
-                    label: Center(child: Text(series, style: TextStyle(
-                      fontSize: 12, 
-                      color: isSelected ? Colors.black : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ))),
-                    backgroundColor: isSelected ? Colors.amber : AppColors.surfaceHigh,
-                    side: BorderSide.none,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    onPressed: () {
-                      final value = (series == allSeries) ? '' : series;
-                      ref.read(cardLibraryViewModelProvider.notifier).updateSelectedSeries(value);
-                      Navigator.pop(ctx);
-                    }
-                  );
-                },
+              const SizedBox(height: 16),
+              Flexible(
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3, 
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10
+                  ),
+                  itemCount: displayList.length,
+                  itemBuilder: (ctx, i) {
+                    final series = displayList[i];
+                    final bool isSelected = libState.selectedSeries == series || (series == allSeries && libState.selectedSeries.isEmpty);
+                    
+                    return ActionChip(
+                      label: Center(child: Text(series, style: TextStyle(
+                        fontSize: 12, 
+                        color: isSelected ? Colors.black : Colors.white70,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ))),
+                      backgroundColor: isSelected ? Colors.amber : AppColors.surfaceHigh,
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      onPressed: () {
+                        final value = (series == allSeries) ? '' : series;
+                        ref.read(cardLibraryViewModelProvider.notifier).updateSelectedSeries(value);
+                        Navigator.pop(ctx);
+                      }
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         );
       }),
     );
