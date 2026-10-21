@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/ua_card.dart';
+import '../utils/deck_qr_codec.dart';
 import '../l10n/l10n_ext.dart';
 
 class DeckExportWidget extends StatelessWidget {
@@ -15,24 +16,16 @@ class DeckExportWidget extends StatelessWidget {
     required this.allCards,
   });
 
-  // 🧬 生成牌組字串以便掃描導入
-  String _generateDeckData() {
-    final List<String> parts = [];
-    deckMap.forEach((cardId, quantity) {
-      final card = allCards.firstWhere((c) => c.id == cardId);
-      parts.add('${card.cardNumber}:$quantity');
-    });
-    return 'UA_DECK|${parts.join(',')}';
-  }
-
   @override
   Widget build(BuildContext context) {
     // 🔥 1. 改變資料整理方式：不再把重複的卡片拆開，而是綁定「卡片物件」與「數量」
     final List<MapEntry<UACard, int>> groupedCards = [];
     int totalCount = 0; // 計算總張數
 
+    final cardsById = {for (final c in allCards) if (c.id != null) c.id!: c};
     deckMap.forEach((cardId, quantity) {
-      final card = allCards.firstWhere((c) => c.id == cardId);
+      final card = cardsById[cardId];
+      if (card == null) return;
       groupedCards.add(MapEntry(card, quantity));
       totalCount += quantity;
     });
@@ -40,7 +33,7 @@ class DeckExportWidget extends StatelessWidget {
     // 將卡片依照卡號排序，畫面更整齊
     groupedCards.sort((a, b) => a.key.cardNumber.compareTo(b.key.cardNumber));
 
-    final String deckData = _generateDeckData();
+    final String deckData = DeckQrCodec.encode(DeckQrCodec.countsFromDeck(deckMap, allCards));
 
     return Container(
       width: 1000,

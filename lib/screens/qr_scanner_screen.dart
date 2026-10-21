@@ -4,7 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewModels/deck_view_model.dart';
 import '../viewModels/opponent_view_model.dart';
-import '../models/ua_card.dart';
+import '../utils/deck_qr_codec.dart';
 import 'deck_detail_screen.dart';
 import '../l10n/l10n_ext.dart';
 
@@ -76,7 +76,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                 final String? code = barcode.rawValue;
                 if (code == null) continue;
 
-                if (code.startsWith('UA_DECK|')) {
+                if (code.startsWith(DeckQrCodec.prefix)) {
                   setState(() => _isProcessed = true);
 
                   final navigator = Navigator.of(context);
@@ -89,15 +89,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                   if (success) {
                     // 1. 準備展開後的卡片清單供預覽頁面使用
                     final deckState = ref.read(deckViewModelProvider);
-                    final List<UACard> expandedCards = [];
-                    deckState.deckMap.forEach((cardId, quantity) {
-                      final card = deckState.deckCardDetails[cardId];
-                      if (card != null) {
-                        for (int i = 0; i < quantity; i++) {
-                          expandedCards.add(card);
-                        }
-                      }
-                    });
+                    final expandedCards = deckState.expandedCards;
 
                     // 2. ✨ 直接跳轉至預覽畫面，並取代目前的掃描頁面
                     navigator.pushReplacement(
