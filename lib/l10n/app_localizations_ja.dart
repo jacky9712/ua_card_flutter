@@ -574,6 +574,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get syncedToCloud => 'クラウドに同期済み';
 
   @override
+  String get myDecksOfflineNotice => '接続できません。前回同期したデッキを表示しています';
+
+  @override
   String get notLoggedIn => '未ログイン';
 
   @override

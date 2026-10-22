@@ -1150,6 +1150,12 @@ abstract class AppLocalizations {
   /// **'已同步至雲端'**
   String get syncedToCloud;
 
+  /// No description provided for @myDecksOfflineNotice.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法連線，顯示上次同步的牌組'**
+  String get myDecksOfflineNotice;
+
   /// No description provided for @notLoggedIn.
   ///
   /// In zh, this message translates to:

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ua_card.dart';
 import '../repositories/providers.dart';
@@ -12,6 +13,7 @@ class DeckState {
   final bool isLoading;
   final AppError? error;
   final int? editingDeckId; // 🔥 追蹤目前正在編輯的牌組 ID
+  final bool isOffline; // 雲端牌組抓取失敗，清單裡的雲端部分來自上次同步的快取
 
   DeckState({
     this.deckMap = const {},
@@ -20,6 +22,7 @@ class DeckState {
     this.isLoading = false,
     this.error,
     this.editingDeckId,
+    this.isOffline = false,
   });
 
   int get totalDeckCount => deckMap.values.fold(0, (sum, qty) => sum + qty);
@@ -55,6 +58,7 @@ class DeckState {
     AppError? error,
     int? editingDeckId,
     bool clearEditingId = false, // 用於手動重置
+    bool? isOffline,
   }) {
     return DeckState(
       deckMap: deckMap ?? this.deckMap,
@@ -63,6 +67,7 @@ class DeckState {
       isLoading: isLoading ?? this.isLoading,
       error: error,
       editingDeckId: clearEditingId ? null : (editingDeckId ?? this.editingDeckId),
+      isOffline: isOffline ?? this.isOffline,
     );
   }
 }
@@ -158,17 +163,27 @@ class DeckViewModel extends Notifier<DeckState> {
     final user = authRepo.currentUser;
 
     try {
-      List<Map<String, dynamic>> remoteDecks = [];
-      if (user != null && !user.isAnonymous) {
-        remoteDecks = await deckRepo.fetchRemoteDecks(user.id);
-      }
       final rawLocalDecks = await deckRepo.fetchLocalDecks();
       final localDecks = rawLocalDecks
           .map((deck) => {...deck, 'total_price': _calculateLocalDeckPrice(deck)})
           .toList();
-      state = state.copyWith(myDecks: [...localDecks, ...remoteDecks], isLoading: false);
+      List<Map<String, dynamic>> remoteDecks = [];
+      bool isOffline = false;
+      if (user != null && !user.isAnonymous) {
+        // 快取的 load/save 絕不丟例外，所以內層 catch 只會接到雲端錯誤
+        final cache = ref.read(myDeckCacheStoreProvider);
+        try {
+          remoteDecks = await deckRepo.fetchRemoteDecks(user.id);
+          await cache.saveDecks(user.id, remoteDecks);
+        } catch (e) {
+          debugPrint('抓取雲端牌組失敗，改用快取: $e');
+          isOffline = true;
+          remoteDecks = await cache.loadDecks(user.id) ?? [];
+        }
+      }
+      state = state.copyWith(myDecks: [...localDecks, ...remoteDecks], isLoading: false, isOffline: isOffline);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadDecksFailed));
+      state = state.copyWith(isLoading: false, isOffline: false, error: const AppError(AppErrorCode.loadDecksFailed));
     }
   }
 
@@ -271,7 +286,18 @@ class DeckViewModel extends Notifier<DeckState> {
         }
         return expanded;
       }
-      return await deckRepo.fetchRemoteDeckCards(deckId);
+      final user = ref.read(authRepositoryProvider).currentUser;
+      final bool canCache = user != null && !user.isAnonymous;
+      final cache = ref.read(myDeckCacheStoreProvider);
+      try {
+        final cards = await deckRepo.fetchRemoteDeckCards(deckId);
+        if (canCache && cards.isNotEmpty) await cache.saveDeckCards(user.id, deckId, cards);
+        return cards;
+      } catch (e) {
+        debugPrint('抓取雲端牌組卡表失敗，改用快取: $e');
+        if (!canCache) return [];
+        return await cache.loadDeckCards(user.id, deckId) ?? [];
+      }
     } catch (e) {
       return [];
     }

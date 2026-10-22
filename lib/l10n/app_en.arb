@@ -175,6 +175,7 @@
   "deckDeleted": "Deleted deck {name}",
   "savedOnDevice": "Saved on this device",
   "syncedToCloud": "Synced to cloud",
+  "myDecksOfflineNotice": "Can't connect — showing decks from the last sync",
   "notLoggedIn": "Not logged in",
   "nicknameNotSetLong": "(No nickname set)",
   "myQrHint": "Other players can scan this QR to add you as an opponent",
