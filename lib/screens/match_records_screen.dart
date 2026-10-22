@@ -73,8 +73,8 @@ class MatchRecordsScreen extends ConsumerWidget {
             : TabBarView(
                 children: [
                   _buildRecordsTab(context, ref, matchState, myUserId),
-                  _buildGroupTab(context, ref, matchState, matchState.statsByDeck, isDeck: true),
-                  _buildGroupTab(context, ref, matchState, matchState.statsByOpponent, isDeck: false),
+                  _buildGroupTab(context, ref, matchState.statsByDeck, isDeck: true),
+                  _buildGroupTab(context, ref, matchState.statsByOpponent, isDeck: false),
                 ],
               ),
       ),
@@ -129,7 +129,6 @@ class MatchRecordsScreen extends ConsumerWidget {
   Widget _buildGroupTab(
     BuildContext context,
     WidgetRef ref,
-    MatchRecordState matchState,
     List<MatchStatsGroup> groups, {
     required bool isDeck,
   }) {

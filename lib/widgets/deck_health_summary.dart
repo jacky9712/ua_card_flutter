@@ -25,8 +25,11 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
     final colors = DeckStats.colorCounts(widget.cards);
     final energy = DeckStats.energyDistribution(widget.cards);
     final maxEnergy = energy.values.fold<int>(0, (a, b) => a > b ? a : b);
-    const sectionTitleStyle = TextStyle(
-      color: Colors.white,
+    // 展開區的圖表和標題跟牌組詳情頁取一樣的主題色，兩頁才會長得一樣。
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final surfaceColor = Theme.of(context).cardColor;
+    final sectionTitleStyle = TextStyle(
+      color: textColor,
       fontSize: 16,
       fontWeight: FontWeight.w900,
     );
@@ -134,16 +137,16 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                   const SizedBox(height: 12),
                   EnergyDistributionChart(
                     data: energy,
-                    surfaceColor: Theme.of(context).cardColor,
-                    textColor: Colors.white,
+                    surfaceColor: surfaceColor,
+                    textColor: textColor,
                   ),
                   const SizedBox(height: 16),
                   Text(context.l10n.triggerDistribution, style: sectionTitleStyle),
                   const SizedBox(height: 12),
                   TriggerDistributionGrid(
                     data: DeckStats.triggerDistribution(widget.cards),
-                    surfaceColor: Theme.of(context).cardColor,
-                    textColor: Colors.white,
+                    surfaceColor: surfaceColor,
+                    textColor: textColor,
                   ),
                   const SizedBox(height: 8),
                 ],
