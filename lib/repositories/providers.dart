@@ -12,6 +12,7 @@ import 'opponent_repository.dart';
 import 'match_record_repository.dart';
 import 'meetup_repository.dart';
 import 'live_location_repository.dart';
+import 'deck_share_code_repository.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) => SupabaseAuthRepository());
 final cardRepositoryProvider = Provider<CardRepository>((ref) => SupabaseCardRepository());
@@ -26,3 +27,4 @@ final opponentRepositoryProvider = Provider<OpponentRepository>((ref) => Supabas
 final matchRecordRepositoryProvider = Provider<MatchRecordRepository>((ref) => SupabaseMatchRecordRepository());
 final meetupRepositoryProvider = Provider<MeetupRepository>((ref) => SupabaseMeetupRepository());
 final liveLocationRepositoryProvider = Provider<LiveLocationRepository>((ref) => SupabaseLiveLocationRepository());
+final deckShareCodeRepositoryProvider = Provider<DeckShareCodeRepository>((ref) => SupabaseDeckShareCodeRepository());

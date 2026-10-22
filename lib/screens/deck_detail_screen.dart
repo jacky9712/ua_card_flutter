@@ -1,7 +1,9 @@
 // lib/screens/deck_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/ua_card.dart';
 import '../utils/deck_exporter.dart';
@@ -10,6 +12,7 @@ import '../utils/deck_stats.dart';
 import '../widgets/deck_distribution_charts.dart';
 import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
+import '../viewModels/deck_share_code_view_model.dart';
 import 'deck_builder_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
@@ -21,6 +24,8 @@ class DeckDetailScreen extends ConsumerStatefulWidget {
   final VoidCallback? onSavePressed;
   /// null 時用預設的「儲存至我的牌組」（跟著介面語言）
   final String? saveButtonLabel;
+  /// 一開始停在哪個分頁（0: 圖像, 1: 文字/QR）
+  final int initialTabIndex;
 
   const DeckDetailScreen({
     super.key,
@@ -29,6 +34,7 @@ class DeckDetailScreen extends ConsumerStatefulWidget {
     required this.cardsInDeck,
     this.onSavePressed,
     this.saveButtonLabel,
+    this.initialTabIndex = 0,
   });
 
   @override
@@ -36,7 +42,13 @@ class DeckDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
-  int _activeTabIndex = 0; // 0: 圖像, 1: 文字/QR
+  late int _activeTabIndex; // 0: 圖像, 1: 文字/QR
+
+  @override
+  void initState() {
+    super.initState();
+    _activeTabIndex = widget.initialTabIndex;
+  }
 
   Map<int, int> _getDeckMap() {
     final Map<int, int> map = {};
@@ -276,8 +288,79 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
             style: TextStyle(color: Colors.grey, fontSize: 12),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 20),
+          _buildShareCodeSection(deckData, textColor),
         ],
       ),
+    );
+  }
+
+  Widget _buildShareCodeSection(String deckData, Color textColor) {
+    final shareState = ref.watch(deckShareCodeViewModelProvider);
+    final shareCode = shareState.shareCode;
+    return Column(
+      children: [
+        ElevatedButton(
+          key: const Key('deckShareCodeGenerate'),
+          onPressed: shareState.isLoading || deckData == DeckQrCodec.prefix
+              ? null
+              : () => ref.read(deckShareCodeViewModelProvider.notifier).generate(deckData),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.actionRed,
+            foregroundColor: Colors.white,
+          ),
+          child: shareState.isLoading
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : Text(context.l10n.generateShareCode),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          context.l10n.shareCodeHint,
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
+          textAlign: TextAlign.center,
+        ),
+        if (shareCode != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            shareCode.code,
+            key: const Key('deckShareCodeText'),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 6,
+            ),
+          ),
+          Text(
+            context.l10n.shareCodeExpiresAt(
+              DateFormat('yyyy/MM/dd HH:mm').format(shareCode.expiresAt.toLocal()),
+            ),
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+          TextButton.icon(
+            key: const Key('deckShareCodeCopy'),
+            icon: const Icon(Icons.copy, size: 18),
+            label: Text(context.l10n.copyShareCode),
+            onPressed: () async {
+              // await 之前先取好 messenger 與文字，await 之後不再碰 context。
+              final messenger = ScaffoldMessenger.of(context);
+              final copiedText = context.l10n.shareCodeCopied;
+              await Clipboard.setData(ClipboardData(text: shareCode.code));
+              if (!mounted) return;
+              messenger.showSnackBar(SnackBar(content: Text(copiedText)));
+            },
+          ),
+        ],
+        if (shareState.error != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            shareState.error!.localize(context.l10n),
+            key: const Key('deckShareCodeError'),
+            style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ],
     );
   }
 

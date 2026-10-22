@@ -301,6 +301,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Other players can scan this code to import your deck';
 
   @override
+  String get generateShareCode => 'Generate share code';
+
+  @override
+  String get shareCodeHint =>
+      'Codes are valid for 24 hours; each tap creates a new one';
+
+  @override
+  String shareCodeExpiresAt(String time) {
+    return 'Valid until $time';
+  }
+
+  @override
+  String get copyShareCode => 'Copy';
+
+  @override
+  String get shareCodeCopied => 'Share code copied';
+
+  @override
   String get totalCards => 'Total cards';
 
   @override
@@ -860,6 +878,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errLoadDeckCardsFailed =>
       'Failed to load the deck\'s card list. Please try again later.';
+
+  @override
+  String get errCreateShareCodeFailed => 'Failed to generate share code';
 
   @override
   String errorWithDetail(String message, String detail) {

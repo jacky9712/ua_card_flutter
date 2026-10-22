@@ -93,6 +93,11 @@
   "tabImportQr": "インポートQR",
   "deckImportQrTitle": "デッキインポート QRコード",
   "deckImportQrHint": "他のプレイヤーがこのコードをスキャンするとデッキをインポートできます",
+  "generateShareCode": "共有コードを発行",
+  "shareCodeHint": "コードは24時間有効です。発行するたびに新しいコードになります",
+  "shareCodeExpiresAt": "{time} まで有効",
+  "copyShareCode": "コピー",
+  "shareCodeCopied": "共有コードをコピーしました",
   "totalCards": "合計枚数",
   "cardCount": "{count} 枚",
   "estimatedPrice": "参考価格",
@@ -258,5 +263,6 @@
   "errLoadTopDecksFailed": "上位デッキの読み込みに失敗しました",
   "errSearchCardsFailed": "カードの検索に失敗しました",
   "errLoadDeckCardsFailed": "デッキのカードリストの読み込みに失敗しました。しばらくしてからもう一度お試しください",
+  "errCreateShareCodeFailed": "共有コードの発行に失敗しました",
   "errorWithDetail": "{message}: {detail}"
 }

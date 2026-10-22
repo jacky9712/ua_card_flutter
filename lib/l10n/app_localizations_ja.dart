@@ -298,6 +298,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get deckImportQrHint => '他のプレイヤーがこのコードをスキャンするとデッキをインポートできます';
 
   @override
+  String get generateShareCode => '共有コードを発行';
+
+  @override
+  String get shareCodeHint => 'コードは24時間有効です。発行するたびに新しいコードになります';
+
+  @override
+  String shareCodeExpiresAt(String time) {
+    return '$time まで有効';
+  }
+
+  @override
+  String get copyShareCode => 'コピー';
+
+  @override
+  String get shareCodeCopied => '共有コードをコピーしました';
+
+  @override
   String get totalCards => '合計枚数';
 
   @override
@@ -847,6 +864,9 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get errLoadDeckCardsFailed =>
       'デッキのカードリストの読み込みに失敗しました。しばらくしてからもう一度お試しください';
+
+  @override
+  String get errCreateShareCodeFailed => '共有コードの発行に失敗しました';
 
   @override
   String errorWithDetail(String message, String detail) {

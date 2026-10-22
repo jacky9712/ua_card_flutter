@@ -31,12 +31,13 @@ class DeckQrCodec {
 
   /// deckMap (cardId -> qty) 配上卡片清單，轉成 cardNumber -> qty；
   /// cards 裡找不到的 cardId 直接跳過，不丟例外。
+  /// 同卡號不同版本（不同 id，如一般/平行/星/簽名）的張數會加總。
   static Map<String, int> countsFromDeck(Map<int, int> deckMap, Iterable<UACard> cards) {
     final byId = <int, UACard>{for (final c in cards) if (c.id != null) c.id!: c};
     final Map<String, int> result = {};
     deckMap.forEach((id, qty) {
       final c = byId[id];
-      if (c != null) result[c.cardNumber] = qty;
+      if (c != null) result[c.cardNumber] = (result[c.cardNumber] ?? 0) + qty;
     });
     return result;
   }

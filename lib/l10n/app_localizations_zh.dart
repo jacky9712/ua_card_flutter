@@ -296,6 +296,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deckImportQrHint => '其他玩家掃描此碼即可快速導入您的牌組';
 
   @override
+  String get generateShareCode => '產生分享代碼';
+
+  @override
+  String get shareCodeHint => '代碼 24 小時內有效，每次產生都是新的代碼';
+
+  @override
+  String shareCodeExpiresAt(String time) {
+    return '$time 前有效';
+  }
+
+  @override
+  String get copyShareCode => '複製';
+
+  @override
+  String get shareCodeCopied => '已複製分享代碼';
+
+  @override
   String get totalCards => '總張數';
 
   @override
@@ -843,6 +860,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errLoadDeckCardsFailed => '載入牌組卡表失敗，請稍後再試';
+
+  @override
+  String get errCreateShareCodeFailed => '產生分享代碼失敗';
 
   @override
   String errorWithDetail(String message, String detail) {

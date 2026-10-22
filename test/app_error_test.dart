@@ -19,6 +19,12 @@ void main() {
     expect(error.localize(en), 'Save failed: SocketException: timeout');
   });
 
+  test('產生分享代碼失敗依語言翻譯', () {
+    const error = AppError(AppErrorCode.createShareCodeFailed);
+    expect(error.localize(en), 'Failed to generate share code');
+    expect(error.localize(zh), '產生分享代碼失敗');
+  });
+
   test('每個錯誤代碼都有翻譯', () {
     for (final code in AppErrorCode.values) {
       expect(AppError(code).localize(en), isNotEmpty, reason: code.name);

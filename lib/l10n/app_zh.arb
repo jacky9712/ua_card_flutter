@@ -124,6 +124,18 @@
   "tabImportQr": "導入 QR",
   "deckImportQrTitle": "牌組導入 QR Code",
   "deckImportQrHint": "其他玩家掃描此碼即可快速導入您的牌組",
+  "generateShareCode": "產生分享代碼",
+  "shareCodeHint": "代碼 24 小時內有效，每次產生都是新的代碼",
+  "shareCodeExpiresAt": "{time} 前有效",
+  "@shareCodeExpiresAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "copyShareCode": "複製",
+  "shareCodeCopied": "已複製分享代碼",
   "totalCards": "總張數",
   "cardCount": "{count} 枚",
   "@cardCount": {
@@ -480,6 +492,7 @@
   "errLoadTopDecksFailed": "載入上位卡組失敗",
   "errSearchCardsFailed": "搜尋卡片失敗",
   "errLoadDeckCardsFailed": "載入牌組卡表失敗，請稍後再試",
+  "errCreateShareCodeFailed": "產生分享代碼失敗",
   "errorWithDetail": "{message}: {detail}",
   "@errorWithDetail": {
     "description": "錯誤訊息後面接原始例外內容（技術細節，不翻譯）",
