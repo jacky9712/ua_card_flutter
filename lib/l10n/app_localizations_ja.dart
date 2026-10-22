@@ -447,6 +447,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get winRate => '勝率';
 
   @override
+  String get matchTabRecords => '記録';
+
+  @override
+  String get matchTabByDeck => 'デッキ別';
+
+  @override
+  String get matchTabByOpponent => '対戦相手別';
+
+  @override
+  String get unspecifiedDeck => '未指定';
+
+  @override
+  String matchWinLossDraw(int win, int loss, int draw) {
+    return '$win勝 $loss敗 $draw分';
+  }
+
+  @override
   String get deckUsed => '使用デッキ';
 
   @override

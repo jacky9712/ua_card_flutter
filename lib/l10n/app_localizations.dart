@@ -928,6 +928,36 @@ abstract class AppLocalizations {
   /// **'勝率'**
   String get winRate;
 
+  /// No description provided for @matchTabRecords.
+  ///
+  /// In zh, this message translates to:
+  /// **'紀錄'**
+  String get matchTabRecords;
+
+  /// No description provided for @matchTabByDeck.
+  ///
+  /// In zh, this message translates to:
+  /// **'依牌組'**
+  String get matchTabByDeck;
+
+  /// No description provided for @matchTabByOpponent.
+  ///
+  /// In zh, this message translates to:
+  /// **'依對手'**
+  String get matchTabByOpponent;
+
+  /// No description provided for @unspecifiedDeck.
+  ///
+  /// In zh, this message translates to:
+  /// **'未指定'**
+  String get unspecifiedDeck;
+
+  /// 戰績統計每列的勝-敗-和
+  ///
+  /// In zh, this message translates to:
+  /// **'{win}勝 {loss}敗 {draw}和'**
+  String matchWinLossDraw(int win, int loss, int draw);
+
   /// No description provided for @deckUsed.
   ///
   /// In zh, this message translates to:

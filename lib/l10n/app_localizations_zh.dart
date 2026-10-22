@@ -445,6 +445,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get winRate => '勝率';
 
   @override
+  String get matchTabRecords => '紀錄';
+
+  @override
+  String get matchTabByDeck => '依牌組';
+
+  @override
+  String get matchTabByOpponent => '依對手';
+
+  @override
+  String get unspecifiedDeck => '未指定';
+
+  @override
+  String matchWinLossDraw(int win, int loss, int draw) {
+    return '$win勝 $loss敗 $draw和';
+  }
+
+  @override
   String get deckUsed => '使用牌組';
 
   @override

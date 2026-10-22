@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_error.dart';
+import '../utils/match_record_stats.dart';
 import '../viewModels/match_record_view_model.dart';
 import 'create_match_record_screen.dart';
 import '../l10n/l10n_ext.dart';
@@ -11,21 +11,6 @@ import '../theme/app_theme.dart';
 
 class MatchRecordsScreen extends ConsumerWidget {
   const MatchRecordsScreen({super.key});
-
-  /// match_records 的 result 是從「記錄的那個人（player）」的角度存的。
-  /// 如果我是 opponent（別人幫我記的），要把結果反過來看才是「我」的勝敗。
-  String _resultFromMyPerspective(Map<String, dynamic> record, String myUserId) {
-    final String result = record['result'];
-    if (record['player_id'] == myUserId) return result;
-    switch (result) {
-      case 'win':
-        return 'loss';
-      case 'loss':
-        return 'win';
-      default:
-        return 'draw';
-    }
-  }
 
   String _opponentNameFromMyPerspective(BuildContext context, Map<String, dynamic> record, String myUserId) {
     if (record['player_id'] == myUserId) {
@@ -60,64 +45,133 @@ class MatchRecordsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final matchState = ref.watch(matchRecordViewModelProvider);
-    final myUserId = Supabase.instance.client.auth.currentUser?.id;
+    final myUserId = matchState.myUserId;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.l10n.actionMatchRecords, style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.amber,
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateMatchRecordScreen())),
-        child: const Icon(Icons.add, color: Colors.black),
-      ),
-      body: matchState.isLoading && matchState.records.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () => ref.read(matchRecordViewModelProvider.notifier).fetchMyMatchRecords(),
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(child: _buildStatsHeader(context, matchState)),
-                  if (matchState.records.isEmpty)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Center(
-                          child: matchState.error?.code == AppErrorCode.loadMatchesFailed
-                              ? Column(
-                                  children: [
-                                    Text(matchState.error!.localize(context.l10n), style: TextStyle(color: Colors.grey)),
-                                    TextButton.icon(
-                                      onPressed: () => ref.read(matchRecordViewModelProvider.notifier).fetchMyMatchRecords(),
-                                      icon: const Icon(Icons.refresh, size: 18),
-                                      label: Text(context.l10n.retry),
-                                    ),
-                                  ],
-                                )
-                              : Text(context.l10n.noMatchRecords, style: TextStyle(color: Colors.grey)),
-                        ),
-                      ),
-                    )
-                  else if (myUserId != null)
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final record = matchState.records[index];
-                            return _buildRecordTile(context, ref, record, myUserId);
-                          },
-                          childCount: matchState.records.length,
-                        ),
-                      ),
-                    ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(context.l10n.actionMatchRecords, style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          bottom: TabBar(
+            tabs: [
+              Tab(text: context.l10n.matchTabRecords),
+              Tab(text: context.l10n.matchTabByDeck),
+              Tab(text: context.l10n.matchTabByOpponent),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.amber,
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateMatchRecordScreen())),
+          child: const Icon(Icons.add, color: Colors.black),
+        ),
+        body: matchState.isLoading && matchState.records.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(
+                children: [
+                  _buildRecordsTab(context, ref, matchState, myUserId),
+                  _buildGroupTab(context, ref, matchState, matchState.statsByDeck, isDeck: true),
+                  _buildGroupTab(context, ref, matchState, matchState.statsByOpponent, isDeck: false),
                 ],
               ),
+      ),
+    );
+  }
+
+  Widget _buildRecordsTab(BuildContext context, WidgetRef ref, MatchRecordState matchState, String? myUserId) {
+    return RefreshIndicator(
+      onRefresh: () => ref.read(matchRecordViewModelProvider.notifier).fetchMyMatchRecords(),
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildStatsHeader(context, matchState)),
+          if (matchState.records.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(
+                  child: matchState.error?.code == AppErrorCode.loadMatchesFailed
+                      ? Column(
+                          children: [
+                            Text(matchState.error!.localize(context.l10n), style: TextStyle(color: Colors.grey)),
+                            TextButton.icon(
+                              onPressed: () => ref.read(matchRecordViewModelProvider.notifier).fetchMyMatchRecords(),
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: Text(context.l10n.retry),
+                            ),
+                          ],
+                        )
+                      : Text(context.l10n.noMatchRecords, style: TextStyle(color: Colors.grey)),
+                ),
+              ),
+            )
+          else if (myUserId != null)
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final record = matchState.records[index];
+                    return _buildRecordTile(context, ref, record, myUserId);
+                  },
+                  childCount: matchState.records.length,
+                ),
+              ),
             ),
+          const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupTab(
+    BuildContext context,
+    WidgetRef ref,
+    MatchRecordState matchState,
+    List<MatchStatsGroup> groups, {
+    required bool isDeck,
+  }) {
+    return RefreshIndicator(
+      onRefresh: () => ref.read(matchRecordViewModelProvider.notifier).fetchMyMatchRecords(),
+      // AlwaysScrollableScrollPhysics：內容不滿一頁（或空清單）時仍可下拉刷新。
+      child: groups.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Center(child: Text(context.l10n.noMatchRecords, style: TextStyle(color: Colors.grey))),
+                ),
+              ],
+            )
+          : ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+              itemCount: groups.length,
+              itemBuilder: (context, index) => _buildGroupTile(context, groups[index], isDeck: isDeck),
+            ),
+    );
+  }
+
+  Widget _buildGroupTile(BuildContext context, MatchStatsGroup group, {required bool isDeck}) {
+    final stats = group.stats;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        title: Text(
+          group.label ?? (isDeck ? context.l10n.unspecifiedDeck : context.l10n.unnamedPlayer),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(context.l10n.matchWinLossDraw(stats.win, stats.loss, stats.draw), style: const TextStyle(fontSize: 12)),
+        trailing: Text(
+          '${context.l10n.winRate} ${stats.winRate.toStringAsFixed(0)}%',
+          style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 
@@ -148,7 +202,7 @@ class MatchRecordsScreen extends ConsumerWidget {
   }
 
   Widget _buildRecordTile(BuildContext context, WidgetRef ref, Map<String, dynamic> record, String myUserId) {
-    final result = _resultFromMyPerspective(record, myUserId);
+    final result = resultFromMyPerspective(record, myUserId);
     final opponentName = _opponentNameFromMyPerspective(context, record, myUserId);
     final deckName = record['deck_name_snapshot'] as String?;
     final deckTier = record['deck_tier'] as String?;
@@ -186,7 +240,7 @@ class MatchRecordsScreen extends ConsumerWidget {
     Map<String, dynamic> record,
     String myUserId,
   ) {
-    final result = _resultFromMyPerspective(record, myUserId);
+    final result = resultFromMyPerspective(record, myUserId);
     final opponentName = _opponentNameFromMyPerspective(context, record, myUserId);
     final deckName = record['deck_name_snapshot'] as String?;
     final deckTier = record['deck_tier'] as String?;

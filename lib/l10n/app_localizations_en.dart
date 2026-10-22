@@ -452,6 +452,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get winRate => 'Win rate';
 
   @override
+  String get matchTabRecords => 'Records';
+
+  @override
+  String get matchTabByDeck => 'By deck';
+
+  @override
+  String get matchTabByOpponent => 'By opponent';
+
+  @override
+  String get unspecifiedDeck => 'Unspecified';
+
+  @override
+  String matchWinLossDraw(int win, int loss, int draw) {
+    return '${win}W ${loss}L ${draw}D';
+  }
+
+  @override
   String get deckUsed => 'Deck';
 
   @override
