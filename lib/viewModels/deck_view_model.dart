@@ -14,6 +14,7 @@ class DeckState {
   final AppError? error;
   final int? editingDeckId; // 🔥 追蹤目前正在編輯的牌組 ID
   final bool isOffline; // 雲端牌組抓取失敗，清單裡的雲端部分來自上次同步的快取
+  final bool offlineWithoutCache; // 離線而且這個帳號從沒同步過，清單裡沒有任何雲端牌組
 
   DeckState({
     this.deckMap = const {},
@@ -23,6 +24,7 @@ class DeckState {
     this.error,
     this.editingDeckId,
     this.isOffline = false,
+    this.offlineWithoutCache = false,
   });
 
   int get totalDeckCount => deckMap.values.fold(0, (sum, qty) => sum + qty);
@@ -59,6 +61,7 @@ class DeckState {
     int? editingDeckId,
     bool clearEditingId = false, // 用於手動重置
     bool? isOffline,
+    bool? offlineWithoutCache,
   }) {
     return DeckState(
       deckMap: deckMap ?? this.deckMap,
@@ -68,6 +71,7 @@ class DeckState {
       error: error,
       editingDeckId: clearEditingId ? null : (editingDeckId ?? this.editingDeckId),
       isOffline: isOffline ?? this.isOffline,
+      offlineWithoutCache: offlineWithoutCache ?? this.offlineWithoutCache,
     );
   }
 }
@@ -169,6 +173,7 @@ class DeckViewModel extends Notifier<DeckState> {
           .toList();
       List<Map<String, dynamic>> remoteDecks = [];
       bool isOffline = false;
+      bool offlineWithoutCache = false;
       if (user != null && !user.isAnonymous) {
         // 快取的 load/save 絕不丟例外，所以內層 catch 只會接到雲端錯誤
         final cache = ref.read(myDeckCacheStoreProvider);
@@ -178,12 +183,24 @@ class DeckViewModel extends Notifier<DeckState> {
         } catch (e) {
           debugPrint('抓取雲端牌組失敗，改用快取: $e');
           isOffline = true;
-          remoteDecks = await cache.loadDecks(user.id) ?? [];
+          final cached = await cache.loadDecks(user.id);
+          offlineWithoutCache = cached == null;
+          remoteDecks = cached ?? [];
         }
       }
-      state = state.copyWith(myDecks: [...localDecks, ...remoteDecks], isLoading: false, isOffline: isOffline);
+      state = state.copyWith(
+        myDecks: [...localDecks, ...remoteDecks],
+        isLoading: false,
+        isOffline: isOffline,
+        offlineWithoutCache: offlineWithoutCache,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, isOffline: false, error: const AppError(AppErrorCode.loadDecksFailed));
+      state = state.copyWith(
+        isLoading: false,
+        isOffline: false,
+        offlineWithoutCache: false,
+        error: const AppError(AppErrorCode.loadDecksFailed),
+      );
     }
   }
 

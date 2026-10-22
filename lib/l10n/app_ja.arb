@@ -176,6 +176,7 @@
   "savedOnDevice": "この端末に保存",
   "syncedToCloud": "クラウドに同期済み",
   "myDecksOfflineNotice": "接続できません。前回同期したデッキを表示しています",
+  "myDecksOfflineNoCache": "接続できません。クラウドのデッキは現在表示できません",
   "notLoggedIn": "未ログイン",
   "nicknameNotSetLong": "（ニックネーム未設定）",
   "myQrHint": "他のプレイヤーがこのQRをスキャンすると、あなたを対戦相手として追加できます",

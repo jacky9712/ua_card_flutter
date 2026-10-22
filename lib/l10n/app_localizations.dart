@@ -1156,6 +1156,12 @@ abstract class AppLocalizations {
   /// **'無法連線，顯示上次同步的牌組'**
   String get myDecksOfflineNotice;
 
+  /// No description provided for @myDecksOfflineNoCache.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法連線，雲端牌組暫時無法顯示'**
+  String get myDecksOfflineNoCache;
+
   /// No description provided for @notLoggedIn.
   ///
   /// In zh, this message translates to:

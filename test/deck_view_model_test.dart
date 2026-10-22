@@ -167,6 +167,7 @@ void main() {
     expect(ids(container), [-1]);
     expect(state.error, isNull);
     expect(state.isOffline, isTrue);
+    expect(state.offlineWithoutCache, isTrue); // 沒同步過：提示改說雲端牌組暫時無法顯示
     expect(state.isLoading, isFalse);
   });
 
@@ -184,6 +185,7 @@ void main() {
     expect(ids(container), [-1, 10]);
     expect(state.error, isNull);
     expect(state.isOffline, isTrue);
+    expect(state.offlineWithoutCache, isFalse); // 有快取：提示寫「顯示上次同步的牌組」
     expect(state.myDecks.map((d) => d['series_id'] as int?).whereType<int>().toSet(), {2, 3});
   });
 
