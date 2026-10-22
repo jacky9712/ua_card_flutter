@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/providers.dart';
 import '../utils/app_error.dart';
 
@@ -29,7 +28,7 @@ class ProfileViewModel extends Notifier<ProfileState> {
   }
 
   Future<void> fetchMyProfile() async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = ref.read(authRepositoryProvider).currentUser?.id;
     if (userId == null) return;
     state = state.copyWith(isLoading: true, error: null);
     try {
