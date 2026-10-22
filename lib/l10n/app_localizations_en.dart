@@ -850,7 +850,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errSearchCardsFailed => 'Card search failed';
 
   @override
-  String get errLoadDeckCardsFailed => 'Failed to load the deck\'s card list';
+  String get errLoadDeckCardsFailed =>
+      'Failed to load the deck\'s card list. Please try again later.';
 
   @override
   String errorWithDetail(String message, String detail) {
