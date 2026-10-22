@@ -147,6 +147,17 @@ void main() {
           [...times('ファイナル', 5), ...times('スペシャル', 5)]);
       expect(result.keys.toList(), ['SPECIAL', 'FINAL']);
     });
+
+    test('Color 5 張時提醒、4 張不提醒', () {
+      expect(DeckStats.overLimitTriggers(times('カラー', 5)), {'COLOR': 5});
+      expect(DeckStats.overLimitTriggers(times('カラー', 4)), isEmpty);
+    });
+
+    test('三種都超過時依序 SPECIAL、FINAL、COLOR', () {
+      final result = DeckStats.overLimitTriggers(
+          [...times('カラー', 5), ...times('ファイナル', 5), ...times('スペシャル', 5)]);
+      expect(result.keys.toList(), ['SPECIAL', 'FINAL', 'COLOR']);
+    });
   });
 
   group('DeckStats.openingHandHitProbability / zeroEnergyCount', () {

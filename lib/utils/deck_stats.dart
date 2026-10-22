@@ -132,11 +132,11 @@ class DeckStats {
     };
   }
 
-  /// Special / Final 觸發各自超過 [maxCopies] 時的觸發 -> 張數，固定 SPECIAL 在前。
+  /// Special / Final / Color 觸發各自超過 [maxCopies] 時的觸發 -> 張數，依 SPECIAL、FINAL、COLOR 排序。
   static Map<String, int> overLimitTriggers(Iterable<UACard> cards) {
     final dist = triggerDistribution(cards);
     return {
-      for (final key in const ['SPECIAL', 'FINAL'])
+      for (final key in const ['SPECIAL', 'FINAL', 'COLOR'])
         if ((dist[key] ?? 0) > maxCopies) key: dist[key]!,
     };
   }
