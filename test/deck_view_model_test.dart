@@ -97,6 +97,8 @@ class _FakeMyDeckCacheStore implements MyDeckCacheStore {
   Future<void> saveDeckCards(String userId, int deckId, List<UACard> cards) async {
     this.cards['$userId/$deckId'] = cards;
   }
+  @override
+  Future<void> clearUser(String userId) async {}
 }
 
 User _user(String id) =>

@@ -69,6 +69,9 @@ class _FakeMyDeckCacheStore implements MyDeckCacheStore {
 
   @override
   Future<void> saveDeckCards(String userId, int deckId, List<UACard> cards) async {}
+
+  @override
+  Future<void> clearUser(String userId) async {}
 }
 
 void main() {
