@@ -304,6 +304,41 @@ class CardLibraryViewModel extends Notifier<CardLibraryState> {
     }
   }
 
+  /// 從「我的牌組」或 QR 匯入按編輯進組牌頁時，把卡池系列對齊牌組本身
+  /// （推薦牌組那邊有現成的 series_code，這裡只有卡片，要從卡號推）。
+  /// 取張數最多的系列；判斷不出來就切回全部系列，不留著上一次選的。
+  void selectSeriesForDeck(Iterable<UACard> cards) {
+    final counts = <String, int>{};
+    for (final card in cards) {
+      final code = seriesCodeOf(card.cardNumber, state.availableSeries);
+      if (code != null) counts[code] = (counts[code] ?? 0) + 1;
+    }
+    var best = '';
+    var bestCount = 0;
+    counts.forEach((code, n) {
+      if (n > bestCount) {
+        best = code;
+        bestCount = n;
+      }
+    });
+    if (best != state.selectedSeries) updateSelectedSeries(best);
+  }
+
+  /// 卡號（例如 EX02BT/CGH-2-042）屬於哪個系列：對上系列清單裡最長的前綴
+  /// （系列篩選本身就是 card_number 前綴比對，見 card_repository.dart）；
+  /// 系列清單還沒回來或對不上時退回 `/` 前那段。
+  @visibleForTesting
+  static String? seriesCodeOf(String cardNumber, List<String> knownSeries) {
+    final upper = cardNumber.toUpperCase();
+    String? match;
+    for (final code in knownSeries) {
+      if (upper.startsWith(code) && (match == null || code.length > match.length)) match = code;
+    }
+    if (match != null) return match;
+    final slash = upper.indexOf('/');
+    return slash > 0 ? upper.substring(0, slash) : null;
+  }
+
   /// 🔥 顏色篩選改成伺服器端過濾（見 card_repository.dart），跟分頁搭配的話不能只篩
   /// 「目前已經載入的那一頁」——分頁上限只有 60 筆，選顏色前如果沒剛好捲到底，
   /// 符合顏色的卡片很可能根本還沒被載入，本地篩選只會篩出小貓兩三隻。選色後重新

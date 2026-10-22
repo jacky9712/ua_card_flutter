@@ -750,4 +750,64 @@ void main() {
       });
     });
   });
+
+  group('編輯既有牌組時卡池對齊牌組系列', () {
+    test('取張數最多的系列，並用新系列重新查詢', () {
+      fakeAsync((async) {
+        repo.seriesResult = ['EX02BT', 'UA01BT'];
+        final container = makeContainer(async);
+        final vm = container.read(cardLibraryViewModelProvider.notifier);
+        final callsBefore = repo.fetchCalls;
+
+        vm.selectSeriesForDeck([
+          ...List.filled(3, UACard(cardNumber: 'UA01BT/BLC-1-001')),
+          UACard(cardNumber: 'EX02BT/CGH-2-042'),
+        ]);
+        async.flushMicrotasks();
+
+        expect(container.read(cardLibraryViewModelProvider).selectedSeries, 'UA01BT');
+        expect(repo.fetchCalls, callsBefore + 1);
+        container.dispose();
+      });
+    });
+
+    test('已經是同一個系列就不重抓', () {
+      fakeAsync((async) {
+        repo.seriesResult = ['UA01BT'];
+        final container = makeContainer(async);
+        final vm = container.read(cardLibraryViewModelProvider.notifier);
+        vm.updateSelectedSeries('UA01BT');
+        async.flushMicrotasks();
+        final callsBefore = repo.fetchCalls;
+
+        vm.selectSeriesForDeck([UACard(cardNumber: 'UA01BT/BLC-1-001')]);
+        async.flushMicrotasks();
+
+        expect(repo.fetchCalls, callsBefore);
+        container.dispose();
+      });
+    });
+
+    test('判斷不出系列時切回全部系列', () {
+      fakeAsync((async) {
+        repo.seriesResult = ['UA01BT'];
+        final container = makeContainer(async);
+        final vm = container.read(cardLibraryViewModelProvider.notifier);
+        vm.updateSelectedSeries('UA01BT');
+        async.flushMicrotasks();
+
+        vm.selectSeriesForDeck([UACard(cardNumber: 'PROMO-001')]);
+        async.flushMicrotasks();
+
+        expect(container.read(cardLibraryViewModelProvider).selectedSeries, '');
+        container.dispose();
+      });
+    });
+
+    test('seriesCodeOf：對上最長前綴，系列清單沒有時退回 / 前那段', () {
+      expect(CardLibraryViewModel.seriesCodeOf('UA01BT/BLC-1-001', ['UA01', 'UA01BT']), 'UA01BT');
+      expect(CardLibraryViewModel.seriesCodeOf('ex02bt/CGH-2-042', []), 'EX02BT');
+      expect(CardLibraryViewModel.seriesCodeOf('PROMO-001', []), isNull);
+    });
+  });
 }
