@@ -4,6 +4,7 @@ import 'card_cache_store.dart';
 import 'card_repository.dart';
 import 'deck_repository.dart';
 import 'meta_repository.dart';
+import 'recommended_deck_cache_store.dart';
 import 'recommended_deck_repository.dart';
 import 'profile_repository.dart';
 import 'opponent_repository.dart';
@@ -17,6 +18,7 @@ final cardCacheStoreProvider = Provider<CardCacheStore>((ref) => SharedPrefsCard
 final deckRepositoryProvider = Provider<DeckRepository>((ref) => MixedDeckRepository());
 final metaRepositoryProvider = Provider<MetaRepository>((ref) => SupabaseMetaRepository());
 final recommendedDeckRepositoryProvider = Provider<RecommendedDeckRepository>((ref) => SupabaseRecommendedDeckRepository());
+final recommendedDeckCacheStoreProvider = Provider<RecommendedDeckCacheStore>((ref) => SharedPrefsRecommendedDeckCacheStore());
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) => SupabaseProfileRepository());
 final opponentRepositoryProvider = Provider<OpponentRepository>((ref) => SupabaseOpponentRepository());
 final matchRecordRepositoryProvider = Provider<MatchRecordRepository>((ref) => SupabaseMatchRecordRepository());

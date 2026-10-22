@@ -1634,6 +1634,12 @@ abstract class AppLocalizations {
   /// **'搜尋卡片失敗'**
   String get errSearchCardsFailed;
 
+  /// No description provided for @errLoadDeckCardsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'載入牌組卡表失敗，請稍後再試'**
+  String get errLoadDeckCardsFailed;
+
   /// 錯誤訊息後面接原始例外內容（技術細節，不翻譯）
   ///
   /// In zh, this message translates to:
