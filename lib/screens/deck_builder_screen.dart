@@ -191,46 +191,48 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
 
   // 🦴 骨架屏：完全模擬真實卡片的佈局結構
   Widget _buildSkeletonGrid() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(10),
-      physics: const AlwaysScrollableScrollPhysics(), // 保持捲軸物理效果一致
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, 
-        childAspectRatio: 0.54, 
-        crossAxisSpacing: 8, 
-        mainAxisSpacing: 8
-      ),
-      itemCount: 9,
-      itemBuilder: (context, index) => Container(
-        // 1. 完全一致的外框裝飾（包含 2px 邊框預留）
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.transparent, width: 2), // 👈 關鍵：必須預留這 2px
+    return _SkeletonShimmer(
+      child: GridView.builder(
+        padding: const EdgeInsets.all(10),
+        physics: const AlwaysScrollableScrollPhysics(), // 保持捲軸物理效果一致
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3, 
+          childAspectRatio: 0.54, 
+          crossAxisSpacing: 8, 
+          mainAxisSpacing: 8
         ),
-        child: Column(
-          children: [
-            // 2. 模擬圖片區域
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
+        itemCount: 9,
+        itemBuilder: (context, index) => Container(
+          // 1. 完全一致的外框裝飾（包含 2px 邊框預留）
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.transparent, width: 2), // 👈 關鍵：必須預留這 2px
+          ),
+          child: Column(
+            children: [
+              // 2. 模擬圖片區域
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
-            ),
-            // 3. 模擬底部按鈕區域 (固定高度)
-            const SizedBox(
-              height: 48, // 預留給 Row (IconButton + Text) 的高度
-              child: Center(
-                child: SizedBox(
-                  width: 40, height: 10,
-                  child: DecoratedBox(decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.all(Radius.circular(10)))),
+              // 3. 模擬底部按鈕區域 (固定高度)
+              const SizedBox(
+                height: 48, // 預留給 Row (IconButton + Text) 的高度
+                child: Center(
+                  child: SizedBox(
+                    width: 40, height: 10,
+                    child: DecoratedBox(decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.all(Radius.circular(10)))),
+                  ),
                 ),
-              ),
-            )
-          ],
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -554,4 +556,53 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
       ],
     ));
   }
+}
+
+// 骨架上一道淡淡的亮光由左往右掃過，讓等待時看得出畫面還在動。
+class _SkeletonShimmer extends StatefulWidget {
+  const _SkeletonShimmer({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_SkeletonShimmer> createState() => _SkeletonShimmerState();
+}
+
+class _SkeletonShimmerState extends State<_SkeletonShimmer> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      child: widget.child,
+      builder: (context, child) => ShaderMask(
+        key: const Key('cardSkeletonShimmer'),
+        blendMode: BlendMode.srcATop, // 只畫在骨架格子上，空白處不會亮
+        shaderCallback: (bounds) => LinearGradient(
+          colors: [Colors.transparent, Colors.white.withValues(alpha: 0.08), Colors.transparent],
+          stops: const [0.35, 0.5, 0.65],
+          // 亮帶從畫面左外側（-width）移到右外側（+width）
+          transform: _SlideGradient(bounds.width * (2 * _controller.value - 1)),
+        ).createShader(bounds),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _SlideGradient extends GradientTransform {
+  const _SlideGradient(this.dx);
+
+  final double dx;
+
+  @override
+  Matrix4 transform(Rect bounds, {TextDirection? textDirection}) => Matrix4.translationValues(dx, 0, 0);
 }

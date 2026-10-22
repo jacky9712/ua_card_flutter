@@ -52,6 +52,7 @@ class _FakeCardRepository implements CardRepository {
   bool failFetch = false;
   List<UACard> browseResult = const [];
   Completer<List<UACard>>? searchCompleter;
+  Completer<List<UACard>>? fetchCompleter;
 
   @override
   Future<List<String>> fetchSeriesList() async => [];
@@ -60,6 +61,7 @@ class _FakeCardRepository implements CardRepository {
   Future<List<UACard>> fetchCards({String? series, List<String>? colors, int limit = 60, int offset = 0}) async {
     fetchCalls++;
     if (failFetch) throw Exception('network down');
+    if (fetchCompleter != null) return fetchCompleter!.future;
     return browseResult;
   }
 
@@ -162,5 +164,27 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.byKey(const Key('cardLibraryLoadingBar')), findsNothing);
+  });
+
+  testWidgets('第一次載入的骨架有閃爍動畫，載完就停', (tester) async {
+    repo.fetchCompleter = Completer();
+    final container = makeContainer();
+
+    await tester.pumpWidget(wrap(container, const DeckBuilderScreen()));
+    await tester.pump();
+    expect(find.byKey(const Key('cardSkeletonShimmer')), findsOneWidget);
+    final shimmer = tester.widget<AnimatedBuilder>(
+      find.ancestor(of: find.byKey(const Key('cardSkeletonShimmer')), matching: find.byType(AnimatedBuilder)).first,
+    );
+    final controller = shimmer.animation as AnimationController;
+    final before = controller.value;
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(controller.isAnimating, isTrue);
+    expect(controller.value, isNot(before));
+
+    repo.fetchCompleter!.complete([]);
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const Key('cardSkeletonShimmer')), findsNothing);
   });
 }
