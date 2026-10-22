@@ -8,6 +8,7 @@ import '../utils/deck_exporter.dart';
 import '../utils/deck_qr_codec.dart';
 import '../utils/deck_stats.dart';
 import '../widgets/deck_distribution_charts.dart';
+import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
 import 'deck_builder_screen.dart';
 import '../l10n/l10n_ext.dart';
@@ -96,6 +97,9 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                 ref
                     .read(deckViewModelProvider.notifier)
                     .loadDeckForEditing(widget.deckId, widget.cardsInDeck);
+                ref
+                    .read(cardLibraryViewModelProvider.notifier)
+                    .selectSeriesForDeck(widget.cardsInDeck);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
