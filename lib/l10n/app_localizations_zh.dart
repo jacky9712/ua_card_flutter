@@ -716,6 +716,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confirmSave => '確認儲存';
 
   @override
+  String get deckHealthTitle => '牌組健檢';
+
+  @override
+  String get deckHealthEmpty => '尚未加入卡片';
+
+  @override
   String get startupErrorTitle => '無法啟動 App';
 
   @override

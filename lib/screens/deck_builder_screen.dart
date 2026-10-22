@@ -9,6 +9,7 @@ import 'card_detail_dialog.dart';
 import 'deck_detail_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../widgets/deck_health_summary.dart';
 
 class DeckBuilderScreen extends ConsumerStatefulWidget {
   const DeckBuilderScreen({super.key});
@@ -246,22 +247,30 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
         border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.2)))
       ),
       child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            DeckHealthSummary(cards: deckState.expandedCards),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(context.l10n.currentCardCount(deckState.totalDeckCount), style: TextStyle(color: deckState.totalDeckCount > 50 ? Colors.red : Colors.grey)),
-                Text(context.l10n.totalPrice('${deckState.totalDeckPrice}'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(context.l10n.currentCardCount(deckState.totalDeckCount), style: TextStyle(color: deckState.totalDeckCount > 50 ? Colors.red : Colors.grey)),
+                    Text(context.l10n.totalPrice('${deckState.totalDeckPrice}'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: deckState.totalDeckCount == 50 ? () => _navigateToPreview(deckState) : null,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
+                  child: Text(context.l10n.previewAndSave),
+                )
               ],
             ),
-            ElevatedButton(
-              onPressed: deckState.totalDeckCount == 50 ? () => _navigateToPreview(deckState) : null,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
-              child: Text(context.l10n.previewAndSave),
-            )
           ],
         ),
       ),
