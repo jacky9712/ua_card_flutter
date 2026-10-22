@@ -577,6 +577,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get myDecksOfflineNotice => '接続できません。前回同期したデッキを表示しています';
 
   @override
+  String get myDecksOfflineNoCache => '接続できません。クラウドのデッキは現在表示できません';
+
+  @override
   String get notLoggedIn => '未ログイン';
 
   @override

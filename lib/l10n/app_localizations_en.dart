@@ -584,6 +584,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Can\'t connect — showing decks from the last sync';
 
   @override
+  String get myDecksOfflineNoCache =>
+      'Can\'t connect — cloud decks are unavailable right now';
+
+  @override
   String get notLoggedIn => 'Not logged in';
 
   @override

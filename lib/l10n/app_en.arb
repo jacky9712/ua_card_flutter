@@ -176,6 +176,7 @@
   "savedOnDevice": "Saved on this device",
   "syncedToCloud": "Synced to cloud",
   "myDecksOfflineNotice": "Can't connect — showing decks from the last sync",
+  "myDecksOfflineNoCache": "Can't connect — cloud decks are unavailable right now",
   "notLoggedIn": "Not logged in",
   "nicknameNotSetLong": "(No nickname set)",
   "myQrHint": "Other players can scan this QR to add you as an opponent",

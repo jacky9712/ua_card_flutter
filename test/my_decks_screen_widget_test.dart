@@ -157,6 +157,9 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(banner), findsOneWidget);
+    // 從沒同步過：不說「顯示上次同步的牌組」，改說雲端牌組暫時無法顯示
+    expect(find.text('無法連線，雲端牌組暫時無法顯示'), findsOneWidget);
+    expect(find.text('無法連線，顯示上次同步的牌組'), findsNothing);
     expect(find.text('目前還沒有任何牌組，快去組一套吧！'), findsOneWidget);
     expect(find.byType(RefreshIndicator), findsOneWidget);
   });
