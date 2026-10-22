@@ -33,6 +33,16 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
       deckSize: widget.cards.length,
       hits: zeroEnergy,
     );
+    final zeroOddsWithMulligan = DeckStats.openingHandHitProbability(
+      deckSize: widget.cards.length,
+      hits: zeroEnergy,
+      redraws: 1,
+    );
+    // 觸發沒放滿只是提醒，不算進摘要列的警示數量。
+    final underFilledTexts = [
+      for (final e in DeckStats.underFilledTriggers(widget.cards).entries)
+        context.l10n.deckHealthTriggerUnderfilled(_triggerLabel(context, e.key), e.value),
+    ];
     final warningTexts = [
       for (final e in dupWarnings.entries)
         context.l10n.deckHealthDuplicateCardWarning(e.key, e.value),
@@ -194,6 +204,29 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                       ),
                     const SizedBox(height: 16),
                   ],
+                  if (underFilledTexts.isNotEmpty) ...[
+                    Text(context.l10n.deckHealthTriggerReminders, style: sectionTitleStyle),
+                    const SizedBox(height: 8),
+                    for (var i = 0; i < underFilledTexts.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                underFilledTexts[i],
+                                key: Key('deckHealthTriggerReminder_$i'),
+                                style: TextStyle(color: textColor, fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
                   if (zeroOdds != null) ...[
                     Text(context.l10n.deckHealthOpeningHand, style: sectionTitleStyle),
                     const SizedBox(height: 8),
@@ -201,6 +234,7 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                       context.l10n.deckHealthZeroEnergyOdds(
                         zeroEnergy,
                         (zeroOdds * 100).toStringAsFixed(1),
+                        (zeroOddsWithMulligan! * 100).toStringAsFixed(1),
                       ),
                       key: const Key('deckHealthZeroEnergyOdds'),
                       style: TextStyle(color: textColor, fontSize: 13),
@@ -235,6 +269,7 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
   String _triggerLabel(BuildContext context, String key) => switch (key) {
         'SPECIAL' => context.l10n.triggerNameSpecial,
         'FINAL' => context.l10n.triggerNameFinal,
+        'COLOR' => context.l10n.triggerNameColor,
         _ => key,
       };
 }

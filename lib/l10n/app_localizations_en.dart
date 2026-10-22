@@ -754,8 +754,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get triggerNameFinal => 'Final';
 
   @override
-  String deckHealthZeroEnergyOdds(int count, String percent) {
-    return '$count zero-energy cards, $percent% chance of at least 1 in a 7-card opening hand';
+  String get triggerNameColor => 'Color';
+
+  @override
+  String get deckHealthTriggerReminders => 'Trigger counts';
+
+  @override
+  String deckHealthTriggerUnderfilled(String trigger, int count) {
+    return 'Only $count $trigger triggers (up to 4 allowed)';
+  }
+
+  @override
+  String deckHealthZeroEnergyOdds(
+    int count,
+    String percent,
+    String mulliganPercent,
+  ) {
+    return '$count zero-energy cards, $percent% chance of at least 1 in a 7-card opening hand ($mulliganPercent% with one mulligan)';
   }
 
   @override

@@ -167,9 +167,43 @@ void main() {
       expect(DeckStats.openingHandHitProbability(deckSize: 50, hits: 44), 1.0);
     });
 
+    test('含重抽一次：兩手都沒抽到的機率是單手的平方', () {
+      final single = DeckStats.openingHandHitProbability(deckSize: 50, hits: 10)!;
+      final withMulligan =
+          DeckStats.openingHandHitProbability(deckSize: 50, hits: 10, redraws: 1)!;
+      expect(withMulligan, closeTo(1 - (1 - single) * (1 - single), 1e-12));
+      expect(withMulligan, closeTo(0.9652, 0.0005));
+    });
+
     test('energyReq 為 null 視為 0 能', () {
       expect(
           DeckStats.zeroEnergyCount([_energy(null), _energy(0), _energy(1)]), 2);
+    });
+  });
+
+  group('DeckStats.underFilledTriggers', () {
+    test('Special / Final / Color 沒滿 4 張就列出目前張數，依序排列', () {
+      final cards = [
+        ...List.filled(4, _trigger('スペシャル')),
+        ...List.filled(2, _trigger('ファイナル')),
+        _trigger('xyz'),
+      ];
+      final result = DeckStats.underFilledTriggers(cards);
+      expect(result, {'FINAL': 2, 'COLOR': 0});
+      expect(result.keys.toList(), ['FINAL', 'COLOR']);
+    });
+
+    test('三種都放滿 4 張（或更多）時不提醒', () {
+      final cards = [
+        ...List.filled(4, _trigger('スペシャル')),
+        ...List.filled(5, _trigger('ファイナル')),
+        ...List.filled(4, _trigger('カラー')),
+      ];
+      expect(DeckStats.underFilledTriggers(cards), isEmpty);
+    });
+
+    test('空牌組不提醒', () {
+      expect(DeckStats.underFilledTriggers([]), isEmpty);
     });
   });
 }

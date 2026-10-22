@@ -263,8 +263,29 @@ void main() {
     addCopies(notifier, UACard(id: 3, cardNumber: 'C-1', color: 'RED', energyReq: 3), 3);
     await tester.pump();
 
-    expect(find.text('0 能卡 1 張，起手 7 張至少 1 張的機率 87.5%'), findsOneWidget);
+    expect(find.text('0 能卡 1 張，起手 7 張至少 1 張的機率 87.5%（含重抽一次 98.4%）'), findsOneWidget);
     expect(find.byKey(warningIconKey), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Special / Final / Color 沒滿 4 張時展開區提醒，但不算進警示數量', (tester) async {
+    final container = makeContainer();
+    await pumpBuilder(tester, container);
+
+    final notifier = container.read(deckViewModelProvider.notifier);
+    addCopies(notifier, sp1, 4);
+    addCopies(notifier, UACard(id: 30, cardNumber: 'FI-1', energyReq: 2, triggerText: 'ファイナル'), 2);
+    await tester.pump();
+
+    expect(find.byKey(warningIconKey), findsNothing);
+
+    await tester.tap(find.byKey(summaryKey));
+    await tester.pump();
+
+    expect(find.text('觸發張數'), findsOneWidget);
+    expect(find.text('最終 (Final) 觸發只有 2 張（最多可放 4 張）'), findsOneWidget);
+    expect(find.text('顏色 (Color) 觸發只有 0 張（最多可放 4 張）'), findsOneWidget);
+    expect(find.textContaining('特殊 (Special) 觸發只有'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

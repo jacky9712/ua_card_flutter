@@ -426,13 +426,29 @@
   "deckHealthOpeningHand": "起手",
   "triggerNameSpecial": "特殊 (Special)",
   "triggerNameFinal": "最終 (Final)",
-  "deckHealthZeroEnergyOdds": "0 能卡 {count} 張，起手 7 張至少 1 張的機率 {percent}%",
+  "triggerNameColor": "顏色 (Color)",
+  "deckHealthTriggerReminders": "觸發張數",
+  "deckHealthTriggerUnderfilled": "{trigger} 觸發只有 {count} 張（最多可放 4 張）",
+  "@deckHealthTriggerUnderfilled": {
+    "placeholders": {
+      "trigger": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deckHealthZeroEnergyOdds": "0 能卡 {count} 張，起手 7 張至少 1 張的機率 {percent}%（含重抽一次 {mulliganPercent}%）",
   "@deckHealthZeroEnergyOdds": {
     "placeholders": {
       "count": {
         "type": "int"
       },
       "percent": {
+        "type": "String"
+      },
+      "mulliganPercent": {
         "type": "String"
       }
     }

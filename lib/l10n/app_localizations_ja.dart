@@ -746,8 +746,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get triggerNameFinal => 'ファイナル';
 
   @override
-  String deckHealthZeroEnergyOdds(int count, String percent) {
-    return 'エナジー0のカード $count 枚、初手 7 枚に 1 枚以上来る確率 $percent%';
+  String get triggerNameColor => 'カラー';
+
+  @override
+  String get deckHealthTriggerReminders => 'トリガー枚数';
+
+  @override
+  String deckHealthTriggerUnderfilled(String trigger, int count) {
+    return '$trigger トリガーが $count 枚のみ（最大 4 枚まで入れられます）';
+  }
+
+  @override
+  String deckHealthZeroEnergyOdds(
+    int count,
+    String percent,
+    String mulliganPercent,
+  ) {
+    return 'エナジー0のカード $count 枚、初手 7 枚に 1 枚以上来る確率 $percent%（引き直し 1 回込み $mulliganPercent%）';
   }
 
   @override
