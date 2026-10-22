@@ -6,6 +6,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../models/ua_card.dart';
 import '../utils/deck_exporter.dart';
 import '../utils/deck_qr_codec.dart';
+import '../utils/deck_stats.dart';
+import '../widgets/deck_distribution_charts.dart';
 import '../viewModels/deck_view_model.dart';
 import 'deck_builder_screen.dart';
 import '../l10n/l10n_ext.dart';
@@ -58,92 +60,11 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     return grouped;
   }
 
-  // 🧮 統計功能一：計算必要能源 分佈
-  Map<int, int> _calculateEnergyDistribution() {
-    final Map<int, int> dist = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
-    for (var card in widget.cardsInDeck) {
-      final req = card.energyReq ?? 0;
-      if (req >= 6) {
-        dist[6] = (dist[6] ?? 0) + 1;
-      } else {
-        dist[req] = (dist[req] ?? 0) + 1;
-      }
-    }
-    return dist;
-  }
-
-  // 🧮 統計功能二：觸發分佈 (精準識別 UA 各顏色 Color Trigger)
-  Map<String, int> _calculateTriggerDistribution() {
-    final Map<String, int> dist = {
-      'SPECIAL': 0,
-      'COLOR': 0,
-      'FINAL': 0,
-      'DRAW': 0,
-      'GET': 0,
-      'ACTIVE': 0,
-      'RAID': 0,
-      'OTHER': 0,
-      'NONE': 0,
-    };
-    for (var card in widget.cardsInDeck) {
-      final text = card.triggerText?.trim() ?? '';
-
-      if (text.isEmpty || text == '-') {
-        dist['NONE'] = dist['NONE']! + 1;
-        continue;
-      }
-
-      // 1. 優先判定 COLOR (使用您提供的精準描述)
-      if (text.contains('カラー') ||
-          text.contains('COLOR') ||
-          text.contains('BP2500以下の相手') || // 紅色 Color
-          text.contains('BP3500以下の相手') || // 藍色 Color
-          (text.contains('レストにする') &&
-              text.contains('アクティブにならない')) || // 黃色 Color
-          (text.contains('2以下') &&
-              text.contains('消費APが1') &&
-              text.contains('登場させる'))) {
-        // 綠/紫 Color
-        dist['COLOR'] = dist['COLOR']! + 1;
-      }
-      // 2. 判定 RAID (截圖中的重要類別)
-      else if (text.contains('レイド') || text.contains('RAID')) {
-        dist['RAID'] = dist['RAID']! + 1;
-      }
-      // 3. 判定 SPECIAL (排除掉已認定的 Color)
-      else if (text.contains('スペシャル') ||
-          text.contains('SPECIAL') ||
-          text.contains('退場させる')) {
-        dist['SPECIAL'] = dist['SPECIAL']! + 1;
-      }
-      // 4. 其餘標準觸發
-      else if (text.contains('アクティブ') || text.contains('ACTIVE')) {
-        dist['ACTIVE'] = dist['ACTIVE']! + 1;
-      } else if (text.contains('手札に加える') ||
-          text.contains('ゲット') ||
-          text.contains('GET')) {
-        dist['GET'] = dist['GET']! + 1;
-      } else if (text.contains('1枚引く') ||
-          text.contains('ドロー') ||
-          text.contains('DRAW')) {
-        dist['DRAW'] = dist['DRAW']! + 1;
-      } else if (text.contains('ファイナル') ||
-          text.contains('FINAL') ||
-          text.contains('自分のライフエリアに置く')) {
-        dist['FINAL'] = dist['FINAL']! + 1;
-      } else {
-        dist['OTHER'] = dist['OTHER']! + 1;
-      }
-    }
-    return dist;
-  }
-
   @override
   Widget build(BuildContext context) {
     final groupedCards = _getGroupedCards();
-    final energyData = _calculateEnergyDistribution();
-    final triggerData = _calculateTriggerDistribution();
-    final maxEnergyCount = energyData.values.reduce((a, b) => a > b ? a : b);
+    final energyData = DeckStats.energyDistribution(widget.cardsInDeck);
+    final triggerData = DeckStats.triggerDistribution(widget.cardsInDeck);
     final int totalPrice = widget.cardsInDeck.fold(
       0,
       (sum, card) => sum + (card.price ?? 0),
@@ -243,11 +164,10 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildEnergyChart(
-                    energyData,
-                    maxEnergyCount,
-                    surfaceColor,
-                    textColor,
+                  EnergyDistributionChart(
+                    data: energyData,
+                    surfaceColor: surfaceColor,
+                    textColor: textColor,
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -259,10 +179,10 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildTriggerGrid(
-                    triggerData,
-                    surfaceColor,
-                    textColor,
+                  TriggerDistributionGrid(
+                    data: triggerData,
+                    surfaceColor: surfaceColor,
+                    textColor: textColor,
                   ),
                 ],
               ),
@@ -472,165 +392,6 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEnergyChart(
-    Map<int, int> data,
-    int maxVal,
-    Color surfaceColor,
-    Color textColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: data.entries.map((entry) {
-          final barWidthRatio = maxVal > 0 ? (entry.value / maxVal) : 0.0;
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 35,
-                  child: Text(
-                    context.l10n.energyCost(entry.key == 6 ? '6+' : '${entry.key}'),
-                    style: TextStyle(
-                      color: textColor.withValues(alpha: 0.7),
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Container(
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceHigh,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      FractionallySizedBox(
-                        widthFactor: barWidthRatio == 0 ? 0.02 : barWidthRatio,
-                        child: Container(
-                          height: 16,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF8E24AA), Color(0xFFCE93D8)],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 25,
-                  child: Text(
-                    '${entry.value}',
-                    style: TextStyle(
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildTriggerGrid(
-    Map<String, int> data,
-    Color surfaceColor,
-    Color textColor,
-  ) {
-    final triggerColors = {
-      'SPECIAL': Colors.redAccent,
-      'COLOR': Colors.orangeAccent,
-      'FINAL': Colors.blueAccent,
-      'DRAW': Colors.greenAccent,
-      'GET': Colors.yellowAccent,
-      'ACTIVE': Colors.cyanAccent,
-      'RAID': Colors.pinkAccent,
-      'OTHER': Colors.blueGrey,
-      'NONE': Colors.grey,
-    };
-
-    final sortedKeys = [
-      'ACTIVE',
-      'GET',
-      'DRAW',
-      'RAID',
-      'COLOR',
-      'SPECIAL',
-      'FINAL',
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          childAspectRatio: 1.8,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
-        itemCount: sortedKeys.length,
-        itemBuilder: (context, index) {
-          final key = sortedKeys[index];
-          final count = data[key] ?? 0;
-          final color = triggerColors[key] ?? Colors.grey;
-
-          return Container(
-            decoration: BoxDecoration(
-              color: AppColors.surfaceHigh,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  key,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  context.l10n.cardCount(count),
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }

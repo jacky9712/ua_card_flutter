@@ -709,6 +709,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmSave => 'Save';
 
   @override
+  String get deckHealthTitle => 'Deck check';
+
+  @override
+  String get deckHealthEmpty => 'No cards yet';
+
+  @override
   String get startupErrorTitle => 'Couldn\'t start the app';
 
   @override

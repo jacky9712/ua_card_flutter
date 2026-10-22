@@ -701,6 +701,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get confirmSave => '保存する';
 
   @override
+  String get deckHealthTitle => 'デッキ診断';
+
+  @override
+  String get deckHealthEmpty => 'カードがまだありません';
+
+  @override
   String get startupErrorTitle => 'アプリを起動できません';
 
   @override

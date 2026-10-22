@@ -1384,6 +1384,18 @@ abstract class AppLocalizations {
   /// **'確認儲存'**
   String get confirmSave;
 
+  /// No description provided for @deckHealthTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'牌組健檢'**
+  String get deckHealthTitle;
+
+  /// No description provided for @deckHealthEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未加入卡片'**
+  String get deckHealthEmpty;
+
   /// No description provided for @startupErrorTitle.
   ///
   /// In zh, this message translates to:
