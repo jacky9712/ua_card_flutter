@@ -748,6 +748,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deckHealthOpeningHand => 'Opening hand';
 
   @override
+  String get triggerNameSpecial => 'Special';
+
+  @override
+  String get triggerNameFinal => 'Final';
+
+  @override
   String deckHealthZeroEnergyOdds(int count, String percent) {
     return '$count zero-energy cards, $percent% chance of at least 1 in a 7-card opening hand';
   }
