@@ -113,8 +113,9 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                         .toList(),
                   ),
                 ),
+                // 摘要在畫面底部，展開時整條結算列往上長：收合時箭頭朝上（點了往上打開），展開時朝下。
                 Icon(
-                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  _expanded ? Icons.expand_more : Icons.expand_less,
                   size: 18,
                   color: Colors.grey,
                 ),

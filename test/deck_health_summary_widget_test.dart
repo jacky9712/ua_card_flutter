@@ -163,13 +163,18 @@ void main() {
     container.read(deckViewModelProvider.notifier).updateCardQuantity(red, 1);
     await tester.pump();
 
+    // 結算列在底部、往上展開：收合時箭頭朝上，展開後朝下
+    expect(find.byIcon(Icons.expand_less), findsOneWidget);
+
     await tester.tap(find.byKey(summaryKey));
     await tester.pump();
     expect(find.byKey(detailsKey), findsOneWidget);
+    expect(find.byIcon(Icons.expand_more), findsOneWidget);
 
     await tester.tap(find.byKey(summaryKey));
     await tester.pump();
     expect(find.byKey(detailsKey), findsNothing);
+    expect(find.byIcon(Icons.expand_less), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
