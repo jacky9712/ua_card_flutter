@@ -44,7 +44,7 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
 
   Future<void> _useCurrentLocation() async {
     setState(() => _isFetchingLocation = true);
-    final position = await getCurrentPositionOrNull();
+    final position = await ref.read(currentPositionProvider)();
     if (!mounted) return;
     setState(() => _isFetchingLocation = false);
     if (position == null) {

@@ -111,7 +111,7 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
   }
 
   Future<bool> _pingOnce(DateTime until) async {
-    final position = await getCurrentPositionOrNull();
+    final position = await ref.read(currentPositionProvider)();
     if (position == null) return false;
     try {
       final repo = ref.read(liveLocationRepositoryProvider);

@@ -76,7 +76,7 @@ class MeetupViewModel extends Notifier<MeetupState> {
   /// 切到「最近距離」排序時才真的去要定位權限——不要一進畫面就跳權限詢問。
   Future<void> setSortMode(MeetupSortMode mode) async {
     if (mode == MeetupSortMode.nearest && state.myPosition == null) {
-      final position = await getCurrentPositionOrNull();
+      final position = await ref.read(currentPositionProvider)();
       if (position == null) {
         state = state.copyWith(error: const AppError(AppErrorCode.locationFallbackToTime));
         return;
