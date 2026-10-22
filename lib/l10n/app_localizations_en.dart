@@ -732,6 +732,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deckHealthEmpty => 'No cards yet';
 
   @override
+  String get deckHealthRuleWarnings => 'Rule warnings';
+
+  @override
+  String deckHealthDuplicateCardWarning(String cardNumber, int count) {
+    return '$cardNumber: $count copies (incl. other versions)';
+  }
+
+  @override
+  String deckHealthTriggerWarning(String trigger, int count) {
+    return '$trigger triggers: $count (max 4)';
+  }
+
+  @override
+  String get deckHealthOpeningHand => 'Opening hand';
+
+  @override
+  String deckHealthZeroEnergyOdds(int count, String percent) {
+    return '$count zero-energy cards, $percent% chance of at least 1 in a 7-card opening hand';
+  }
+
+  @override
   String get startupErrorTitle => 'Couldn\'t start the app';
 
   @override

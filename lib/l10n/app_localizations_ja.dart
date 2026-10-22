@@ -724,6 +724,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get deckHealthEmpty => 'カードがまだありません';
 
   @override
+  String get deckHealthRuleWarnings => 'デッキルール注意';
+
+  @override
+  String deckHealthDuplicateCardWarning(String cardNumber, int count) {
+    return '$cardNumber が計 $count 枚（別バージョン含む）';
+  }
+
+  @override
+  String deckHealthTriggerWarning(String trigger, int count) {
+    return '$trigger トリガーが計 $count 枚（上限 4 枚）';
+  }
+
+  @override
+  String get deckHealthOpeningHand => '初手';
+
+  @override
+  String deckHealthZeroEnergyOdds(int count, String percent) {
+    return 'エナジー0のカード $count 枚、初手 7 枚に 1 枚以上来る確率 $percent%';
+  }
+
+  @override
   String get startupErrorTitle => 'アプリを起動できません';
 
   @override
