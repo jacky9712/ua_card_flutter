@@ -1426,6 +1426,36 @@ abstract class AppLocalizations {
   /// **'尚未加入卡片'**
   String get deckHealthEmpty;
 
+  /// No description provided for @deckHealthRuleWarnings.
+  ///
+  /// In zh, this message translates to:
+  /// **'規則提醒'**
+  String get deckHealthRuleWarnings;
+
+  /// No description provided for @deckHealthDuplicateCardWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'{cardNumber} 共 {count} 張（含其他版本）'**
+  String deckHealthDuplicateCardWarning(String cardNumber, int count);
+
+  /// No description provided for @deckHealthTriggerWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'{trigger} 觸發共 {count} 張（上限 4 張）'**
+  String deckHealthTriggerWarning(String trigger, int count);
+
+  /// No description provided for @deckHealthOpeningHand.
+  ///
+  /// In zh, this message translates to:
+  /// **'起手'**
+  String get deckHealthOpeningHand;
+
+  /// No description provided for @deckHealthZeroEnergyOdds.
+  ///
+  /// In zh, this message translates to:
+  /// **'0 能卡 {count} 張，起手 7 張至少 1 張的機率 {percent}%'**
+  String deckHealthZeroEnergyOdds(int count, String percent);
+
   /// No description provided for @startupErrorTitle.
   ///
   /// In zh, this message translates to:

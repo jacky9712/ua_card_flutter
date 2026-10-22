@@ -722,6 +722,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deckHealthEmpty => '尚未加入卡片';
 
   @override
+  String get deckHealthRuleWarnings => '規則提醒';
+
+  @override
+  String deckHealthDuplicateCardWarning(String cardNumber, int count) {
+    return '$cardNumber 共 $count 張（含其他版本）';
+  }
+
+  @override
+  String deckHealthTriggerWarning(String trigger, int count) {
+    return '$trigger 觸發共 $count 張（上限 4 張）';
+  }
+
+  @override
+  String get deckHealthOpeningHand => '起手';
+
+  @override
+  String deckHealthZeroEnergyOdds(int count, String percent) {
+    return '0 能卡 $count 張，起手 7 張至少 1 張的機率 $percent%';
+  }
+
+  @override
   String get startupErrorTitle => '無法啟動 App';
 
   @override

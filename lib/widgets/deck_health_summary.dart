@@ -1,5 +1,5 @@
 // lib/widgets/deck_health_summary.dart
-// 組牌頁底部結算列的牌組健檢摘要：顏色張數 + 必要能源迷你長條，點擊展開完整分布。
+// 組牌頁底部結算列的牌組健檢摘要：顏色張數 + 必要能源迷你長條，點擊展開完整分布、規則提醒與 0 能起手機率。
 import 'package:flutter/material.dart';
 import '../models/ua_card.dart';
 import '../utils/deck_stats.dart';
@@ -25,6 +25,20 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
     final colors = DeckStats.colorCounts(widget.cards);
     final energy = DeckStats.energyDistribution(widget.cards);
     final maxEnergy = energy.values.fold<int>(0, (a, b) => a > b ? a : b);
+    final dupWarnings = DeckStats.overLimitCardNumbers(widget.cards);
+    final triggerWarnings = DeckStats.overLimitTriggers(widget.cards);
+    final warningCount = dupWarnings.length + triggerWarnings.length;
+    final zeroEnergy = DeckStats.zeroEnergyCount(widget.cards);
+    final zeroOdds = DeckStats.openingHandHitProbability(
+      deckSize: widget.cards.length,
+      hits: zeroEnergy,
+    );
+    final warningTexts = [
+      for (final e in dupWarnings.entries)
+        context.l10n.deckHealthDuplicateCardWarning(e.key, e.value),
+      for (final e in triggerWarnings.entries)
+        context.l10n.deckHealthTriggerWarning(e.key, e.value),
+    ];
     // 展開區的圖表和標題跟牌組詳情頁取一樣的主題色，兩頁才會長得一樣。
     final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
     final surfaceColor = Theme.of(context).cardColor;
@@ -113,6 +127,25 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                         .toList(),
                   ),
                 ),
+                if (warningCount > 0) ...[
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    key: Key('deckHealthWarningIcon'),
+                    size: 16,
+                    color: Colors.amber,
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    '$warningCount',
+                    key: const Key('deckHealthWarningCount'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.amber,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
                 // 摘要在畫面底部，展開時整條結算列往上長：收合時箭頭朝上（點了往上打開），展開時朝下。
                 Icon(
                   _expanded ? Icons.expand_more : Icons.expand_less,
@@ -134,6 +167,46 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (warningTexts.isNotEmpty) ...[
+                    Text(context.l10n.deckHealthRuleWarnings, style: sectionTitleStyle),
+                    const SizedBox(height: 8),
+                    for (var i = 0; i < warningTexts.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              size: 16,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                warningTexts[i],
+                                key: Key('deckHealthWarning_$i'),
+                                style: TextStyle(color: textColor, fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (zeroOdds != null) ...[
+                    Text(context.l10n.deckHealthOpeningHand, style: sectionTitleStyle),
+                    const SizedBox(height: 8),
+                    Text(
+                      context.l10n.deckHealthZeroEnergyOdds(
+                        zeroEnergy,
+                        (zeroOdds * 100).toStringAsFixed(1),
+                      ),
+                      key: const Key('deckHealthZeroEnergyOdds'),
+                      style: TextStyle(color: textColor, fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   Text(context.l10n.costDistribution, style: sectionTitleStyle),
                   const SizedBox(height: 12),
                   EnergyDistributionChart(

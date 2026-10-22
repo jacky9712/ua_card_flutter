@@ -3,6 +3,7 @@ import '../models/ua_card.dart';
 
 /// 牌組詳情頁與組牌頁共用的統計（純 Dart）。
 /// 傳入依張數展開的卡片清單（同一張卡出現幾次就算幾張）。
+/// overLimit* 系列是「只提醒、不擋加入」的規則檢查。
 class DeckStats {
   DeckStats._();
 
@@ -111,5 +112,57 @@ class DeckStats {
       if (!ordered.containsKey(entry.key)) ordered[entry.key] = entry.value;
     }
     return ordered;
+  }
+
+  /// 同卡號、同觸發的張數上限。
+  static const int maxCopies = 4;
+
+  /// 同一 card_number（跨普通/平行/星級/簽名等版本）合計超過 [maxCopies] 的卡號 -> 張數，
+  /// 依第一次出現順序。
+  static Map<String, int> overLimitCardNumbers(Iterable<UACard> cards) {
+    final Map<String, int> raw = {};
+    for (final card in cards) {
+      raw[card.cardNumber] = (raw[card.cardNumber] ?? 0) + 1;
+    }
+    return {
+      for (final e in raw.entries)
+        if (e.value > maxCopies) e.key: e.value,
+    };
+  }
+
+  /// Special / Final 觸發各自超過 [maxCopies] 時的觸發 -> 張數，固定 SPECIAL 在前。
+  static Map<String, int> overLimitTriggers(Iterable<UACard> cards) {
+    final dist = triggerDistribution(cards);
+    return {
+      for (final key in const ['SPECIAL', 'FINAL'])
+        if ((dist[key] ?? 0) > maxCopies) key: dist[key]!,
+    };
+  }
+
+  /// 0 能卡張數（energyReq 為 null 視為 0）。
+  static int zeroEnergyCount(Iterable<UACard> cards) =>
+      energyDistribution(cards)[0] ?? 0;
+
+  static const int openingHandSize = 7;
+
+  /// 超幾何：牌組 [deckSize] 張中有 [hits] 張目標卡，起手 [handSize] 張至少 1 張的機率。
+  /// 牌組不到 [handSize] 張時回傳 null。
+  static double? openingHandHitProbability({
+    required int deckSize,
+    required int hits,
+    int handSize = openingHandSize,
+  }) {
+    if (deckSize < handSize) return null;
+    return 1 - _choose(deckSize - hits, handSize) / _choose(deckSize, handSize);
+  }
+
+  // 精確整數組合數；每步都能整除。
+  static int _choose(int n, int r) {
+    if (r < 0 || r > n) return 0;
+    var result = 1;
+    for (var i = 0; i < r; i++) {
+      result = result * (n - i) ~/ (i + 1);
+    }
+    return result;
   }
 }

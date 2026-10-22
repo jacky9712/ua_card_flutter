@@ -6,6 +6,7 @@ import 'package:ua_card_flutter/utils/deck_stats.dart';
 UACard _energy(int? req) => UACard(cardNumber: 'E', energyReq: req);
 UACard _trigger(String? text) => UACard(cardNumber: 'T', triggerText: text);
 UACard _color(String? color) => UACard(cardNumber: 'C', color: color);
+UACard _num(String n, {int id = 0}) => UACard(id: id, cardNumber: n);
 
 void main() {
   group('DeckStats.energyDistribution', () {
@@ -93,6 +94,82 @@ void main() {
       final counts =
           DeckStats.colorCounts([_color('PURPLE'), _color('RED'), _color(null)]);
       expect(counts.keys.toList(), ['RED', 'PURPLE', 'UNKNOWN']);
+    });
+  });
+
+  group('DeckStats.overLimitCardNumbers', () {
+    test('同卡號普通版 4 張 + 平行版 1 張 = 5 張時提醒', () {
+      final normal = _num('UA01BT-001', id: 1);
+      final parallel =
+          UACard(id: 2, cardNumber: 'UA01BT-001', isParallel: true);
+      final cards = [normal, normal, normal, normal, parallel];
+      expect(DeckStats.overLimitCardNumbers(cards), {'UA01BT-001': 5});
+    });
+
+    test('普通版 3 張 + 星級版 1 張 = 剛好 4 張不提醒', () {
+      final normal = _num('UA01BT-001', id: 1);
+      final star = UACard(id: 3, cardNumber: 'UA01BT-001', starCount: 1);
+      final cards = [normal, normal, normal, star];
+      expect(DeckStats.overLimitCardNumbers(cards), isEmpty);
+    });
+
+    test('空清單回傳空 Map', () {
+      expect(DeckStats.overLimitCardNumbers(const []), isEmpty);
+    });
+  });
+
+  group('DeckStats.overLimitTriggers', () {
+    List<UACard> times(String text, int n) =>
+        [for (var i = 0; i < n; i++) _trigger(text)];
+
+    test('Special 5 張時提醒', () {
+      expect(DeckStats.overLimitTriggers(times('スペシャル', 5)), {'SPECIAL': 5});
+    });
+
+    test('Special 4 張 + Final 4 張不提醒', () {
+      expect(
+        DeckStats.overLimitTriggers(
+            [...times('スペシャル', 4), ...times('ファイナル', 4)]),
+        isEmpty,
+      );
+    });
+
+    test('Final 5 張 + Special 4 張只提醒 Final', () {
+      expect(
+        DeckStats.overLimitTriggers(
+            [...times('ファイナル', 5), ...times('スペシャル', 4)]),
+        {'FINAL': 5},
+      );
+    });
+
+    test('兩者都超過時依序 SPECIAL、FINAL', () {
+      final result = DeckStats.overLimitTriggers(
+          [...times('ファイナル', 5), ...times('スペシャル', 5)]);
+      expect(result.keys.toList(), ['SPECIAL', 'FINAL']);
+    });
+  });
+
+  group('DeckStats.openingHandHitProbability / zeroEnergyCount', () {
+    test('50 張中 10 張 0 能，起手 7 張至少 1 張約 81.3%', () {
+      expect(DeckStats.openingHandHitProbability(deckSize: 50, hits: 10),
+          closeTo(0.8133, 0.0005));
+    });
+
+    test('牌組不到 7 張回傳 null', () {
+      expect(DeckStats.openingHandHitProbability(deckSize: 6, hits: 3), isNull);
+    });
+
+    test('沒有 0 能卡時機率為 0', () {
+      expect(DeckStats.openingHandHitProbability(deckSize: 7, hits: 0), 0.0);
+    });
+
+    test('非 0 能卡不到 7 張時機率為 1', () {
+      expect(DeckStats.openingHandHitProbability(deckSize: 50, hits: 44), 1.0);
+    });
+
+    test('energyReq 為 null 視為 0 能', () {
+      expect(
+          DeckStats.zeroEnergyCount([_energy(null), _energy(0), _energy(1)]), 2);
     });
   });
 }

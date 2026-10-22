@@ -190,4 +190,81 @@ void main() {
     expect(tester.widget<EnergyDistributionChart>(find.byType(EnergyDistributionChart)).textColor, themeText);
     expect(tester.widget<TriggerDistributionGrid>(find.byType(TriggerDistributionGrid)).textColor, themeText);
   });
+
+  const warningIconKey = Key('deckHealthWarningIcon');
+  const warningCountKey = Key('deckHealthWarningCount');
+  final normal = UACard(id: 10, cardNumber: 'UA01BT-001', energyReq: 2);
+  final parallel = UACard(id: 11, cardNumber: 'UA01BT-001', isParallel: true, energyReq: 2);
+  final sp1 = UACard(id: 20, cardNumber: 'SP-1', energyReq: 2, triggerText: 'スペシャル');
+  final sp2 = UACard(id: 21, cardNumber: 'SP-2', energyReq: 2, triggerText: 'スペシャル');
+
+  void addCopies(DeckViewModel notifier, UACard card, int n) {
+    for (var i = 0; i < n; i++) {
+      notifier.updateCardQuantity(card, 1);
+    }
+  }
+
+  testWidgets('同卡號跨版本超過 4 張、Special 觸發超過 4 張時顯示提醒', (tester) async {
+    final container = makeContainer();
+    await pumpBuilder(tester, container);
+
+    final notifier = container.read(deckViewModelProvider.notifier);
+    addCopies(notifier, normal, 4);
+    addCopies(notifier, parallel, 1);
+    addCopies(notifier, sp1, 4);
+    addCopies(notifier, sp2, 1);
+    await tester.pump();
+
+    expect(find.byKey(warningIconKey), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(warningCountKey)).data, '2');
+
+    await tester.tap(find.byKey(summaryKey));
+    await tester.pump();
+
+    expect(find.text('規則提醒'), findsOneWidget);
+    expect(find.text('UA01BT-001 共 5 張（含其他版本）'), findsOneWidget);
+    expect(find.text('SPECIAL 觸發共 5 張（上限 4 張）'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('同卡號與觸發剛好 4 張不提醒', (tester) async {
+    final container = makeContainer();
+    await pumpBuilder(tester, container);
+
+    final notifier = container.read(deckViewModelProvider.notifier);
+    addCopies(notifier, normal, 3);
+    addCopies(notifier, parallel, 1);
+    addCopies(notifier, sp1, 4);
+    await tester.pump();
+
+    expect(find.byKey(warningIconKey), findsNothing);
+    expect(find.byKey(warningCountKey), findsNothing);
+
+    await tester.tap(find.byKey(summaryKey));
+    await tester.pump();
+
+    expect(find.text('規則提醒'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('0 能起手機率：不到 7 張不顯示，7 張以上一律顯示', (tester) async {
+    final container = makeContainer();
+    await pumpBuilder(tester, container);
+
+    final notifier = container.read(deckViewModelProvider.notifier);
+    addCopies(notifier, blue, 1);
+    addCopies(notifier, red, 4);
+    await tester.pump();
+
+    await tester.tap(find.byKey(summaryKey));
+    await tester.pump();
+    expect(find.byKey(const Key('deckHealthZeroEnergyOdds')), findsNothing);
+
+    addCopies(notifier, UACard(id: 3, cardNumber: 'C-1', color: 'RED', energyReq: 3), 3);
+    await tester.pump();
+
+    expect(find.text('0 能卡 1 張，起手 7 張至少 1 張的機率 87.5%'), findsOneWidget);
+    expect(find.byKey(warningIconKey), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
