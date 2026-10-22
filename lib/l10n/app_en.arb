@@ -93,6 +93,11 @@
   "tabImportQr": "Import QR",
   "deckImportQrTitle": "Deck Import QR Code",
   "deckImportQrHint": "Other players can scan this code to import your deck",
+  "generateShareCode": "Generate share code",
+  "shareCodeHint": "Codes are valid for 24 hours; each tap creates a new one",
+  "shareCodeExpiresAt": "Valid until {time}",
+  "copyShareCode": "Copy",
+  "shareCodeCopied": "Share code copied",
   "totalCards": "Total cards",
   "cardCount": "{count} cards",
   "estimatedPrice": "Est. price (reference)",
@@ -258,5 +263,6 @@
   "errLoadTopDecksFailed": "Failed to load top decks",
   "errSearchCardsFailed": "Card search failed",
   "errLoadDeckCardsFailed": "Failed to load the deck's card list. Please try again later.",
+  "errCreateShareCodeFailed": "Failed to generate share code",
   "errorWithDetail": "{message}: {detail}"
 }

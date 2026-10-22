@@ -658,6 +658,36 @@ abstract class AppLocalizations {
   /// **'其他玩家掃描此碼即可快速導入您的牌組'**
   String get deckImportQrHint;
 
+  /// No description provided for @generateShareCode.
+  ///
+  /// In zh, this message translates to:
+  /// **'產生分享代碼'**
+  String get generateShareCode;
+
+  /// No description provided for @shareCodeHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'代碼 24 小時內有效，每次產生都是新的代碼'**
+  String get shareCodeHint;
+
+  /// No description provided for @shareCodeExpiresAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'{time} 前有效'**
+  String shareCodeExpiresAt(String time);
+
+  /// No description provided for @copyShareCode.
+  ///
+  /// In zh, this message translates to:
+  /// **'複製'**
+  String get copyShareCode;
+
+  /// No description provided for @shareCodeCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已複製分享代碼'**
+  String get shareCodeCopied;
+
   /// No description provided for @totalCards.
   ///
   /// In zh, this message translates to:
@@ -1651,6 +1681,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'載入牌組卡表失敗，請稍後再試'**
   String get errLoadDeckCardsFailed;
+
+  /// No description provided for @errCreateShareCodeFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'產生分享代碼失敗'**
+  String get errCreateShareCodeFailed;
 
   /// 錯誤訊息後面接原始例外內容（技術細節，不翻譯）
   ///

@@ -44,12 +44,30 @@ void main() {
       final counts = DeckQrCodec.countsFromDeck({1: 2, 99: 3}, [UACard(id: 1, cardNumber: 'A-1')]);
       expect(counts, {'A-1': 2});
     });
+
+    test('同卡號不同版本張數加總，不互相覆蓋', () {
+      final counts = DeckQrCodec.countsFromDeck({1: 2, 2: 1, 3: 1, 4: 1}, [
+        UACard(id: 1, cardNumber: 'A-1'),
+        UACard(id: 2, cardNumber: 'A-1', isParallel: true),
+        UACard(id: 3, cardNumber: 'A-1', starCount: 1),
+        UACard(id: 4, cardNumber: 'B-2'),
+      ]);
+      expect(counts, {'A-1': 4, 'B-2': 1});
+    });
   });
 
   group('DeckQrCodec.encodeDeck', () {
     test('deckMap 配卡片清單直接編成 QR 字串，找不到的卡跳過', () {
       final data = DeckQrCodec.encodeDeck({1: 2, 99: 3}, [UACard(id: 1, cardNumber: 'A-1')]);
       expect(data, 'UA_DECK|A-1:2');
+    });
+
+    test('同卡號一般版與簽名版張數加總後編碼', () {
+      final data = DeckQrCodec.encodeDeck({1: 2, 2: 1}, [
+        UACard(id: 1, cardNumber: 'A-1'),
+        UACard(id: 2, cardNumber: 'A-1', hasSignature: true),
+      ]);
+      expect(data, 'UA_DECK|A-1:3');
     });
   });
 }
