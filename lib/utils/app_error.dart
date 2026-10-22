@@ -28,6 +28,7 @@ enum AppErrorCode {
   loadTopDecksFailed,
   searchCardsFailed,
   createShareCodeFailed,
+  shareCodeRateLimited,
 }
 
 class AppError {
@@ -65,6 +66,7 @@ class AppError {
       AppErrorCode.loadTopDecksFailed => l10n.errLoadTopDecksFailed,
       AppErrorCode.searchCardsFailed => l10n.errSearchCardsFailed,
       AppErrorCode.createShareCodeFailed => l10n.errCreateShareCodeFailed,
+      AppErrorCode.shareCodeRateLimited => l10n.errShareCodeRateLimited,
     };
     return detail == null ? message : l10n.errorWithDetail(message, detail!);
   }

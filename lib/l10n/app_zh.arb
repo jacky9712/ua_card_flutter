@@ -493,6 +493,7 @@
   "errSearchCardsFailed": "搜尋卡片失敗",
   "errLoadDeckCardsFailed": "載入牌組卡表失敗，請稍後再試",
   "errCreateShareCodeFailed": "產生分享代碼失敗",
+  "errShareCodeRateLimited": "產生分享代碼太頻繁了，請一小時後再試",
   "errorWithDetail": "{message}: {detail}",
   "@errorWithDetail": {
     "description": "錯誤訊息後面接原始例外內容（技術細節，不翻譯）",

@@ -264,5 +264,6 @@
   "errSearchCardsFailed": "Card search failed",
   "errLoadDeckCardsFailed": "Failed to load the deck's card list. Please try again later.",
   "errCreateShareCodeFailed": "Failed to generate share code",
+  "errShareCodeRateLimited": "Too many share codes generated. Please try again in an hour.",
   "errorWithDetail": "{message}: {detail}"
 }

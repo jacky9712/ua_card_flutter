@@ -23,6 +23,9 @@ class DeckShareCodeViewModel extends Notifier<DeckShareCodeState> {
       // await 期間畫面可能已經關掉、provider 被 autoDispose，之後就不能再碰 state。
       if (!ref.mounted) return;
       state = DeckShareCodeState(shareCode: result);
+    } on DeckShareCodeRateLimitedException {
+      if (!ref.mounted) return;
+      state = const DeckShareCodeState(error: AppError(AppErrorCode.shareCodeRateLimited));
     } catch (e) {
       if (!ref.mounted) return;
       state = DeckShareCodeState(error: AppError(AppErrorCode.createShareCodeFailed, detail: '$e'));

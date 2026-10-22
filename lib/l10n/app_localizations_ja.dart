@@ -869,6 +869,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errCreateShareCodeFailed => '共有コードの発行に失敗しました';
 
   @override
+  String get errShareCodeRateLimited => '共有コードの発行回数が多すぎます。1時間後にもう一度お試しください';
+
+  @override
   String errorWithDetail(String message, String detail) {
     return '$message: $detail';
   }

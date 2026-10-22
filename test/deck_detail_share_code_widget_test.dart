@@ -12,11 +12,13 @@ import 'package:ua_card_flutter/screens/deck_detail_screen.dart';
 class _FakeDeckShareCodeRepository implements DeckShareCodeRepository {
   String? lastDeckString;
   bool fail = false;
+  bool rateLimited = false;
 
   @override
   Future<DeckShareCode> createShareCode(String deckString) async {
     lastDeckString = deckString;
     if (fail) throw Exception('rpc down');
+    if (rateLimited) throw const DeckShareCodeRateLimitedException();
     return DeckShareCode(code: '012345', expiresAt: DateTime(2026, 10, 23, 15, 30));
   }
 }
@@ -97,6 +99,22 @@ void main() {
 
     expect(find.textContaining('產生分享代碼失敗'), findsOneWidget);
     expect(find.byKey(const Key('deckShareCodeText')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('產生太頻繁被伺服器擋下：顯示「一小時後再試」，不是一般的失敗訊息', (tester) async {
+    fake.rateLimited = true;
+
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(generateKey));
+    await tester.pump();
+    await tester.tap(find.byKey(generateKey));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('產生分享代碼太頻繁了，請一小時後再試'), findsOneWidget);
+    expect(find.textContaining('產生分享代碼失敗'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

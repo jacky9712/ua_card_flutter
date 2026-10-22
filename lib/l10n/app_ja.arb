@@ -264,5 +264,6 @@
   "errSearchCardsFailed": "カードの検索に失敗しました",
   "errLoadDeckCardsFailed": "デッキのカードリストの読み込みに失敗しました。しばらくしてからもう一度お試しください",
   "errCreateShareCodeFailed": "共有コードの発行に失敗しました",
+  "errShareCodeRateLimited": "共有コードの発行回数が多すぎます。1時間後にもう一度お試しください",
   "errorWithDetail": "{message}: {detail}"
 }
