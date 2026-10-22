@@ -98,4 +98,23 @@ void main() {
     SharedPreferences.setMockInitialValues({cardsKey: 'not json'});
     expect(await SharedPrefsMyDeckCacheStore().loadDeckCards('userA', 5), isNull);
   });
+
+  test('clearUser 只刪這個使用者的清單與卡表，不動別人的', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = SharedPrefsMyDeckCacheStore();
+    final card = UACard(id: 1, cardNumber: 'UA01BT-001', name: 'a', price: 300, seriesId: 2);
+    await store.saveDecks('userA', [{'id': 10, 'name': 'A'}]);
+    await store.saveDeckCards('userA', 5, [card]);
+    await store.saveDeckCards('userA', 6, [card]);
+    await store.saveDecks('userAB', [{'id': 20, 'name': 'AB'}]); // id 剛好以 userA 開頭
+    await store.saveDeckCards('userAB', 5, [card]);
+
+    await store.clearUser('userA');
+
+    expect(await store.loadDecks('userA'), isNull);
+    expect(await store.loadDeckCards('userA', 5), isNull);
+    expect(await store.loadDeckCards('userA', 6), isNull);
+    expect((await store.loadDecks('userAB'))!.single['id'], 20);
+    expect(await store.loadDeckCards('userAB', 5), hasLength(1));
+  });
 }

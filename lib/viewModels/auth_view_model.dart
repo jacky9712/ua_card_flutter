@@ -62,8 +62,16 @@ class AuthViewModel extends Notifier<UserAuthState> {
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true);
     final repo = ref.read(authRepositoryProvider);
+    // 登出前先記下是誰：登出後 currentUser 就換成新的匿名身分了。
+    // 匿名使用者沒有雲端牌組快取（牌組本來就存在手機上），不用清。
+    final user = repo.currentUser;
+    final String? cachedUserId = (user != null && !user.isAnonymous) ? user.id : null;
     try {
       await repo.signOut();
+      // 登出成功才清：登出失敗時人還是登入狀態，快取留著離線還能看。
+      if (cachedUserId != null) {
+        await ref.read(myDeckCacheStoreProvider).clearUser(cachedUserId);
+      }
       // 登出後立即建立新的匿名階段，確保 App 核心功能（本地組牌）不中斷
       await repo.signInAnonymously();
       state = state.copyWith(isLoading: false, error: null);

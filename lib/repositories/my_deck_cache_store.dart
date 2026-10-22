@@ -8,12 +8,15 @@ import '../models/ua_card.dart';
 /// 「我的牌組」雲端牌組清單與打開過的牌組卡表的本機快取，離線時顯示上次同步的結果。
 ///
 /// 以使用者 id 區分，避免換帳號看到別人的牌組。
-/// load 遇到沒有快取、快取損壞或讀不到時回傳 `null`，絕不丟例外；save 也絕不丟例外。
+/// load 遇到沒有快取、快取損壞或讀不到時回傳 `null`，絕不丟例外；save / clear 也絕不丟例外。
 abstract class MyDeckCacheStore {
   Future<List<Map<String, dynamic>>?> loadDecks(String userId);
   Future<void> saveDecks(String userId, List<Map<String, dynamic>> decks);
   Future<List<UACard>?> loadDeckCards(String userId, int deckId);
   Future<void> saveDeckCards(String userId, int deckId, List<UACard> cards);
+
+  /// 刪掉這個使用者的牌組清單與所有卡表快取（登出時用），不動其他使用者的。
+  Future<void> clearUser(String userId);
 }
 
 class SharedPrefsMyDeckCacheStore implements MyDeckCacheStore {
@@ -75,6 +78,21 @@ class SharedPrefsMyDeckCacheStore implements MyDeckCacheStore {
       await prefs.setString(_deckCardsKey(userId, deckId), json.encode(cards.map((c) => c.toJson()).toList()));
     } catch (e) {
       debugPrint('寫入我的牌組卡表快取失敗: $e');
+    }
+  }
+
+  @override
+  Future<void> clearUser(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // 卡表 key 是 `..._${userId}_$deckId`，用帶結尾底線的前綴比對，才不會誤刪 id 剛好是前綴的別人。
+      final cardsPrefix = 'my_deck_cards_cache_v1_${userId}_';
+      final keys = prefs.getKeys().where((k) => k == _decksKey(userId) || k.startsWith(cardsPrefix)).toList();
+      for (final key in keys) {
+        await prefs.remove(key);
+      }
+    } catch (e) {
+      debugPrint('清除我的牌組快取失敗: $e');
     }
   }
 }
