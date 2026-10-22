@@ -1,10 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:ua_card_flutter/repositories/auth_repository.dart';
 import 'package:ua_card_flutter/repositories/match_record_repository.dart';
 import 'package:ua_card_flutter/repositories/providers.dart';
 import 'package:ua_card_flutter/utils/app_error.dart';
 import 'package:ua_card_flutter/viewModels/match_record_view_model.dart';
+
+class _FakeAuthRepository implements AuthRepository {
+  @override
+  User? get currentUser => null;
+
+  @override
+  Stream<AuthState> get onAuthStateChange => const Stream.empty();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 class _FakeMatchRecordRepository implements MatchRecordRepository {
   _FakeMatchRecordRepository({this.failDelete = false});
@@ -29,7 +42,10 @@ class _FakeMatchRecordRepository implements MatchRecordRepository {
 
 void main() {
   ProviderContainer makeContainer(_FakeMatchRecordRepository repo) {
-    final container = ProviderContainer(overrides: [matchRecordRepositoryProvider.overrideWithValue(repo)]);
+    final container = ProviderContainer(overrides: [
+      matchRecordRepositoryProvider.overrideWithValue(repo),
+      authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
+    ]);
     addTearDown(container.dispose);
     return container;
   }
@@ -48,5 +64,32 @@ void main() {
 
     expect(success, isFalse);
     expect(container.read(matchRecordViewModelProvider).error?.code, AppErrorCode.deleteFailed);
+  });
+
+  group('MatchRecordState 總統計從我的角度算', () {
+    test('別人記他贏了我，在我的統計算成敗場', () {
+      final state = MatchRecordState(myUserId: 'me', records: [
+        {'player_id': 'other', 'opponent_id': 'me', 'result': 'win'},
+      ]);
+
+      expect(state.winCount, 0);
+      expect(state.lossCount, 1);
+      expect(state.winRate, 0);
+    });
+
+    test('混合我記的與別人記的紀錄，平手不入分母', () {
+      final state = MatchRecordState(myUserId: 'me', records: [
+        {'player_id': 'me', 'opponent_id': 'other', 'result': 'win'},
+        {'player_id': 'me', 'opponent_id': 'other', 'result': 'draw'},
+        {'player_id': 'other', 'opponent_id': 'me', 'result': 'loss'},
+        {'player_id': 'other', 'opponent_id': 'me', 'result': 'win'},
+      ]);
+
+      expect(state.totalCount, 4);
+      expect(state.winCount, 2);
+      expect(state.lossCount, 1);
+      expect(state.drawCount, 1);
+      expect(state.winRate, closeTo(66.67, 0.01));
+    });
   });
 }

@@ -1,33 +1,36 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/providers.dart';
 import '../utils/app_error.dart';
+import '../utils/match_record_stats.dart';
 
 class MatchRecordState {
   final List<Map<String, dynamic>> records;
   final bool isLoading;
   final AppError? error;
+  final String? myUserId;
 
-  MatchRecordState({this.records = const [], this.isLoading = false, this.error});
+  MatchRecordState({this.records = const [], this.isLoading = false, this.error, this.myUserId});
 
-  MatchRecordState copyWith({List<Map<String, dynamic>>? records, bool? isLoading, AppError? error}) {
+  MatchRecordState copyWith({List<Map<String, dynamic>>? records, bool? isLoading, AppError? error, String? myUserId}) {
     return MatchRecordState(
       records: records ?? this.records,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      myUserId: myUserId ?? this.myUserId,
     );
   }
 
   int get totalCount => records.length;
-  int get winCount => records.where((r) => r['result'] == 'win').length;
-  int get lossCount => records.where((r) => r['result'] == 'loss').length;
-  int get drawCount => records.where((r) => r['result'] == 'draw').length;
 
-  double get winRate {
-    // 平手不計入勝率的分母，只算「有分出勝負」的場次。
-    final decided = winCount + lossCount;
-    if (decided == 0) return 0;
-    return winCount / decided * 100;
-  }
+  /// result 是從記錄者角度存的，統計一律換成「我」的角度（見 resultFromMyPerspective）。
+  MatchStats get stats => matchStatsOf(records, myUserId);
+  int get winCount => stats.win;
+  int get lossCount => stats.loss;
+  int get drawCount => stats.draw;
+  double get winRate => stats.winRate;
+
+  List<MatchStatsGroup> get statsByDeck => matchStatsByDeck(records, myUserId);
+  List<MatchStatsGroup> get statsByOpponent => matchStatsByOpponent(records, myUserId);
 }
 
 class MatchRecordViewModel extends Notifier<MatchRecordState> {
@@ -43,7 +46,8 @@ class MatchRecordViewModel extends Notifier<MatchRecordState> {
     try {
       final repo = ref.read(matchRecordRepositoryProvider);
       final records = await repo.fetchMyMatchRecords();
-      state = state.copyWith(records: records, isLoading: false);
+      final myUserId = ref.read(authRepositoryProvider).currentUser?.id;
+      state = state.copyWith(records: records, isLoading: false, myUserId: myUserId);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadMatchesFailed));
     }

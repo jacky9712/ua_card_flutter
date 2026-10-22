@@ -218,6 +218,19 @@
   "noMatchRecords": "還沒有任何對戰紀錄",
   "totalMatches": "總場次",
   "winRate": "勝率",
+  "matchTabRecords": "紀錄",
+  "matchTabByDeck": "依牌組",
+  "matchTabByOpponent": "依對手",
+  "unspecifiedDeck": "未指定",
+  "matchWinLossDraw": "{win}勝 {loss}敗 {draw}和",
+  "@matchWinLossDraw": {
+    "description": "戰績統計每列的勝-敗-和",
+    "placeholders": {
+      "win": {"type": "int"},
+      "loss": {"type": "int"},
+      "draw": {"type": "int"}
+    }
+  },
   "deckUsed": "使用牌組",
   "playedAt": "對戰時間",
   "deleteThisRecord": "刪除這筆紀錄",
