@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// 定位相關功能（即時分享位置、用目前位置排序/發布）的平台判斷閘門。
@@ -35,3 +36,9 @@ Future<Position?> getCurrentPositionOrNull() async {
     return null;
   }
 }
+
+
+/// 取得目前位置的入口。ViewModel / 畫面透過這個 provider 拿位置，測試可以 override 成固定座標
+/// （測試環境沒有定位外掛，直接呼叫 [getCurrentPositionOrNull] 永遠拿到 null）。
+typedef PositionGetter = Future<Position?> Function();
+final currentPositionProvider = Provider<PositionGetter>((ref) => getCurrentPositionOrNull);

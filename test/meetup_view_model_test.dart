@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:ua_card_flutter/repositories/meetup_repository.dart';
 import 'package:ua_card_flutter/repositories/providers.dart';
 import 'package:ua_card_flutter/utils/app_error.dart';
+import 'package:ua_card_flutter/utils/location_platform.dart';
 import 'package:ua_card_flutter/viewModels/meetup_view_model.dart';
 
 class _FakeMeetupRepository implements MeetupRepository {
@@ -63,8 +64,11 @@ void main() {
 
   setUp(() => repo = _FakeMeetupRepository());
 
-  ProviderContainer makeContainer() {
-    final container = ProviderContainer(overrides: [meetupRepositoryProvider.overrideWithValue(repo)]);
+  ProviderContainer makeContainer({PositionGetter? position}) {
+    final container = ProviderContainer(overrides: [
+      meetupRepositoryProvider.overrideWithValue(repo),
+      if (position != null) currentPositionProvider.overrideWithValue(position),
+    ]);
     addTearDown(container.dispose);
     return container;
   }
@@ -141,6 +145,35 @@ void main() {
     final state = container.read(meetupViewModelProvider);
     expect(state.error?.code, AppErrorCode.locationFallbackToTime);
     expect(state.sortMode, MeetupSortMode.soonest);
+  });
+
+  test('切到最近距離且拿到定位：記住座標、改成距離排序，之後切換不再重新定位', () async {
+    repo.posts
+      ..clear()
+      ..addAll([
+        {'id': 1, 'lat': 25.0, 'lng': 121.5}, // 台北
+        {'id': 2},
+        {'id': 3, 'lat': 22.6, 'lng': 120.3}, // 高雄
+      ]);
+    var positionCalls = 0;
+    final container = makeContainer(position: () async {
+      positionCalls++;
+      return _position(22.63, 120.30);
+    });
+    final notifier = container.read(meetupViewModelProvider.notifier);
+    await notifier.fetchOpenMeetupPosts();
+
+    await notifier.setSortMode(MeetupSortMode.nearest);
+
+    final state = container.read(meetupViewModelProvider);
+    expect(state.error, isNull);
+    expect(state.sortMode, MeetupSortMode.nearest);
+    expect(state.myPosition?.latitude, 22.63);
+    expect(state.sortedPosts.map((p) => p['id']), [3, 1, 2]);
+
+    await notifier.setSortMode(MeetupSortMode.soonest);
+    await notifier.setSortMode(MeetupSortMode.nearest);
+    expect(positionCalls, 1);
   });
 
   group('MeetupState.sortedPosts', () {
