@@ -14,6 +14,7 @@ class AppColors {
   static const cardGreen = Color(0xFF43A047);
   static const cardYellow = Color(0xFFFFB300);
   static const cardPurple = Color(0xFF8E24AA);
+  static const cardPurpleLight = Color(0xFFCE93D8); // 能源分布長條漸層的淺色端
   static const cardUnknown = Color(0xFF757575);
 
   // 推薦牌組 Tier 分級

@@ -172,4 +172,17 @@ void main() {
     expect(find.byKey(detailsKey), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('展開區的圖表用主題文字色，和牌組詳情頁一致', (tester) async {
+    final container = makeContainer();
+    await pumpBuilder(tester, container);
+
+    await tester.tap(find.byKey(summaryKey));
+    await tester.pump();
+
+    final themeText = Theme.of(tester.element(find.byKey(detailsKey))).textTheme.bodyLarge?.color;
+    expect(themeText, isNot(Colors.white)); // 測試用的預設亮色主題，寫死白色會被抓到
+    expect(tester.widget<EnergyDistributionChart>(find.byType(EnergyDistributionChart)).textColor, themeText);
+    expect(tester.widget<TriggerDistributionGrid>(find.byType(TriggerDistributionGrid)).textColor, themeText);
+  });
 }

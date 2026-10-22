@@ -9,8 +9,10 @@ import 'package:ua_card_flutter/utils/app_error.dart';
 import 'package:ua_card_flutter/viewModels/match_record_view_model.dart';
 
 class _FakeAuthRepository implements AuthRepository {
+  User? user;
+
   @override
-  User? get currentUser => null;
+  User? get currentUser => user;
 
   @override
   Stream<AuthState> get onAuthStateChange => const Stream.empty();
@@ -41,10 +43,10 @@ class _FakeMatchRecordRepository implements MatchRecordRepository {
 }
 
 void main() {
-  ProviderContainer makeContainer(_FakeMatchRecordRepository repo) {
+  ProviderContainer makeContainer(_FakeMatchRecordRepository repo, {_FakeAuthRepository? auth}) {
     final container = ProviderContainer(overrides: [
       matchRecordRepositoryProvider.overrideWithValue(repo),
-      authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
+      authRepositoryProvider.overrideWithValue(auth ?? _FakeAuthRepository()),
     ]);
     addTearDown(container.dispose);
     return container;
@@ -64,6 +66,20 @@ void main() {
 
     expect(success, isFalse);
     expect(container.read(matchRecordViewModelProvider).error?.code, AppErrorCode.deleteFailed);
+  });
+
+  test('登出後重新載入，myUserId 會清成 null，不留上一個帳號的 id', () async {
+    final auth = _FakeAuthRepository()
+      ..user = User(id: 'me', appMetadata: const {}, userMetadata: const {}, aud: 'authenticated', createdAt: '');
+    final container = makeContainer(_FakeMatchRecordRepository(), auth: auth);
+    final vm = container.read(matchRecordViewModelProvider.notifier);
+
+    await vm.fetchMyMatchRecords();
+    expect(container.read(matchRecordViewModelProvider).myUserId, 'me');
+
+    auth.user = null;
+    await vm.fetchMyMatchRecords();
+    expect(container.read(matchRecordViewModelProvider).myUserId, isNull);
   });
 
   group('MatchRecordState 總統計從我的角度算', () {

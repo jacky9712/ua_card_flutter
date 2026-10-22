@@ -59,7 +59,7 @@ class EnergyDistributionChart extends StatelessWidget {
                           height: 16,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF8E24AA), Color(0xFFCE93D8)],
+                              colors: [AppColors.cardPurple, AppColors.cardPurpleLight],
                             ),
                             borderRadius: BorderRadius.circular(4),
                           ),
