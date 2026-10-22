@@ -85,8 +85,6 @@ void main() {
     test('格式不對或 id 是空的：invalidQr，不查資料庫', () async {
       final container = makeContainer();
       final notifier = container.read(opponentViewModelProvider.notifier);
-      // build() 排了一次初始載入，它開始時會清掉 error；先讓它跑完，免得蓋掉這裡要檢查的錯誤。
-      await pumpEventQueue();
 
       expect(await notifier.addOpponentFromQr('UA_DECK|abc'), isNull);
       expect(container.read(opponentViewModelProvider).error?.code, AppErrorCode.invalidQr);
@@ -136,5 +134,29 @@ void main() {
       expect(state.error?.code, AppErrorCode.addOpponentFailed);
       expect(state.isLoading, isFalse);
     });
+  });
+
+  test('初始載入比掃 QR 晚跑完，也不會蓋掉 invalidQr', () async {
+    final container = makeContainer();
+    final notifier = container.read(opponentViewModelProvider.notifier);
+
+    // build() 排的初始載入還沒跑，先掃到錯的 QR
+    expect(await notifier.addOpponentFromQr('UA_DECK|abc'), isNull);
+    await pumpEventQueue(); // 讓初始載入跑完
+
+    expect(container.read(opponentViewModelProvider).error?.code, AppErrorCode.invalidQr);
+  });
+
+  test('載入失敗後重新載入成功，清掉 loadOpponentsFailed', () async {
+    opponents.failFetch = true;
+    final container = makeContainer();
+    final notifier = container.read(opponentViewModelProvider.notifier);
+    await notifier.fetchKnownOpponents();
+    expect(container.read(opponentViewModelProvider).error?.code, AppErrorCode.loadOpponentsFailed);
+
+    opponents.failFetch = false;
+    await notifier.fetchKnownOpponents();
+
+    expect(container.read(opponentViewModelProvider).error, isNull);
   });
 }

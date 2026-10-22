@@ -63,11 +63,15 @@ class MeetupViewModel extends Notifier<MeetupState> {
   }
 
   Future<void> fetchOpenMeetupPosts() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: state.error.clearedIf(AppErrorCode.loadMeetupsFailed));
     try {
       final repo = ref.read(meetupRepositoryProvider);
       final posts = await repo.fetchOpenMeetupPosts();
-      state = state.copyWith(posts: posts, isLoading: false);
+      state = state.copyWith(
+        posts: posts,
+        isLoading: false,
+        error: state.error.clearedIf(AppErrorCode.loadMeetupsFailed),
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadMeetupsFailed));
     }

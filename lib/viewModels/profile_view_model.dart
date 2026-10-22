@@ -30,11 +30,15 @@ class ProfileViewModel extends Notifier<ProfileState> {
   Future<void> fetchMyProfile() async {
     final userId = ref.read(authRepositoryProvider).currentUser?.id;
     if (userId == null) return;
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: state.error.clearedIf(AppErrorCode.loadProfileFailed));
     try {
       final repo = ref.read(profileRepositoryProvider);
       final profile = await repo.fetchProfile(userId);
-      state = state.copyWith(displayName: profile?['display_name'] as String?, isLoading: false);
+      state = state.copyWith(
+        displayName: profile?['display_name'] as String?,
+        isLoading: false,
+        error: state.error.clearedIf(AppErrorCode.loadProfileFailed),
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadProfileFailed));
     }

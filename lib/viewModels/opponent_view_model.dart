@@ -27,11 +27,15 @@ class OpponentViewModel extends Notifier<OpponentState> {
   }
 
   Future<void> fetchKnownOpponents() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: state.error.clearedIf(AppErrorCode.loadOpponentsFailed));
     try {
       final repo = ref.read(opponentRepositoryProvider);
       final list = await repo.fetchKnownOpponents();
-      state = state.copyWith(knownOpponents: list, isLoading: false);
+      state = state.copyWith(
+        knownOpponents: list,
+        isLoading: false,
+        error: state.error.clearedIf(AppErrorCode.loadOpponentsFailed),
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadOpponentsFailed));
     }
