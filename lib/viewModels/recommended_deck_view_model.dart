@@ -67,7 +67,7 @@ class RecommendedDeckViewModel extends Notifier<RecommendedDeckState> {
     // 只在網路還沒給資料時套用。isLoading 由 copyWith 保留（網路還在跑就維持 true）；
     // error 清成 null：網路先失敗、快取後到時，有快取就不算失敗。
     if (cached != null && cached.isNotEmpty && !_hasNetworkData && state.decks.isEmpty) {
-      state = state.copyWith(decks: cached);
+      state = state.copyWith(decks: cached, error: null);
     }
   }
 

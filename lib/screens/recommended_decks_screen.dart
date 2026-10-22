@@ -19,6 +19,8 @@ class RecommendedDecksScreen extends ConsumerStatefulWidget {
 
 class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen> {
   int? _openingDeckId;
+  // 下拉重新整理時 RefreshIndicator 自己會轉圈，這段期間不要再疊一條頂端進度條。
+  bool _pullRefreshing = false;
 
   // 篩選條件：系列/顏色/T級都是 null 或空集合代表「不篩選」，跟 CardLibraryViewModel
   // 的篩選欄位同一套習慣。「只看我的卡組」則是額外的布林開關。
@@ -239,6 +241,15 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
     );
   }
 
+  Future<void> _onPullRefresh() async {
+    setState(() => _pullRefreshing = true);
+    try {
+      await ref.read(recommendedDeckViewModelProvider.notifier).fetchRecommendedDecks();
+    } finally {
+      if (mounted) setState(() => _pullRefreshing = false);
+    }
+  }
+
   Future<void> _openDeck(Map<String, dynamic> deck) async {
     final int deckId = deck['id'];
     // await 之後畫面可能已經重建，先取好 messenger 與 l10n。
@@ -342,158 +353,158 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
       body: Column(
         children: [
           // 已經有牌組時重新整理（下拉或背景更新快取）不會整頁轉圈，頂端顯示細進度條。
-          if (state.isLoading && state.decks.isNotEmpty)
+          if (state.isLoading && state.decks.isNotEmpty && !_pullRefreshing)
             const LinearProgressIndicator(key: Key('recommendedDecksLoadingBar'), minHeight: 2),
           Expanded(
             child: RefreshIndicator(
-        onRefresh: () => ref.read(recommendedDeckViewModelProvider.notifier).fetchRecommendedDecks(),
-        child: state.isLoading && state.decks.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : state.decks.isEmpty && state.error != null
-                // 第一次載入沒快取又失敗：顯示錯誤與重試（用 ListView 讓下拉重新整理也能用）。
-                ? ListView(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Column(
+              onRefresh: _onPullRefresh,
+              child: state.isLoading && state.decks.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.decks.isEmpty && state.error != null
+                      // 第一次載入沒快取又失敗：顯示錯誤與重試（用 ListView 讓下拉重新整理也能用）。
+                      ? ListView(
                           children: [
-                            Text(
-                              state.error!.localize(context.l10n),
-                              key: const Key('recommendedDecksError'),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              key: const Key('recommendedDecksRetryButton'),
-                              onPressed: () => ref.read(recommendedDeckViewModelProvider.notifier).fetchRecommendedDecks(),
-                              child: Text(context.l10n.retry),
+                            Padding(
+                              padding: const EdgeInsets.all(40),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    state.error!.localize(context.l10n),
+                                    key: const Key('recommendedDecksError'),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    key: const Key('recommendedDecksRetryButton'),
+                                    onPressed: () => ref.read(recommendedDeckViewModelProvider.notifier).fetchRecommendedDecks(),
+                                    child: Text(context.l10n.retry),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                        ),
-                      ),
-                    ],
-                  )
-            : state.decks.isEmpty
-                ? ListView(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Center(child: Text(context.l10n.noRecommendedDecks, style: TextStyle(color: Colors.grey))),
-                      ),
-                    ],
-                  )
-                : filteredDecks.isEmpty
-                    ? ListView(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.all(40),
-                            child: Center(child: Text(context.l10n.noDecksMatchFilter, style: TextStyle(color: Colors.grey))),
-                          ),
-                        ],
-                      )
-                    : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredDecks.length,
-                    itemBuilder: (context, index) {
-                      final deck = filteredDecks[index];
-                      final String tier = (deck['tier'] ?? '').toString();
-                      // 圓形徽章空間有限，"Tier1.5" 這種字串只取數字部分顯示
-                      final tierMatch = RegExp(r'(\d+(\.\d+)?)').firstMatch(tier);
-                      final String tierBadge = tierMatch?.group(1) ?? '?';
-                      final String seriesName = deck['series']?['name_zh'] ?? context.l10n.uncategorizedSeries;
-                      final winRate = deck['win_rate'];
-                      final int totalPrice = deck['total_price'] ?? 0;
-                      final int deckId = deck['id'];
-                      final bool opening = _openingDeckId == deckId;
-                      final String? coverImageUrl = deck['cover_image_url'];
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        color: AppColors.surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: ListTile(
-                          onTap: opening ? null : () => _openDeck(deck),
-                          leading: SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: Stack(
-                              clipBehavior: Clip.none,
+                        )
+                  : state.decks.isEmpty
+                      ? ListView(
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.all(40),
+                              child: Center(child: Text(context.l10n.noRecommendedDecks, style: TextStyle(color: Colors.grey))),
+                            ),
+                          ],
+                        )
+                      : filteredDecks.isEmpty
+                          ? ListView(
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: coverImageUrl != null && coverImageUrl.isNotEmpty
-                                      ? CachedNetworkImage(
-                                          imageUrl: coverImageUrl,
-                                          width: 48,
-                                          height: 48,
-                                          fit: BoxFit.cover,
-                                          placeholder: (context, url) => Container(
-                                            color: Colors.white.withValues(alpha: 0.05),
-                                          ),
-                                          errorWidget: (context, url, error) => Container(
-                                            width: 48,
-                                            height: 48,
-                                            color: Colors.white.withValues(alpha: 0.05),
-                                            child: const Icon(Icons.style, color: Colors.grey, size: 20),
-                                          ),
-                                        )
-                                      : Container(
-                                          width: 48,
-                                          height: 48,
-                                          color: Colors.white.withValues(alpha: 0.05),
-                                          child: const Icon(Icons.style, color: Colors.grey, size: 20),
-                                        ),
-                                ),
-                                Positioned(
-                                  bottom: -4,
-                                  right: -4,
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: _tierColor(tier),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: AppColors.surface, width: 1.5),
-                                    ),
-                                    child: Text(
-                                      tierBadge,
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 9),
-                                    ),
-                                  ),
+                                Padding(
+                                  padding: EdgeInsets.all(40),
+                                  child: Center(child: Text(context.l10n.noDecksMatchFilter, style: TextStyle(color: Colors.grey))),
                                 ),
                               ],
-                            ),
-                          ),
-                          title: Text(deck['name'] ?? context.l10n.unnamedDeck, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(
-                            '$seriesName'
-                            '${tier.isNotEmpty ? ' · $tier' : ''}'
-                            '${winRate != null ? ' · ${context.l10n.winRateValue('$winRate')}' : ''}',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          trailing: opening
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      '¥ $totalPrice',
-                                      style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900),
-                                    ),
-                                    const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
-                                  ],
+                            )
+                          : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filteredDecks.length,
+                          itemBuilder: (context, index) {
+                            final deck = filteredDecks[index];
+                            final String tier = (deck['tier'] ?? '').toString();
+                            // 圓形徽章空間有限，"Tier1.5" 這種字串只取數字部分顯示
+                            final tierMatch = RegExp(r'(\d+(\.\d+)?)').firstMatch(tier);
+                            final String tierBadge = tierMatch?.group(1) ?? '?';
+                            final String seriesName = deck['series']?['name_zh'] ?? context.l10n.uncategorizedSeries;
+                            final winRate = deck['win_rate'];
+                            final int totalPrice = deck['total_price'] ?? 0;
+                            final int deckId = deck['id'];
+                            final bool opening = _openingDeckId == deckId;
+                            final String? coverImageUrl = deck['cover_image_url'];
+
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              color: AppColors.surface,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              child: ListTile(
+                                onTap: opening ? null : () => _openDeck(deck),
+                                leading: SizedBox(
+                                  width: 48,
+                                  height: 48,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: coverImageUrl != null && coverImageUrl.isNotEmpty
+                                            ? CachedNetworkImage(
+                                                imageUrl: coverImageUrl,
+                                                width: 48,
+                                                height: 48,
+                                                fit: BoxFit.cover,
+                                                placeholder: (context, url) => Container(
+                                                  color: Colors.white.withValues(alpha: 0.05),
+                                                ),
+                                                errorWidget: (context, url, error) => Container(
+                                                  width: 48,
+                                                  height: 48,
+                                                  color: Colors.white.withValues(alpha: 0.05),
+                                                  child: const Icon(Icons.style, color: Colors.grey, size: 20),
+                                                ),
+                                              )
+                                            : Container(
+                                                width: 48,
+                                                height: 48,
+                                                color: Colors.white.withValues(alpha: 0.05),
+                                                child: const Icon(Icons.style, color: Colors.grey, size: 20),
+                                              ),
+                                      ),
+                                      Positioned(
+                                        bottom: -4,
+                                        right: -4,
+                                        child: Container(
+                                          width: 20,
+                                          height: 20,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: _tierColor(tier),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: AppColors.surface, width: 1.5),
+                                          ),
+                                          child: Text(
+                                            tierBadge,
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 9),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                                title: Text(deck['name'] ?? context.l10n.unnamedDeck, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text(
+                                  '$seriesName'
+                                  '${tier.isNotEmpty ? ' · $tier' : ''}'
+                                  '${winRate != null ? ' · ${context.l10n.winRateValue('$winRate')}' : ''}',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                trailing: opening
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            '¥ $totalPrice',
+                                            style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900),
+                                          ),
+                                          const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                                        ],
+                                      ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
             ),
           ),
         ],

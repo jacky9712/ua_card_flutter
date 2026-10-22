@@ -12,6 +12,7 @@ import 'package:ua_card_flutter/repositories/providers.dart';
 import 'package:ua_card_flutter/repositories/recommended_deck_cache_store.dart';
 import 'package:ua_card_flutter/repositories/recommended_deck_repository.dart';
 import 'package:ua_card_flutter/screens/recommended_decks_screen.dart';
+import 'package:ua_card_flutter/viewModels/recommended_deck_view_model.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   @override
@@ -179,5 +180,28 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('載入牌組卡表失敗，請稍後再試'), findsOneWidget);
     expect(tester.widget<ListTile>(find.byType(ListTile)).onTap, isNotNull);
+  });
+
+  testWidgets('下拉重新整理時只有下拉的轉圈，不再疊頂端進度條', (tester) async {
+    final container = makeContainer();
+
+    await tester.pumpWidget(wrap(container));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Tier 1 紅'), findsOneWidget);
+
+    repo.fetchCompleter = Completer();
+    final refresh = tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
+    await tester.pump();
+
+    expect(container.read(recommendedDeckViewModelProvider).isLoading, isTrue);
+    expect(find.byKey(const Key('recommendedDecksLoadingBar')), findsNothing);
+
+    repo.fetchCompleter!.complete([
+      {'id': 7, 'name': 'Tier 1 紅'},
+    ]);
+    await refresh;
+    await tester.pump();
+    expect(find.byKey(const Key('recommendedDecksLoadingBar')), findsNothing);
   });
 }

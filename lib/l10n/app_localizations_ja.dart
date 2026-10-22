@@ -839,7 +839,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errSearchCardsFailed => 'カードの検索に失敗しました';
 
   @override
-  String get errLoadDeckCardsFailed => 'デッキのカードリストの読み込みに失敗しました';
+  String get errLoadDeckCardsFailed =>
+      'デッキのカードリストの読み込みに失敗しました。しばらくしてからもう一度お試しください';
 
   @override
   String errorWithDetail(String message, String detail) {
