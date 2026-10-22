@@ -1462,11 +1462,33 @@ abstract class AppLocalizations {
   /// **'最終 (Final)'**
   String get triggerNameFinal;
 
+  /// No description provided for @triggerNameColor.
+  ///
+  /// In zh, this message translates to:
+  /// **'顏色 (Color)'**
+  String get triggerNameColor;
+
+  /// No description provided for @deckHealthTriggerReminders.
+  ///
+  /// In zh, this message translates to:
+  /// **'觸發張數'**
+  String get deckHealthTriggerReminders;
+
+  /// No description provided for @deckHealthTriggerUnderfilled.
+  ///
+  /// In zh, this message translates to:
+  /// **'{trigger} 觸發只有 {count} 張（最多可放 4 張）'**
+  String deckHealthTriggerUnderfilled(String trigger, int count);
+
   /// No description provided for @deckHealthZeroEnergyOdds.
   ///
   /// In zh, this message translates to:
-  /// **'0 能卡 {count} 張，起手 7 張至少 1 張的機率 {percent}%'**
-  String deckHealthZeroEnergyOdds(int count, String percent);
+  /// **'0 能卡 {count} 張，起手 7 張至少 1 張的機率 {percent}%（含重抽一次 {mulliganPercent}%）'**
+  String deckHealthZeroEnergyOdds(
+    int count,
+    String percent,
+    String mulliganPercent,
+  );
 
   /// No description provided for @startupErrorTitle.
   ///

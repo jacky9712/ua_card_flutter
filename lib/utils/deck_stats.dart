@@ -1,4 +1,6 @@
 // lib/utils/deck_stats.dart
+import 'dart:math';
+
 import '../models/ua_card.dart';
 
 /// 牌組詳情頁與組牌頁共用的統計（純 Dart）。
@@ -139,6 +141,17 @@ class DeckStats {
     };
   }
 
+  /// 建議放滿 [maxCopies] 張、但還沒放滿的觸發 -> 目前張數（Special / Final / Color 依序）。
+  /// 空牌組回傳空的，避免一開始組牌就跳一堆提醒。
+  static Map<String, int> underFilledTriggers(Iterable<UACard> cards) {
+    if (cards.isEmpty) return {};
+    final dist = triggerDistribution(cards);
+    return {
+      for (final key in const ['SPECIAL', 'FINAL', 'COLOR'])
+        if ((dist[key] ?? 0) < maxCopies) key: dist[key] ?? 0,
+    };
+  }
+
   /// 0 能卡張數（energyReq 為 null 視為 0）。
   static int zeroEnergyCount(Iterable<UACard> cards) =>
       energyDistribution(cards)[0] ?? 0;
@@ -146,14 +159,17 @@ class DeckStats {
   static const int openingHandSize = 7;
 
   /// 超幾何：牌組 [deckSize] 張中有 [hits] 張目標卡，起手 [handSize] 張至少 1 張的機率。
+  /// [redraws] 是整手洗回重抽的次數；每手互相獨立，全部落空的機率是單手落空的 (redraws + 1) 次方。
   /// 牌組不到 [handSize] 張時回傳 null。
   static double? openingHandHitProbability({
     required int deckSize,
     required int hits,
     int handSize = openingHandSize,
+    int redraws = 0,
   }) {
     if (deckSize < handSize) return null;
-    return 1 - _choose(deckSize - hits, handSize) / _choose(deckSize, handSize);
+    final miss = _choose(deckSize - hits, handSize) / _choose(deckSize, handSize);
+    return 1 - pow(miss, redraws + 1).toDouble();
   }
 
   // 精確整數組合數；每步都能整除。

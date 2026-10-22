@@ -744,8 +744,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get triggerNameFinal => '最終 (Final)';
 
   @override
-  String deckHealthZeroEnergyOdds(int count, String percent) {
-    return '0 能卡 $count 張，起手 7 張至少 1 張的機率 $percent%';
+  String get triggerNameColor => '顏色 (Color)';
+
+  @override
+  String get deckHealthTriggerReminders => '觸發張數';
+
+  @override
+  String deckHealthTriggerUnderfilled(String trigger, int count) {
+    return '$trigger 觸發只有 $count 張（最多可放 4 張）';
+  }
+
+  @override
+  String deckHealthZeroEnergyOdds(
+    int count,
+    String percent,
+    String mulliganPercent,
+  ) {
+    return '0 能卡 $count 張，起手 7 張至少 1 張的機率 $percent%（含重抽一次 $mulliganPercent%）';
   }
 
   @override
