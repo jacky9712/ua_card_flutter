@@ -738,6 +738,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deckHealthOpeningHand => '起手';
 
   @override
+  String get triggerNameSpecial => '特殊 (Special)';
+
+  @override
+  String get triggerNameFinal => '最終 (Final)';
+
+  @override
   String deckHealthZeroEnergyOdds(int count, String percent) {
     return '0 能卡 $count 張，起手 7 張至少 1 張的機率 $percent%';
   }

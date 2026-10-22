@@ -223,7 +223,7 @@ void main() {
 
     expect(find.text('規則提醒'), findsOneWidget);
     expect(find.text('UA01BT-001 共 5 張（含其他版本）'), findsOneWidget);
-    expect(find.text('SPECIAL 觸發共 5 張（上限 4 張）'), findsOneWidget);
+    expect(find.text('特殊 (Special) 觸發共 5 張（上限 4 張）'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

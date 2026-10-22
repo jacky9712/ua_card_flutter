@@ -225,6 +225,8 @@
   "deckHealthDuplicateCardWarning": "{cardNumber}: {count} copies (incl. other versions)",
   "deckHealthTriggerWarning": "{trigger} triggers: {count} (max 4)",
   "deckHealthOpeningHand": "Opening hand",
+  "triggerNameSpecial": "Special",
+  "triggerNameFinal": "Final",
   "deckHealthZeroEnergyOdds": "{count} zero-energy cards, {percent}% chance of at least 1 in a 7-card opening hand",
   "startupErrorTitle": "Couldn't start the app",
   "startupErrorBody": "Failed to load the server settings. Please update to the latest version or try again later. If this keeps happening, send us the message below.",

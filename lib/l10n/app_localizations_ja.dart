@@ -740,6 +740,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get deckHealthOpeningHand => '初手';
 
   @override
+  String get triggerNameSpecial => 'スペシャル';
+
+  @override
+  String get triggerNameFinal => 'ファイナル';
+
+  @override
   String deckHealthZeroEnergyOdds(int count, String percent) {
     return 'エナジー0のカード $count 枚、初手 7 枚に 1 枚以上来る確率 $percent%';
   }

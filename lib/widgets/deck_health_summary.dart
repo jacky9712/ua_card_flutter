@@ -37,7 +37,7 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
       for (final e in dupWarnings.entries)
         context.l10n.deckHealthDuplicateCardWarning(e.key, e.value),
       for (final e in triggerWarnings.entries)
-        context.l10n.deckHealthTriggerWarning(e.key, e.value),
+        context.l10n.deckHealthTriggerWarning(_triggerLabel(context, e.key), e.value),
     ];
     // 展開區的圖表和標題跟牌組詳情頁取一樣的主題色，兩頁才會長得一樣。
     final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
@@ -133,7 +133,7 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                     Icons.warning_amber_rounded,
                     key: Key('deckHealthWarningIcon'),
                     size: 16,
-                    color: Colors.amber,
+                    color: AppColors.amber,
                   ),
                   const SizedBox(width: 2),
                   Text(
@@ -141,7 +141,7 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                     key: const Key('deckHealthWarningCount'),
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.amber,
+                      color: AppColors.amber,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -179,7 +179,7 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
                             const Icon(
                               Icons.warning_amber_rounded,
                               size: 16,
-                              color: Colors.amber,
+                              color: AppColors.amber,
                             ),
                             const SizedBox(width: 6),
                             Expanded(
@@ -230,4 +230,11 @@ class _DeckHealthSummaryState extends State<DeckHealthSummary> {
       ],
     );
   }
+
+  // overLimitTriggers 回傳的是統計用的 key（SPECIAL / FINAL），提醒文字換成各語系的名稱。
+  String _triggerLabel(BuildContext context, String key) => switch (key) {
+        'SPECIAL' => context.l10n.triggerNameSpecial,
+        'FINAL' => context.l10n.triggerNameFinal,
+        _ => key,
+      };
 }

@@ -1450,6 +1450,18 @@ abstract class AppLocalizations {
   /// **'起手'**
   String get deckHealthOpeningHand;
 
+  /// No description provided for @triggerNameSpecial.
+  ///
+  /// In zh, this message translates to:
+  /// **'特殊 (Special)'**
+  String get triggerNameSpecial;
+
+  /// No description provided for @triggerNameFinal.
+  ///
+  /// In zh, this message translates to:
+  /// **'最終 (Final)'**
+  String get triggerNameFinal;
+
   /// No description provided for @deckHealthZeroEnergyOdds.
   ///
   /// In zh, this message translates to:

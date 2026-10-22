@@ -424,6 +424,8 @@
     }
   },
   "deckHealthOpeningHand": "起手",
+  "triggerNameSpecial": "特殊 (Special)",
+  "triggerNameFinal": "最終 (Final)",
   "deckHealthZeroEnergyOdds": "0 能卡 {count} 張，起手 7 張至少 1 張的機率 {percent}%",
   "@deckHealthZeroEnergyOdds": {
     "placeholders": {
