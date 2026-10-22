@@ -25,6 +25,12 @@ void main() {
     expect(error.localize(zh), '產生分享代碼失敗');
   });
 
+  test('分享代碼速率限制依語言翻譯，不帶技術細節', () {
+    const error = AppError(AppErrorCode.shareCodeRateLimited);
+    expect(error.localize(en), 'Too many share codes generated. Please try again in an hour.');
+    expect(error.localize(zh), '產生分享代碼太頻繁了，請一小時後再試');
+  });
+
   test('每個錯誤代碼都有翻譯', () {
     for (final code in AppErrorCode.values) {
       expect(AppError(code).localize(en), isNotEmpty, reason: code.name);

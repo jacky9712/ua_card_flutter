@@ -1688,6 +1688,12 @@ abstract class AppLocalizations {
   /// **'產生分享代碼失敗'**
   String get errCreateShareCodeFailed;
 
+  /// No description provided for @errShareCodeRateLimited.
+  ///
+  /// In zh, this message translates to:
+  /// **'產生分享代碼太頻繁了，請一小時後再試'**
+  String get errShareCodeRateLimited;
+
   /// 錯誤訊息後面接原始例外內容（技術細節，不翻譯）
   ///
   /// In zh, this message translates to:

@@ -865,6 +865,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errCreateShareCodeFailed => '產生分享代碼失敗';
 
   @override
+  String get errShareCodeRateLimited => '產生分享代碼太頻繁了，請一小時後再試';
+
+  @override
   String errorWithDetail(String message, String detail) {
     return '$message: $detail';
   }

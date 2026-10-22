@@ -883,6 +883,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errCreateShareCodeFailed => 'Failed to generate share code';
 
   @override
+  String get errShareCodeRateLimited =>
+      'Too many share codes generated. Please try again in an hour.';
+
+  @override
   String errorWithDetail(String message, String detail) {
     return '$message: $detail';
   }
