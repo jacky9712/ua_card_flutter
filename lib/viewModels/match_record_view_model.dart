@@ -42,13 +42,17 @@ class MatchRecordViewModel extends Notifier<MatchRecordState> {
   }
 
   Future<void> fetchMyMatchRecords() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: state.error.clearedIf(AppErrorCode.loadMatchesFailed));
     try {
       final repo = ref.read(matchRecordRepositoryProvider);
       final records = await repo.fetchMyMatchRecords();
       final myUserId = ref.read(authRepositoryProvider).currentUser?.id;
       // 不走 copyWith：myUserId 可能是 null（已登出），copyWith 的 ?? 會留著上一個帳號的 id。
-      state = MatchRecordState(records: records, myUserId: myUserId);
+      state = MatchRecordState(
+        records: records,
+        myUserId: myUserId,
+        error: state.error.clearedIf(AppErrorCode.loadMatchesFailed),
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadMatchesFailed));
     }

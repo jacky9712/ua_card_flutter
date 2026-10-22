@@ -112,4 +112,17 @@ void main() {
     expect(state.isSharing, isFalse);
     expect(state.error?.code, AppErrorCode.locationUnavailable);
   });
+
+  test('初始載入還沒跑完就被丟棄：不會再碰已丟棄的 state', () async {
+    final container = ProviderContainer(overrides: [
+      liveLocationRepositoryProvider.overrideWithValue(
+        _FakeLiveLocationRepository(mySharingUntil: DateTime.now().add(const Duration(minutes: 30))),
+      ),
+    ]);
+    container.read(liveLocationViewModelProvider);
+    container.dispose(); // build() 排的 microtask 還在路上
+
+    // 有沒有檢查 ref.mounted 的差別：沒檢查的話這裡會冒出「Ref 已 dispose」的未捕捉例外，測試失敗。
+    await pumpEventQueue();
+  });
 }

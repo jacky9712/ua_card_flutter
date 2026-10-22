@@ -117,4 +117,16 @@ void main() {
     expect(state.error?.code, AppErrorCode.updateNicknameFailed);
     expect(state.isLoading, isFalse);
   });
+
+  test('初始載入比改暱稱晚跑完，也不會蓋掉 updateNicknameFailed', () async {
+    auth.user = _user('me');
+    profiles.failUpdate = true;
+    final container = makeContainer();
+
+    final ok = await container.read(profileViewModelProvider.notifier).updateDisplayName('小美');
+    await pumpEventQueue(); // build() 排的初始載入在這之後才跑完
+
+    expect(ok, isFalse);
+    expect(container.read(profileViewModelProvider).error?.code, AppErrorCode.updateNicknameFailed);
+  });
 }

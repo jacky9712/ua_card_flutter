@@ -205,4 +205,14 @@ void main() {
       );
     });
   });
+
+  test('初始載入比切換排序晚跑完，也不會蓋掉 locationFallbackToTime', () async {
+    final container = makeContainer(position: () async => null);
+    final notifier = container.read(meetupViewModelProvider.notifier);
+
+    await notifier.setSortMode(MeetupSortMode.nearest); // 初始載入還沒跑完
+    await pumpEventQueue();
+
+    expect(container.read(meetupViewModelProvider).error?.code, AppErrorCode.locationFallbackToTime);
+  });
 }

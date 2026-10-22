@@ -46,6 +46,7 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
     // 🔥 build() 不能同步呼叫會馬上改 state 的 async function，見 profile_view_model.dart 的註解。
     Future.microtask(() async {
       await _restoreSharing();
+      if (!ref.mounted) return;
       await fetchNearbyOthers();
     });
     // provider 被丟棄時（例如畫面關掉、狀態重置）順便把還在跑的 Timer 停掉，
@@ -60,6 +61,8 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
     if (!isLocationCapablePlatform) return;
     try {
       final until = await ref.read(liveLocationRepositoryProvider).fetchMySharingUntil();
+      // await 期間 provider 可能已經被丟棄（畫面關掉、容器 dispose），之後就不能再碰 state / ref。
+      if (!ref.mounted) return;
       if (until == null || !DateTime.now().isBefore(until)) return;
       state = state.copyWith(isSharing: true, sharingUntil: until);
       _startPingTimer(until);
@@ -70,12 +73,18 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
 
   Future<void> fetchNearbyOthers() async {
     if (!isLocationCapablePlatform) return;
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: state.error.clearedIf(AppErrorCode.loadNearbyFailed));
     try {
       final repo = ref.read(liveLocationRepositoryProvider);
       final all = await repo.fetchActiveLiveLocations();
-      state = state.copyWith(nearbyOthers: all, isLoading: false);
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        nearbyOthers: all,
+        isLoading: false,
+        error: state.error.clearedIf(AppErrorCode.loadNearbyFailed),
+      );
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadNearbyFailed));
     }
   }
@@ -89,6 +98,7 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
 
     final until = DateTime.now().add(duration);
     final success = await _pingOnce(until);
+    if (!ref.mounted) return false;
     if (!success) {
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.locationUnavailable));
       return false;
@@ -112,10 +122,11 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
 
   Future<bool> _pingOnce(DateTime until) async {
     final position = await ref.read(currentPositionProvider)();
-    if (position == null) return false;
+    if (position == null || !ref.mounted) return false;
     try {
       final repo = ref.read(liveLocationRepositoryProvider);
       await repo.upsertMyLocation(lat: position.latitude, lng: position.longitude, expiresAt: until);
+      if (!ref.mounted) return false;
       await fetchNearbyOthers();
       return true;
     } catch (_) {
@@ -132,6 +143,7 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
     } catch (_) {
       // 停止分享失敗也不用擋使用者的 UI，本地狀態照樣切回「未分享」。
     }
+    if (!ref.mounted) return;
     state = state.copyWith(isSharing: false, clearSharingUntil: true);
     await fetchNearbyOthers();
   }

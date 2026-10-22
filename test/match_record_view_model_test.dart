@@ -108,4 +108,14 @@ void main() {
       expect(state.winRate, closeTo(66.67, 0.01));
     });
   });
+
+  test('初始載入比刪除晚跑完，也不會蓋掉 deleteFailed', () async {
+    final container = makeContainer(_FakeMatchRecordRepository(failDelete: true));
+    final notifier = container.read(matchRecordViewModelProvider.notifier);
+
+    expect(await notifier.deleteMatchRecord(1), isFalse);
+    await pumpEventQueue();
+
+    expect(container.read(matchRecordViewModelProvider).error?.code, AppErrorCode.deleteFailed);
+  });
 }
