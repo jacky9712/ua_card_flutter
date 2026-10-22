@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../viewmodels/deck_view_model.dart';
+import '../viewModels/deck_view_model.dart';
 import 'deck_detail_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
@@ -32,11 +32,51 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: deckState.isLoading 
+      // 只有清單還是空的才整頁轉圈；已有清單時重新載入不拆掉 RefreshIndicator
+      body: deckState.isLoading && deckState.myDecks.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : deckState.myDecks.isEmpty
-              ? Center(child: Text(context.l10n.noDecksYet))
-              : ListView.builder(
+          : Column(
+              children: [
+                if (deckState.isOffline)
+                  Container(
+                    key: const Key('myDecksOfflineBanner'),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: AppColors.amberTint,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.cloud_off, size: 16, color: AppColors.amber),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(context.l10n.myDecksOfflineNotice, style: const TextStyle(fontSize: 12))),
+                      ],
+                    ),
+                  ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () => ref.read(deckViewModelProvider.notifier).fetchMyDecks(),
+                    child: _buildList(context, deckState),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildList(BuildContext context, DeckState deckState) {
+    if (deckState.myDecks.isEmpty) {
+      // 空畫面也要能下拉重試
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 120),
+            child: Center(child: Text(context.l10n.noDecksYet)),
+          ),
+        ],
+      );
+    }
+    return ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   itemCount: deckState.myDecks.length,
                   itemBuilder: (context, index) {
@@ -165,7 +205,6 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                       ),
                     );
                   },
-                ),
-    );
+                );
   }
 }

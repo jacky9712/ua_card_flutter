@@ -572,6 +572,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncedToCloud => '已同步至雲端';
 
   @override
+  String get myDecksOfflineNotice => '無法連線，顯示上次同步的牌組';
+
+  @override
   String get notLoggedIn => '尚未登入';
 
   @override

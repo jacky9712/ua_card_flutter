@@ -312,6 +312,7 @@
   },
   "savedOnDevice": "儲存於此裝置",
   "syncedToCloud": "已同步至雲端",
+  "myDecksOfflineNotice": "無法連線，顯示上次同步的牌組",
   "notLoggedIn": "尚未登入",
   "nicknameNotSetLong": "（尚未設定暱稱）",
   "myQrHint": "讓其他玩家掃描這個 QR，就能把你加為已知對手",

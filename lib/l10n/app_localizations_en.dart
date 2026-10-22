@@ -580,6 +580,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncedToCloud => 'Synced to cloud';
 
   @override
+  String get myDecksOfflineNotice =>
+      'Can\'t connect — showing decks from the last sync';
+
+  @override
   String get notLoggedIn => 'Not logged in';
 
   @override
