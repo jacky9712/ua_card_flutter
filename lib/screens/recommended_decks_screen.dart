@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../models/ua_card.dart';
 import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
 import '../viewModels/recommended_deck_view_model.dart';
@@ -240,9 +241,21 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
 
   Future<void> _openDeck(Map<String, dynamic> deck) async {
     final int deckId = deck['id'];
+    // await 之後畫面可能已經重建，先取好 messenger 與 l10n。
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     setState(() => _openingDeckId = deckId);
 
-    final cards = await ref.read(recommendedDeckViewModelProvider.notifier).fetchCardsForDeck(deckId);
+    final List<UACard> cards;
+    try {
+      cards = await ref.read(recommendedDeckViewModelProvider.notifier).fetchCardsForDeck(deckId);
+    } catch (e) {
+      debugPrint('載入推薦牌組卡表失敗: $e');
+      if (!mounted) return;
+      setState(() => _openingDeckId = null);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errLoadDeckCardsFailed)));
+      return;
+    }
 
     if (!mounted) return;
     setState(() => _openingDeckId = null);
@@ -326,10 +339,41 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
           const SizedBox(width: 8),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          // 已經有牌組時重新整理（下拉或背景更新快取）不會整頁轉圈，頂端顯示細進度條。
+          if (state.isLoading && state.decks.isNotEmpty)
+            const LinearProgressIndicator(key: Key('recommendedDecksLoadingBar'), minHeight: 2),
+          Expanded(
+            child: RefreshIndicator(
         onRefresh: () => ref.read(recommendedDeckViewModelProvider.notifier).fetchRecommendedDecks(),
         child: state.isLoading && state.decks.isEmpty
             ? const Center(child: CircularProgressIndicator())
+            : state.decks.isEmpty && state.error != null
+                // 第一次載入沒快取又失敗：顯示錯誤與重試（用 ListView 讓下拉重新整理也能用）。
+                ? ListView(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Column(
+                          children: [
+                            Text(
+                              state.error!.localize(context.l10n),
+                              key: const Key('recommendedDecksError'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              key: const Key('recommendedDecksRetryButton'),
+                              onPressed: () => ref.read(recommendedDeckViewModelProvider.notifier).fetchRecommendedDecks(),
+                              child: Text(context.l10n.retry),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
             : state.decks.isEmpty
                 ? ListView(
                     children: [
@@ -450,6 +494,9 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                       );
                     },
                   ),
+            ),
+          ),
+        ],
       ),
     );
   }

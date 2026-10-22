@@ -6,6 +6,7 @@ import '../viewModels/card_library_view_model.dart';
 import '../viewModels/deck_view_model.dart';
 import '../viewModels/meta_view_model.dart';
 import '../viewModels/profile_view_model.dart';
+import '../viewModels/recommended_deck_view_model.dart';
 import 'login_screen.dart';
 import 'location_hub_screen.dart';
 import 'match_records_screen.dart';
@@ -139,9 +140,11 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authViewModelProvider);
     final metaState = ref.watch(metaViewModelProvider);
-    // 首頁一顯示就建立（非 autoDispose 的）卡片庫 provider，在背景先載第一頁卡片，
-    // 使用者點進組牌頁時不用從零開始等；用 listen 而不是 watch，首頁不會跟著卡片庫狀態重建。
+    // 首頁一顯示就建立（非 autoDispose 的）卡片庫與推薦牌組 provider，在背景先載第一頁卡片
+    // 與推薦牌組清單，使用者點進組牌頁／推薦牌組頁時不用從零開始等；用 listen 而不是 watch，
+    // 首頁不會跟著卡片庫與推薦牌組狀態重建。
     ref.listen(cardLibraryViewModelProvider, (_, _) {});
+    ref.listen(recommendedDeckViewModelProvider, (_, _) {});
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(

@@ -12,9 +12,13 @@ import 'package:ua_card_flutter/repositories/card_cache_store.dart';
 import 'package:ua_card_flutter/repositories/card_repository.dart';
 import 'package:ua_card_flutter/repositories/meta_repository.dart';
 import 'package:ua_card_flutter/repositories/providers.dart';
+import 'package:ua_card_flutter/repositories/recommended_deck_cache_store.dart';
+import 'package:ua_card_flutter/repositories/recommended_deck_repository.dart';
 import 'package:ua_card_flutter/screens/deck_builder_screen.dart';
 import 'package:ua_card_flutter/screens/home_screen.dart';
+import 'package:ua_card_flutter/screens/recommended_decks_screen.dart';
 import 'package:ua_card_flutter/viewModels/card_library_view_model.dart';
+import 'package:ua_card_flutter/viewModels/recommended_deck_view_model.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   @override
@@ -47,6 +51,27 @@ class _EmptyCardCacheStore implements CardCacheStore {
   Future<void> saveSeries(List<String> series) async {}
 }
 
+class _FakeRecommendedDeckRepository implements RecommendedDeckRepository {
+  int fetchCalls = 0;
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchRecommendedDecks() async {
+    fetchCalls++;
+    return [];
+  }
+
+  @override
+  Future<List<UACard>> fetchRecommendedDeckCards(int deckId) async => [];
+}
+
+class _EmptyRecommendedDeckCacheStore implements RecommendedDeckCacheStore {
+  @override
+  Future<List<Map<String, dynamic>>?> loadDecks() async => null;
+
+  @override
+  Future<void> saveDecks(List<Map<String, dynamic>> decks) async {}
+}
+
 class _FakeCardRepository implements CardRepository {
   int fetchCalls = 0;
   bool failFetch = false;
@@ -77,9 +102,11 @@ class _FakeCardRepository implements CardRepository {
 
 void main() {
   late _FakeCardRepository repo;
+  late _FakeRecommendedDeckRepository recommendedRepo;
 
   setUp(() {
     repo = _FakeCardRepository();
+    recommendedRepo = _FakeRecommendedDeckRepository();
   });
 
   ProviderContainer makeContainer() {
@@ -88,6 +115,8 @@ void main() {
       metaRepositoryProvider.overrideWithValue(_FakeMetaRepository()),
       cardRepositoryProvider.overrideWithValue(repo),
       cardCacheStoreProvider.overrideWithValue(_EmptyCardCacheStore()),
+      recommendedDeckRepositoryProvider.overrideWithValue(recommendedRepo),
+      recommendedDeckCacheStoreProvider.overrideWithValue(_EmptyRecommendedDeckCacheStore()),
     ]);
     addTearDown(container.dispose);
     return container;
@@ -115,6 +144,18 @@ void main() {
     expect(repo.fetchCalls, 1);
     expect(find.byType(DeckBuilderScreen), findsNothing);
     expect(container.exists(cardLibraryViewModelProvider), isTrue);
+  });
+
+  testWidgets('首頁一顯示就開始預載推薦牌組', (tester) async {
+    final container = makeContainer();
+
+    await tester.pumpWidget(wrap(container, const HomeScreen()));
+    await tester.pump();
+    await tester.pump();
+
+    expect(recommendedRepo.fetchCalls, 1);
+    expect(container.exists(recommendedDeckViewModelProvider), isTrue);
+    expect(find.byType(RecommendedDecksScreen), findsNothing);
   });
 
   testWidgets('預載失敗後打開組牌頁會自動重抓一次', (tester) async {

@@ -477,6 +477,7 @@
   "errUpdateNicknameFailed": "更新暱稱失敗",
   "errLoadTopDecksFailed": "載入上位卡組失敗",
   "errSearchCardsFailed": "搜尋卡片失敗",
+  "errLoadDeckCardsFailed": "載入牌組卡表失敗，請稍後再試",
   "errorWithDetail": "{message}: {detail}",
   "@errorWithDetail": {
     "description": "錯誤訊息後面接原始例外內容（技術細節，不翻譯）",
