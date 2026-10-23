@@ -125,7 +125,7 @@
   "deckImportQrTitle": "牌組導入 QR Code",
   "deckImportQrHint": "其他玩家掃描此碼即可快速導入您的牌組",
   "generateShareCode": "產生分享代碼",
-  "shareCodeHint": "代碼 24 小時內有效，每次產生都是新的代碼",
+  "shareCodeHint": "代碼 7 天內有效，每次產生都是新的代碼",
   "shareCodeExpiresAt": "{time} 前有效",
   "@shareCodeExpiresAt": {
     "placeholders": {

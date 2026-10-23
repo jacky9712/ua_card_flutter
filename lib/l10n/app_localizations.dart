@@ -667,7 +667,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareCodeHint.
   ///
   /// In zh, this message translates to:
-  /// **'代碼 24 小時內有效，每次產生都是新的代碼'**
+  /// **'代碼 7 天內有效，每次產生都是新的代碼'**
   String get shareCodeHint;
 
   /// No description provided for @shareCodeExpiresAt.
