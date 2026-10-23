@@ -289,10 +289,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tabCardImages => 'カード画像';
 
   @override
-  String get tabImportQr => 'インポートQR';
+  String get tabImportQr => 'デッキ共有';
 
   @override
-  String get deckImportQrTitle => 'デッキインポート QRコード';
+  String get deckImportQrTitle => 'デッキ QRコード';
 
   @override
   String get deckImportQrHint => '他のプレイヤーがこのコードをスキャンするとデッキをインポートできます';

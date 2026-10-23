@@ -291,10 +291,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabCardImages => 'Card images';
 
   @override
-  String get tabImportQr => 'Import QR';
+  String get tabImportQr => 'Share';
 
   @override
-  String get deckImportQrTitle => 'Deck Import QR Code';
+  String get deckImportQrTitle => 'Deck QR Code';
 
   @override
   String get deckImportQrHint =>

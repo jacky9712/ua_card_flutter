@@ -643,13 +643,13 @@ abstract class AppLocalizations {
   /// No description provided for @tabImportQr.
   ///
   /// In zh, this message translates to:
-  /// **'導入 QR'**
+  /// **'分享牌組'**
   String get tabImportQr;
 
   /// No description provided for @deckImportQrTitle.
   ///
   /// In zh, this message translates to:
-  /// **'牌組導入 QR Code'**
+  /// **'牌組 QR Code'**
   String get deckImportQrTitle;
 
   /// No description provided for @deckImportQrHint.
