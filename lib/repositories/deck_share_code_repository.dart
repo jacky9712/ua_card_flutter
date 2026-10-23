@@ -20,7 +20,7 @@ Object translateShareCodeError(Object error) {
 }
 
 abstract class DeckShareCodeRepository {
-  /// 用 `UA_DECK|...` 牌組字串向伺服器要一組新的 6 位數分享代碼（24 小時有效）。
+  /// 用 `UA_DECK|...` 牌組字串向伺服器要一組新的 6 位數分享代碼（7 天有效）。
   Future<DeckShareCode> createShareCode(String deckString);
 }
 
