@@ -287,10 +287,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabCardImages => '卡片圖像';
 
   @override
-  String get tabImportQr => '導入 QR';
+  String get tabImportQr => '分享牌組';
 
   @override
-  String get deckImportQrTitle => '牌組導入 QR Code';
+  String get deckImportQrTitle => '牌組 QR Code';
 
   @override
   String get deckImportQrHint => '其他玩家掃描此碼即可快速導入您的牌組';
