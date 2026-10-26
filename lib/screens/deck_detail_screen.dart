@@ -49,6 +49,9 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
     super.initState();
     _activeTabIndex = widget.initialTabIndex;
     final deckData = DeckQrCodec.encodeDeck(_getDeckMap(), widget.cardsInDeck);
+    // 分享代碼的 provider 是 autoDispose：停在卡圖分頁時沒人 watch，查到的既有代碼會跟著被丟掉。
+    // 在這裡 listen 住，讓它活到離開牌組詳情頁為止（ConsumerState dispose 時自動取消）。
+    ref.listenManual(deckShareCodeViewModelProvider, (_, _) {});
     if (deckData != DeckQrCodec.prefix) {
       // 不能在 initState 裡同步改 provider，排到下一個 microtask。
       Future.microtask(() {
