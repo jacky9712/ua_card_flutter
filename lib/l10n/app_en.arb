@@ -94,7 +94,7 @@
   "deckImportQrTitle": "Deck QR Code",
   "deckImportQrHint": "Other players can scan this code to import your deck",
   "generateShareCode": "Generate share code",
-  "shareCodeHint": "Codes are valid for 7 days; each tap creates a new one",
+  "shareCodeHint": "Codes are valid for 7 days; the same deck keeps the same code until then",
   "shareCodeExpiresAt": "Valid until {time}",
   "copyShareCode": "Copy",
   "shareCodeCopied": "Share code copied",

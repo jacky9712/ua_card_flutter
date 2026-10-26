@@ -20,8 +20,19 @@ Object translateShareCodeError(Object error) {
 }
 
 abstract class DeckShareCodeRepository {
-  /// 用 `UA_DECK|...` 牌組字串向伺服器要一組新的 6 位數分享代碼（7 天有效）。
+  /// 用 `UA_DECK|...` 牌組字串向伺服器要一組 6 位數分享代碼（7 天有效）。
+  /// 自己對同一副牌組已經有還沒過期的代碼時，伺服器會回傳那組，不另外產生新的。
   Future<DeckShareCode> createShareCode(String deckString);
+
+  /// 查自己對這副牌組目前還有效的代碼；沒有就回傳 `null`。
+  Future<DeckShareCode?> findMyShareCode(String deckString);
+}
+
+DeckShareCode _parseShareCodeRow(Map<String, dynamic> row) {
+  return DeckShareCode(
+    code: (row['code'] as String).trim(),
+    expiresAt: DateTime.parse(row['expires_at'] as String).toLocal(),
+  );
 }
 
 class SupabaseDeckShareCodeRepository implements DeckShareCodeRepository {
@@ -37,10 +48,14 @@ class SupabaseDeckShareCodeRepository implements DeckShareCodeRepository {
     }
     final rows = result as List;
     if (rows.isEmpty) throw StateError('create_deck_share_code returned no row');
-    final row = rows.first as Map<String, dynamic>;
-    return DeckShareCode(
-      code: (row['code'] as String).trim(),
-      expiresAt: DateTime.parse(row['expires_at'] as String).toLocal(),
-    );
+    return _parseShareCodeRow(rows.first as Map<String, dynamic>);
+  }
+
+  @override
+  Future<DeckShareCode?> findMyShareCode(String deckString) async {
+    final result = await _supabase.rpc('find_my_deck_share_code', params: {'deck_string': deckString});
+    final rows = result as List;
+    if (rows.isEmpty) return null;
+    return _parseShareCodeRow(rows.first as Map<String, dynamic>);
   }
 }

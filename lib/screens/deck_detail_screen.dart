@@ -48,6 +48,14 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
   void initState() {
     super.initState();
     _activeTabIndex = widget.initialTabIndex;
+    final deckData = DeckQrCodec.encodeDeck(_getDeckMap(), widget.cardsInDeck);
+    if (deckData != DeckQrCodec.prefix) {
+      // 不能在 initState 裡同步改 provider，排到下一個 microtask。
+      Future.microtask(() {
+        if (!mounted) return;
+        ref.read(deckShareCodeViewModelProvider.notifier).loadExisting(deckData);
+      });
+    }
   }
 
   Map<int, int> _getDeckMap() {

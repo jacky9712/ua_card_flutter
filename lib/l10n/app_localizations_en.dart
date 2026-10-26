@@ -305,7 +305,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareCodeHint =>
-      'Codes are valid for 7 days; each tap creates a new one';
+      'Codes are valid for 7 days; the same deck keeps the same code until then';
 
   @override
   String shareCodeExpiresAt(String time) {

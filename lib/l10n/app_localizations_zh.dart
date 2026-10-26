@@ -299,7 +299,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get generateShareCode => '產生分享代碼';
 
   @override
-  String get shareCodeHint => '代碼 7 天內有效，每次產生都是新的代碼';
+  String get shareCodeHint => '代碼 7 天內有效，期間內同一副牌組都用同一組代碼';
 
   @override
   String shareCodeExpiresAt(String time) {
