@@ -48,14 +48,14 @@ void main() {
     fake = _FakeDeckShareCodeRepository();
   });
 
-  Widget wrap() {
+  Widget wrap({int initialTabIndex = 1}) {
     return ProviderScope(
       overrides: [deckShareCodeRepositoryProvider.overrideWithValue(fake)],
       child: MaterialApp(
         locale: const Locale('zh'),
         supportedLocales: kSupportedLocales,
         localizationsDelegates: kLocalizationsDelegates,
-        home: DeckDetailScreen(deckName: 'T', cardsInDeck: cards, initialTabIndex: 1),
+        home: DeckDetailScreen(deckName: 'T', cardsInDeck: cards, initialTabIndex: initialTabIndex),
       ),
     );
   }
@@ -158,5 +158,19 @@ void main() {
 
     expect(find.text('012345'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('從卡圖分頁進來再切到分享分頁：既有代碼仍會自動顯示', (tester) async {
+    fake.existing = DeckShareCode(code: '987654', expiresAt: DateTime(2026, 10, 30, 9, 5));
+
+    await tester.pumpWidget(wrap(initialTabIndex: 0));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('分享牌組'));
+    await tester.pump();
+
+    expect(fake.lastDeckString, isNull); // 沒有呼叫產生
+    expect(find.text('987654'), findsOneWidget);
   });
 }
