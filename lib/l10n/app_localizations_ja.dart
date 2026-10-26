@@ -301,7 +301,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get generateShareCode => '共有コードを発行';
 
   @override
-  String get shareCodeHint => 'コードは7日間有効です。発行するたびに新しいコードになります';
+  String get shareCodeHint => 'コードは7日間有効です。期間中は同じデッキに同じコードが使われます';
 
   @override
   String shareCodeExpiresAt(String time) {

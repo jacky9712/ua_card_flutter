@@ -13,6 +13,9 @@ class _FakeDeckShareCodeRepository implements DeckShareCodeRepository {
   String? lastDeckString;
   bool fail = false;
   bool rateLimited = false;
+  DeckShareCode? existing;
+  bool failFind = false;
+  String? lastFindDeckString;
 
   @override
   Future<DeckShareCode> createShareCode(String deckString) async {
@@ -20,6 +23,13 @@ class _FakeDeckShareCodeRepository implements DeckShareCodeRepository {
     if (fail) throw Exception('rpc down');
     if (rateLimited) throw const DeckShareCodeRateLimitedException();
     return DeckShareCode(code: '012345', expiresAt: DateTime(2026, 10, 23, 15, 30));
+  }
+
+  @override
+  Future<DeckShareCode?> findMyShareCode(String deckString) async {
+    lastFindDeckString = deckString;
+    if (failFind) throw Exception('offline');
+    return existing;
   }
 }
 
@@ -115,6 +125,38 @@ void main() {
 
     expect(find.text('產生分享代碼太頻繁了，請一小時後再試'), findsOneWidget);
     expect(find.textContaining('產生分享代碼失敗'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('這副牌組已經有有效代碼：打開分享分頁就直接顯示，不用按產生', (tester) async {
+    fake.existing = DeckShareCode(code: '987654', expiresAt: DateTime(2026, 10, 30, 9, 5));
+
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+    await tester.pump();
+
+    expect(fake.lastFindDeckString, 'UA_DECK|UA01BT-001:3,UA01BT-002:1');
+    expect(fake.lastDeckString, isNull); // 沒有呼叫產生
+    expect(find.text('987654'), findsOneWidget);
+    expect(find.text('2026/10/30 09:05 前有效'), findsOneWidget);
+  });
+
+  testWidgets('查詢既有代碼失敗：不顯示錯誤，照樣可以按產生', (tester) async {
+    fake.failFind = true;
+
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const Key('deckShareCodeError')), findsNothing);
+
+    await tester.ensureVisible(find.byKey(generateKey));
+    await tester.pump();
+    await tester.tap(find.byKey(generateKey));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('012345'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

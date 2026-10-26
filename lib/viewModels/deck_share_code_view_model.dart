@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/deck_share_code_repository.dart';
 import '../repositories/providers.dart';
@@ -15,7 +16,21 @@ class DeckShareCodeViewModel extends Notifier<DeckShareCodeState> {
   @override
   DeckShareCodeState build() => const DeckShareCodeState();
 
-  /// 用牌組字串向伺服器要一組新的分享代碼；失敗時錯誤進 state.error。
+  /// 打開分享分頁時呼叫：這副牌組已經有還沒過期的代碼就直接顯示，不用再按一次產生。
+  /// 查詢失敗（例如沒網路）只記 log，不顯示錯誤，使用者照樣可以按產生。
+  Future<void> loadExisting(String deckString) async {
+    try {
+      final existing = await ref.read(deckShareCodeRepositoryProvider).findMyShareCode(deckString);
+      if (!ref.mounted) return;
+      // 查詢途中使用者已經按了產生（或已經有結果），就不要蓋掉。
+      if (existing == null || state.shareCode != null || state.isLoading) return;
+      state = DeckShareCodeState(shareCode: existing, error: state.error);
+    } catch (e) {
+      debugPrint('查詢既有分享代碼失敗: $e');
+    }
+  }
+
+  /// 用牌組字串向伺服器要分享代碼（有效期限內會拿回同一組）；失敗時錯誤進 state.error。
   Future<void> generate(String deckString) async {
     state = DeckShareCodeState(shareCode: state.shareCode, isLoading: true);
     try {
