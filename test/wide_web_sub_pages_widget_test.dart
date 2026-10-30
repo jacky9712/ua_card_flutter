@@ -169,11 +169,12 @@ void main() {
         find.descendant(of: find.byKey(const Key('cardSkeletonShimmer')), matching: find.byType(GridView)),
       );
 
-  void expectSkeleton(WidgetTester tester, {required int columns, required int items}) {
+  void expectSkeleton(WidgetTester tester, {required int columns, required int items, double? extent}) {
     final grid = skeletonGrid(tester);
     final delegate = grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
     expect(delegate.crossAxisCount, columns);
     expect(delegate.childAspectRatio, 0.54);
+    expect(delegate.mainAxisExtent, extent);
     expect(grid.childrenDelegate.estimatedChildCount, items);
   }
 
@@ -244,6 +245,11 @@ void main() {
   });
 
   group('欄數計算', () {
+    test('wideWebCardCellExtent 是卡圖高度加按鈕列與邊框', () {
+      expect(wideWebCardCellExtent(1000, 5), closeTo(311.84, 0.01));
+      expect(wideWebCardCellExtent(1920, 8), closeTo(369.1, 0.01));
+    });
+
     test('wideWebCardGridCount 隨寬度增加，上限 8', () {
       expect(wideWebCardGridCount(1000), 5);
       expect(wideWebCardGridCount(1400), 7);
@@ -268,7 +274,7 @@ void main() {
     for (final (size, columns, items) in cases) {
       testWidgets('網頁 ${size.width}：$columns 欄、$items 項', (tester) async {
         await pumpBuilder(tester, size: size, isWeb: true);
-        expectSkeleton(tester, columns: columns, items: items);
+        expectSkeleton(tester, columns: columns, items: items, extent: wideWebCardCellExtent(size.width, columns));
       });
     }
   });

@@ -217,6 +217,8 @@ class HomeScreen extends ConsumerWidget {
                                 key: const Key('homeWideMain'),
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // 搜尋列上方留白 8、右側欄 16，補齊讓兩欄上緣對齊
+                                  const SizedBox(height: 8),
                                   _buildSearchArea(context, ref),
                                   _buildBanner(context),
                                   _buildWidePrimaryEntries(context),
@@ -265,34 +267,35 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildWidePrimaryEntries(BuildContext context) {
-    final entries = _homeEntries(context);
+    final [_, deckBuilder, myDecks, topDecks, _, _] = _homeEntries(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         key: const Key('homeWidePrimaryEntries'),
         children: [
-          Expanded(child: _primaryEntryCard(entries[1], entries[1].label)),
+          Expanded(child: _primaryEntryCard(deckBuilder, deckBuilder.label)),
           const SizedBox(width: 12),
-          Expanded(child: _primaryEntryCard(entries[2], entries[2].label)),
+          Expanded(child: _primaryEntryCard(myDecks, myDecks.label)),
           const SizedBox(width: 12),
           // 寬版標籤用「推薦牌組」，入口本身就是快捷入口的「上位卡組」
-          Expanded(child: _primaryEntryCard(entries[3], AppLocalizations.of(context).recommendedDeck)),
+          Expanded(child: _primaryEntryCard(topDecks, AppLocalizations.of(context).recommendedDeck)),
         ],
       ),
     );
   }
 
   Widget _primaryEntryCard(_HomeEntry entry, String label) {
-    return InkWell(
-      onTap: entry.onTap,
-      borderRadius: BorderRadius.circular(15),
-      child: Container(
-        height: 120,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
-        ),
+    // 底色放在 Ink：放在 InkWell 裡面的 Container 會蓋住水波紋和滑鼠懸停效果
+    return Ink(
+      height: 120,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+      ),
+      child: InkWell(
+        onTap: entry.onTap,
+        borderRadius: BorderRadius.circular(15),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -306,13 +309,13 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildWideQuickActions(BuildContext context) {
-    final entries = _homeEntries(context);
+    final [meta, _, _, _, matchRecords, location] = _homeEntries(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         key: const Key('homeWideQuickActions'),
         children: [
-          for (final e in [entries[0], entries[4], entries[5]])
+          for (final e in [meta, matchRecords, location])
             Expanded(child: _quickButton(e.icon, e.label, e.onTap)),
         ],
       ),

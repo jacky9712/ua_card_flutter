@@ -25,5 +25,12 @@ const double wideWebListMaxWidth = 1280;
 /// 上限也保護「捲動才載入下一頁」：一頁 60 張至少有 8 列，內容一定超過視窗高度。
 int wideWebCardGridCount(double width) => ((width - 12) / 188).floor().clamp(3, 8);
 
+/// 智能組牌寬版每格的高度：卡圖（1:1.4）加上按鈕列與邊框，寬格子才不會在卡圖下方多出空白。
+/// 內容寬度扣掉 GridView 左右 padding 20 與格間距 8；每格再扣左右邊框 4。
+double wideWebCardCellExtent(double width, int columns) {
+  final cellWidth = (width - 20 - 8 * (columns - 1)) / columns;
+  return (cellWidth - 4) * 1.4 + 52;
+}
+
 /// 推薦牌組寬版的欄數。
 int wideWebDeckColumnCount(double width) => width >= wideWebListMaxWidth ? 3 : 2;
