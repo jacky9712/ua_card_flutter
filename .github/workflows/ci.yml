@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+
+      # assets/env.txt is gitignored but bundled as an asset; tests need a placeholder.
+      - name: Create placeholder env
+        run: |
+          printf 'SUPABASE_URL=https://example.supabase.co\nSUPABASE_ANON_KEY=dummy\n' > assets/env.txt
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
