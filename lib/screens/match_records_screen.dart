@@ -8,6 +8,7 @@ import '../viewModels/match_record_view_model.dart';
 import 'create_match_record_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../widgets/wide_web_content.dart';
 
 class MatchRecordsScreen extends ConsumerWidget {
   const MatchRecordsScreen({super.key});
@@ -68,7 +69,7 @@ class MatchRecordsScreen extends ConsumerWidget {
           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateMatchRecordScreen())),
           child: const Icon(Icons.add, color: Colors.black),
         ),
-        body: matchState.isLoading && matchState.records.isEmpty
+        body: WideWebContent(child: matchState.isLoading && matchState.records.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : TabBarView(
                 children: [
@@ -76,7 +77,7 @@ class MatchRecordsScreen extends ConsumerWidget {
                   _buildGroupTab(context, ref, matchState.statsByDeck, isDeck: true),
                   _buildGroupTab(context, ref, matchState.statsByOpponent, isDeck: false),
                 ],
-              ),
+              )),
       ),
     );
   }

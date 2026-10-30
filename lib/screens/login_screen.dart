@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewModels/auth_view_model.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../utils/wide_web_layout.dart';
+import '../widgets/wide_web_content.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -71,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
+      body: WideWebContent(maxWidth: wideWebFormMaxWidth, child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
@@ -171,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }
