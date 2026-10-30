@@ -1,5 +1,6 @@
 // lib/utils/deck_exporter.dart
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
@@ -12,6 +13,8 @@ import '../l10n/l10n_ext.dart';
 class DeckExporter {
   // 用來在畫面上方顯示載入圈圈
   static final GlobalKey<State> _loaderKey = GlobalKey<State>();
+
+  static const String _imageFileName = 'ua_deck_share.png';
 
   static Future<void> exportAndShareDeck({
     required BuildContext context,
@@ -76,18 +79,11 @@ class DeckExporter {
         Navigator.of(_loaderKey.currentContext!, rootNavigator: true).pop();
       }
 
-      // 6. 將圖片 Bytes 存成臨時檔案
-      final tempDir = await getTemporaryDirectory();
-      final file = await File('${tempDir.path}/ua_deck_share.png').create();
-      await file.writeAsBytes(imageBytes);
-
-      // 7. 🔥 呼叫原生分享選單，把檔案分享出去（share_plus 新版 API）
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          text: l10n.deckShareText,
-          subject: l10n.deckShareSubject, // iOS 用的郵件主旨
-        ),
+      // 6. 網頁下載 PNG；手機寫暫存檔後開系統分享選單
+      await deliverDeckImage(
+        imageBytes,
+        shareText: l10n.deckShareText,
+        shareSubject: l10n.deckShareSubject,
       );
 
     } catch (e) {
@@ -99,5 +95,51 @@ class DeckExporter {
         SnackBar(content: Text(l10n.exportFailed('$e'))),
       );
     }
+  }
+
+  // 平台判斷與兩個動作都可替換，因為 widget test 裡 kIsWeb 恆為 false。
+  @visibleForTesting
+  static Future<void> deliverDeckImage(
+    Uint8List imageBytes, {
+    required String shareText,
+    required String shareSubject,
+    bool isWeb = kIsWeb,
+    Future<void> Function(Uint8List) download = _downloadPng,
+    Future<void> Function(Uint8List, String, String) share =
+        _shareViaNativeSheet,
+  }) async {
+    if (isWeb) {
+      await download(imageBytes);
+    } else {
+      await share(imageBytes, shareText, shareSubject);
+    }
+  }
+
+  static Future<void> _downloadPng(Uint8List imageBytes) async {
+    await XFile.fromData(
+      imageBytes,
+      mimeType: 'image/png',
+      name: _imageFileName,
+    ).saveTo(_imageFileName);
+  }
+
+  static Future<void> _shareViaNativeSheet(
+    Uint8List imageBytes,
+    String shareText,
+    String shareSubject,
+  ) async {
+    // 將圖片 Bytes 存成臨時檔案
+    final tempDir = await getTemporaryDirectory();
+    final path = '${tempDir.path}/$_imageFileName';
+    await XFile.fromData(imageBytes).saveTo(path);
+
+    // 🔥 呼叫原生分享選單，把檔案分享出去（share_plus 新版 API）
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(path)],
+        text: shareText,
+        subject: shareSubject, // iOS 用的郵件主旨
+      ),
+    );
   }
 }
