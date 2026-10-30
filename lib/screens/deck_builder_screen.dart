@@ -10,6 +10,14 @@ import 'deck_detail_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
 import '../widgets/deck_health_summary.dart';
+import '../utils/wide_web_layout.dart';
+
+SliverGridDelegate _cardGridDelegate(int crossAxisCount) => SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: crossAxisCount,
+      childAspectRatio: 0.54,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+    );
 
 class DeckBuilderScreen extends ConsumerStatefulWidget {
   const DeckBuilderScreen({super.key});
@@ -72,6 +80,7 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
 
     final libraryState = ref.watch(cardLibraryViewModelProvider);
     final deckState = ref.watch(deckViewModelProvider);
+    final int gridCount = isWideWebLayout(context, ref) ? wideWebCardGridCount(MediaQuery.sizeOf(context).width) : 3;
 
     final Color appBarColor = AppColors.surface;
     final Color textColor = Colors.white;
@@ -143,7 +152,7 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
       bottomNavigationBar: _buildBottomSettlement(deckState),
       // 🔥 核心修正：始終保持 GridView 結構，不再使用 Center()
       body: libraryState.isLoading && libraryState.allCards.isEmpty
-          ? _buildSkeletonGrid() // 第一次載入顯示骨架
+          ? _buildSkeletonGrid(gridCount) // 第一次載入顯示骨架
           : Column(
               children: [
                 // 已經有卡片時重新查詢（換系列/顏色、搜尋、背景刷新快取）不會進骨架，
@@ -165,12 +174,7 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
                           child: GridView.builder(
                             padding: const EdgeInsets.all(10),
                             physics: const AlwaysScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              childAspectRatio: 0.54,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8
-                            ),
+                            gridDelegate: _cardGridDelegate(gridCount),
                             itemCount: libraryState.filteredCards.length,
                             itemBuilder: (context, index) {
                               final card = libraryState.filteredCards[index];
@@ -191,18 +195,13 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
   }
 
   // 🦴 骨架屏：完全模擬真實卡片的佈局結構
-  Widget _buildSkeletonGrid() {
+  Widget _buildSkeletonGrid(int crossAxisCount) {
     return _SkeletonShimmer(
       child: GridView.builder(
         padding: const EdgeInsets.all(10),
         physics: const AlwaysScrollableScrollPhysics(), // 保持捲軸物理效果一致
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, 
-          childAspectRatio: 0.54, 
-          crossAxisSpacing: 8, 
-          mainAxisSpacing: 8
-        ),
-        itemCount: 9,
+        gridDelegate: _cardGridDelegate(crossAxisCount),
+        itemCount: crossAxisCount * 3,
         itemBuilder: (context, index) => Container(
           // 1. 完全一致的外框裝飾（包含 2px 邊框預留）
           decoration: BoxDecoration(

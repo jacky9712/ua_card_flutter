@@ -6,6 +6,7 @@ import '../viewModels/deck_view_model.dart';
 import 'deck_detail_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../widgets/wide_web_content.dart';
 
 class MyDecksScreen extends ConsumerStatefulWidget {
   const MyDecksScreen({super.key});
@@ -33,7 +34,7 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
         elevation: 0,
       ),
       // 只有清單還是空的才整頁轉圈；已有清單時重新載入不拆掉 RefreshIndicator
-      body: deckState.isLoading && deckState.myDecks.isEmpty
+      body: WideWebContent(child: deckState.isLoading && deckState.myDecks.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
@@ -66,7 +67,7 @@ class _MyDecksScreenState extends ConsumerState<MyDecksScreen> {
                   ),
                 ),
               ],
-            ),
+            )),
     );
   }
 

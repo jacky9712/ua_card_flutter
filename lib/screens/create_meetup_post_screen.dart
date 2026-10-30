@@ -6,6 +6,8 @@ import '../viewModels/deck_view_model.dart';
 import '../viewModels/meetup_view_model.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../utils/wide_web_layout.dart';
+import '../widgets/wide_web_content.dart';
 
 // Tier1~Tier6 是自評用的，跟「上位卡組推薦」的分級字串同一套慣例，方便畫面共用同一套顏色邏輯。
 const List<String> kDeckTiers = ['Tier1', 'Tier2', 'Tier3', 'Tier4', 'Tier5', 'Tier6'];
@@ -88,7 +90,7 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: WideWebContent(maxWidth: wideWebFormMaxWidth, child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +236,7 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

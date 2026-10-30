@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../viewModels/meta_view_model.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../widgets/wide_web_content.dart';
 
 class MetaEnvironmentScreen extends ConsumerStatefulWidget {
   const MetaEnvironmentScreen({super.key});
@@ -33,7 +34,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: metaState.isLoading && metaData.isEmpty
+      body: WideWebContent(child: metaState.isLoading && metaData.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: () => ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment(),
@@ -77,7 +78,7 @@ class _MetaEnvironmentScreenState extends ConsumerState<MetaEnvironmentScreen> {
                   const SliverToBoxAdapter(child: SizedBox(height: 40)),
                 ],
               ),
-            ),
+            )),
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'meetup_posts_screen.dart';
 import 'live_location_screen.dart';
 import '../l10n/l10n_ext.dart';
+import '../widgets/wide_web_content.dart';
 
 /// 「約戰地點」跟「分享我的位置」共用一個入口，用分頁切換——
 /// 避免首頁圖示因為兩個定位相關功能而過度膨脹（跟使用者確認過的設計）。
@@ -29,12 +30,12 @@ class LocationHubScreen extends StatelessWidget {
         // MeetupPostsScreen 自己有 Scaffold（含 FAB），這裡直接嵌它的 body 會比較乾淨，
         // 但它是完整 Scaffold widget，用 TabBarView 直接放兩個 Scaffold 也是 Flutter
         // 常見寫法，各自的 FAB/Scaffold 互不干擾。
-        body: const TabBarView(
+        body: const WideWebContent(child: TabBarView(
           children: [
             MeetupPostsScreen(),
             LiveLocationScreen(),
           ],
-        ),
+        )),
       ),
     );
   }

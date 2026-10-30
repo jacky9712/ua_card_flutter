@@ -8,6 +8,8 @@ import 'create_meetup_post_screen.dart' show kDeckTiers;
 import 'qr_scanner_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../utils/wide_web_layout.dart';
+import '../widgets/wide_web_content.dart';
 
 /// 記錄一場對戰的勝負。可以單獨從「戰績紀錄」畫面進來，也可以帶著
 /// [initialMeetupPostId] 從約戰貼文串過來（完全選填，見任務規劃裡的「可串可不串」）。
@@ -66,7 +68,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: WideWebContent(maxWidth: wideWebFormMaxWidth, child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +252,7 @@ class _CreateMatchRecordScreenState extends ConsumerState<CreateMatchRecordScree
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

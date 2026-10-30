@@ -16,6 +16,7 @@ import '../viewModels/deck_share_code_view_model.dart';
 import 'deck_builder_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../widgets/wide_web_content.dart';
 
 class DeckDetailScreen extends ConsumerStatefulWidget {
   final int? deckId; // 🔥 新增：牌組 ID，用於編輯模式
@@ -144,7 +145,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
         ],
       ),
       bottomNavigationBar: widget.onSavePressed != null
-          ? SafeArea(
+          ? WideWebContent(child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
@@ -163,9 +164,9 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
                   ),
                 ),
               ),
-            )
+            ))
           : null,
-      body: SingleChildScrollView(
+      body: WideWebContent(child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -216,7 +217,7 @@ class _DeckDetailScreenState extends ConsumerState<DeckDetailScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

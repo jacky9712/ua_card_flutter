@@ -9,6 +9,8 @@ import 'deck_detail_screen.dart';
 import 'deck_builder_screen.dart';
 import '../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
+import '../utils/wide_web_layout.dart';
+import '../widgets/wide_web_content.dart';
 
 class RecommendedDecksScreen extends ConsumerStatefulWidget {
   const RecommendedDecksScreen({super.key});
@@ -350,7 +352,7 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
           const SizedBox(width: 8),
         ],
       ),
-      body: Column(
+      body: WideWebContent(maxWidth: wideWebListMaxWidth, child: Column(
         children: [
           // 已經有牌組時重新整理（下拉或背景更新快取）不會整頁轉圈，頂端顯示細進度條。
           if (state.isLoading && state.decks.isNotEmpty && !_pullRefreshing)
@@ -403,111 +405,131 @@ class _RecommendedDecksScreenState extends ConsumerState<RecommendedDecksScreen>
                                 ),
                               ],
                             )
-                          : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: filteredDecks.length,
-                          itemBuilder: (context, index) {
-                            final deck = filteredDecks[index];
-                            final String tier = (deck['tier'] ?? '').toString();
-                            // 圓形徽章空間有限，"Tier1.5" 這種字串只取數字部分顯示
-                            final tierMatch = RegExp(r'(\d+(\.\d+)?)').firstMatch(tier);
-                            final String tierBadge = tierMatch?.group(1) ?? '?';
-                            final String seriesName = deck['series']?['name_zh'] ?? context.l10n.uncategorizedSeries;
-                            final winRate = deck['win_rate'];
-                            final int totalPrice = deck['total_price'] ?? 0;
-                            final int deckId = deck['id'];
-                            final bool opening = _openingDeckId == deckId;
-                            final String? coverImageUrl = deck['cover_image_url'];
-
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              color: AppColors.surface,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              child: ListTile(
-                                onTap: opening ? null : () => _openDeck(deck),
-                                leading: SizedBox(
-                                  width: 48,
-                                  height: 48,
-                                  child: Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: coverImageUrl != null && coverImageUrl.isNotEmpty
-                                            ? CachedNetworkImage(
-                                                imageUrl: coverImageUrl,
-                                                width: 48,
-                                                height: 48,
-                                                fit: BoxFit.cover,
-                                                placeholder: (context, url) => Container(
-                                                  color: Colors.white.withValues(alpha: 0.05),
-                                                ),
-                                                errorWidget: (context, url, error) => Container(
-                                                  width: 48,
-                                                  height: 48,
-                                                  color: Colors.white.withValues(alpha: 0.05),
-                                                  child: const Icon(Icons.style, color: Colors.grey, size: 20),
-                                                ),
-                                              )
-                                            : Container(
-                                                width: 48,
-                                                height: 48,
-                                                color: Colors.white.withValues(alpha: 0.05),
-                                                child: const Icon(Icons.style, color: Colors.grey, size: 20),
-                                              ),
-                                      ),
-                                      Positioned(
-                                        bottom: -4,
-                                        right: -4,
-                                        child: Container(
-                                          width: 20,
-                                          height: 20,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            color: _tierColor(tier),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: AppColors.surface, width: 1.5),
-                                          ),
-                                          child: Text(
-                                            tierBadge,
-                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 9),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                          : isWideWebLayout(context, ref)
+                              ? GridView.builder(
+                                  key: const Key('recommendedDecksWideGrid'),
+                                  padding: const EdgeInsets.all(16),
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: wideWebDeckColumnCount(MediaQuery.sizeOf(context).width),
+                                    mainAxisExtent: 92,
+                                    crossAxisSpacing: 12,
                                   ),
+                                  itemCount: filteredDecks.length,
+                                  itemBuilder: (context, index) => _buildDeckCard(context, filteredDecks[index], wide: true),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: filteredDecks.length,
+                                  itemBuilder: (context, index) => _buildDeckCard(context, filteredDecks[index], wide: false),
                                 ),
-                                title: Text(deck['name'] ?? context.l10n.unnamedDeck, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text(
-                                  '$seriesName'
-                                  '${tier.isNotEmpty ? ' · $tier' : ''}'
-                                  '${winRate != null ? ' · ${context.l10n.winRateValue('$winRate')}' : ''}',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                trailing: opening
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      )
-                                    : Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            '¥ $totalPrice',
-                                            style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900),
-                                          ),
-                                          const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
-                                        ],
-                                      ),
-                              ),
-                            );
-                          },
-                        ),
             ),
           ),
         ],
+      )),
+    );
+  }
+
+  Widget _buildDeckCard(BuildContext context, Map<String, dynamic> deck, {required bool wide}) {
+    final String tier = (deck['tier'] ?? '').toString();
+    // 圓形徽章空間有限，"Tier1.5" 這種字串只取數字部分顯示
+    final tierMatch = RegExp(r'(\d+(\.\d+)?)').firstMatch(tier);
+    final String tierBadge = tierMatch?.group(1) ?? '?';
+    final String seriesName = deck['series']?['name_zh'] ?? context.l10n.uncategorizedSeries;
+    final winRate = deck['win_rate'];
+    final int totalPrice = deck['total_price'] ?? 0;
+    final int deckId = deck['id'];
+    final bool opening = _openingDeckId == deckId;
+    final String? coverImageUrl = deck['cover_image_url'];
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        onTap: opening ? null : () => _openDeck(deck),
+        leading: SizedBox(
+          width: 48,
+          height: 48,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: coverImageUrl != null && coverImageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: coverImageUrl,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.white.withValues(alpha: 0.05),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          width: 48,
+                          height: 48,
+                          color: Colors.white.withValues(alpha: 0.05),
+                          child: const Icon(Icons.style, color: Colors.grey, size: 20),
+                        ),
+                      )
+                    : Container(
+                        width: 48,
+                        height: 48,
+                        color: Colors.white.withValues(alpha: 0.05),
+                        child: const Icon(Icons.style, color: Colors.grey, size: 20),
+                      ),
+              ),
+              Positioned(
+                bottom: -4,
+                right: -4,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _tierColor(tier),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.surface, width: 1.5),
+                  ),
+                  child: Text(
+                    tierBadge,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 9),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        title: Text(
+          deck['name'] ?? context.l10n.unnamedDeck,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+          maxLines: wide ? 1 : null,
+          overflow: wide ? TextOverflow.ellipsis : null,
+        ),
+        subtitle: Text(
+          '$seriesName'
+          '${tier.isNotEmpty ? ' · $tier' : ''}'
+          '${winRate != null ? ' · ${context.l10n.winRateValue('$winRate')}' : ''}',
+          style: const TextStyle(fontSize: 12),
+          maxLines: wide ? 2 : null,
+          overflow: wide ? TextOverflow.ellipsis : null,
+        ),
+        trailing: opening
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '¥ $totalPrice',
+                    style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900),
+                  ),
+                  const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                ],
+              ),
       ),
     );
   }
