@@ -18,8 +18,11 @@ import 'my_decks_screen.dart';
 import 'recommended_decks_screen.dart';
 import 'deck_builder_screen.dart';
 import '../theme/app_theme.dart';
+import '../utils/wide_web_layout.dart';
 import '../l10n/app_localizations.dart';
 import '../viewModels/locale_view_model.dart';
+
+typedef _HomeEntry = ({IconData icon, String label, VoidCallback onTap});
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -145,7 +148,8 @@ class HomeScreen extends ConsumerWidget {
     // 首頁不會跟著卡片庫與推薦牌組狀態重建。
     ref.listen(cardLibraryViewModelProvider, (_, _) {});
     ref.listen(recommendedDeckViewModelProvider, (_, _) {});
-    final l10n = AppLocalizations.of(context);
+
+    if (isWideWebLayout(context, ref)) return _buildWideScaffold(context, ref, authState, metaState);
 
     return Scaffold(
       // 移除手動背景色，交給 MaterialApp 的 theme 處理
@@ -155,14 +159,7 @@ class HomeScreen extends ConsumerWidget {
           height: 60,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavIcon(context, Icons.home, l10n.navHome, true, () {}),
-              _buildNavIcon(context, Icons.style_outlined, l10n.navDecks, false,
-                () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()))),
-              _buildNavIcon(context, Icons.newspaper, l10n.navMessages, false, () => _openOfficialNews(context)),
-              _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, l10n.navProfile, false,
-                () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
-            ],
+            children: _buildNavItems(context, ref, authState),
           ),
         ),
       ),
@@ -192,46 +189,192 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, WidgetRef ref) {
+  Widget _buildWideScaffold(BuildContext context, WidgetRef ref, UserAuthState authState, MetaState metaState) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildWideTopNav(context, ref, authState),
+            const Divider(height: 1, color: AppColors.surfaceHigh),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await ref.read(metaViewModelProvider.notifier).fetchMetaEnvironment();
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1280),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                key: const Key('homeWideMain'),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildSearchArea(context, ref),
+                                  _buildBanner(context),
+                                  _buildWidePrimaryEntries(context),
+                                  _buildWideQuickActions(context),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            SizedBox(
+                              key: const Key('homeWideSidebar'),
+                              width: 340,
+                              child: _buildHomeMetaPreview(context, ref, metaState),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWideTopNav(BuildContext context, WidgetRef ref, UserAuthState authState) {
+    return SizedBox(
+      key: const Key('homeWideTopNav'),
+      height: 72,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          children: [
+            ..._brandItems,
+            const SizedBox(width: 32),
+            for (final item in _buildNavItems(context, ref, authState))
+              Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: item),
+            const Spacer(),
+            _buildLanguageMenu(context, ref),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWidePrimaryEntries(BuildContext context) {
+    final entries = _homeEntries(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        key: const Key('homeWidePrimaryEntries'),
+        children: [
+          Expanded(child: _primaryEntryCard(entries[1], entries[1].label)),
+          const SizedBox(width: 12),
+          Expanded(child: _primaryEntryCard(entries[2], entries[2].label)),
+          const SizedBox(width: 12),
+          // 寬版標籤用「推薦牌組」，入口本身就是快捷入口的「上位卡組」
+          Expanded(child: _primaryEntryCard(entries[3], AppLocalizations.of(context).recommendedDeck)),
+        ],
+      ),
+    );
+  }
+
+  Widget _primaryEntryCard(_HomeEntry entry, String label) {
+    return InkWell(
+      onTap: entry.onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(entry.icon, color: AppColors.gold, size: 36),
+            const SizedBox(height: 10),
+            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWideQuickActions(BuildContext context) {
+    final entries = _homeEntries(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        key: const Key('homeWideQuickActions'),
+        children: [
+          for (final e in [entries[0], entries[4], entries[5]])
+            Expanded(child: _quickButton(e.icon, e.label, e.onTap)),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildNavItems(BuildContext context, WidgetRef ref, UserAuthState authState) {
     final l10n = AppLocalizations.of(context);
+    return [
+      _buildNavIcon(context, Icons.home, l10n.navHome, true, () {}),
+      _buildNavIcon(context, Icons.style_outlined, l10n.navDecks, false,
+        () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()))),
+      _buildNavIcon(context, Icons.newspaper, l10n.navMessages, false, () => _openOfficialNews(context)),
+      _buildNavIcon(context, authState.isRealUser ? Icons.person : Icons.person_outline, l10n.navProfile, false,
+        () => _handleProfileClick(context, ref, authState, ref.read(authViewModelProvider.notifier))),
+    ];
+  }
+
+  static const List<Widget> _brandItems = [
+    Icon(Icons.diamond, color: AppColors.gold, size: 20),
+    SizedBox(width: 8),
+    Text('UA DECK', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2, color: AppColors.gold)),
+  ];
+
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
-        children: [
-          const Icon(Icons.diamond, color: AppColors.gold, size: 20),
-          const SizedBox(width: 8),
-          const Text('UA DECK', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2, color: AppColors.gold)),
-          const Spacer(),
-          PopupMenuButton<String>(
-            tooltip: '',
-            position: PopupMenuPosition.under,
-            color: AppColors.surface,
-            onSelected: (code) => ref.read(localeViewModelProvider.notifier).setLocale(Locale(code)),
-            // 選項名稱固定用各語言自己的寫法，切錯語言時才找得回來
-            itemBuilder: (context) {
-              final current = Localizations.localeOf(context).languageCode;
-              return [
-                for (final (code, name) in const [('zh', '繁體中文'), ('ja', '日本語'), ('en', 'English')])
-                  CheckedPopupMenuItem<String>(value: code, checked: code == current, child: Text(name)),
-              ];
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.language, size: 16, color: AppColors.gold),
-                  Text(' ${l10n.languageName}', style: const TextStyle(fontSize: 12)),
-                  const Icon(Icons.arrow_drop_down, size: 16),
-                ],
-              ),
-            ),
-          ),
-        ],
+        children: [..._brandItems, const Spacer(), _buildLanguageMenu(context, ref)],
+      ),
+    );
+  }
+
+  Widget _buildLanguageMenu(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return PopupMenuButton<String>(
+      tooltip: '',
+      position: PopupMenuPosition.under,
+      color: AppColors.surface,
+      onSelected: (code) => ref.read(localeViewModelProvider.notifier).setLocale(Locale(code)),
+      // 選項名稱固定用各語言自己的寫法，切錯語言時才找得回來
+      itemBuilder: (context) {
+        final current = Localizations.localeOf(context).languageCode;
+        return [
+          for (final (code, name) in const [('zh', '繁體中文'), ('ja', '日本語'), ('en', 'English')])
+            CheckedPopupMenuItem<String>(value: code, checked: code == current, child: Text(name)),
+        ];
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.language, size: 16, color: AppColors.gold),
+            Text(' ${l10n.languageName}', style: const TextStyle(fontSize: 12)),
+            const Icon(Icons.arrow_drop_down, size: 16),
+          ],
+        ),
       ),
     );
   }
@@ -324,8 +467,34 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
+  List<_HomeEntry> _homeEntries(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    return [
+      (icon: Icons.analytics_outlined, label: l10n.actionMeta, onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const MetaEnvironmentScreen()));
+      }),
+      (icon: Icons.dashboard_customize_outlined, label: l10n.actionDeckBuilder, onTap: () {
+        // 原本由「出品」按鈕負責清空編輯器；拿掉按鈕後改在這裡清。不清的話，編輯過既有牌組後
+        // 編輯器還留著那副牌組的 editingId，從這裡進去組新牌一儲存就會覆蓋掉舊牌組。
+        ProviderScope.containerOf(context, listen: false).read(deckViewModelProvider.notifier).clearEditor();
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const DeckBuilderScreen()));
+      }),
+      (icon: Icons.style_outlined, label: l10n.actionMyDecks, onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()));
+      }),
+      (icon: Icons.emoji_events_outlined, label: l10n.actionTopDecks, onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const RecommendedDecksScreen()));
+      }),
+      (icon: Icons.military_tech_outlined, label: l10n.actionMatchRecords, onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const MatchRecordsScreen()));
+      }),
+      (icon: Icons.location_on_outlined, label: l10n.actionMeetup, onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const LocationHubScreen()));
+      }),
+    ];
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
     // 拿掉「主題活動」之後剩 6 個入口，改用 3 欄排成剛好 2 整排，
     // 不會像 4 欄那樣第二排只填一半、看起來像漏東西。
     return Padding(
@@ -336,29 +505,7 @@ class HomeScreen extends ConsumerWidget {
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 12,
         childAspectRatio: 0.95,
-        children: [
-          _quickButton(Icons.analytics_outlined, l10n.actionMeta, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const MetaEnvironmentScreen()));
-          }),
-          _quickButton(Icons.dashboard_customize_outlined, l10n.actionDeckBuilder, () {
-            // 原本由「出品」按鈕負責清空編輯器；拿掉按鈕後改在這裡清。不清的話，編輯過既有牌組後
-            // 編輯器還留著那副牌組的 editingId，從這裡進去組新牌一儲存就會覆蓋掉舊牌組。
-            ProviderScope.containerOf(context, listen: false).read(deckViewModelProvider.notifier).clearEditor();
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const DeckBuilderScreen()));
-          }),
-          _quickButton(Icons.style_outlined, l10n.actionMyDecks, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const MyDecksScreen()));
-          }),
-          _quickButton(Icons.emoji_events_outlined, l10n.actionTopDecks, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const RecommendedDecksScreen()));
-          }),
-          _quickButton(Icons.military_tech_outlined, l10n.actionMatchRecords, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const MatchRecordsScreen()));
-          }),
-          _quickButton(Icons.location_on_outlined, l10n.actionMeetup, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const LocationHubScreen()));
-          }),
-        ],
+        children: [for (final e in _homeEntries(context)) _quickButton(e.icon, e.label, e.onTap)],
       ),
     );
   }
