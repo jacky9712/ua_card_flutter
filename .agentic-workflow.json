@@ -1,3 +1,4 @@
 {
-  "shipPublish": "pr"
+  "shipPublish": "pr",
+  "bashAllowlistExtra": ["flutter build web*"]
 }
