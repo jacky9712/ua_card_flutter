@@ -208,6 +208,19 @@ void main() {
     expectWideLayout(tester);
   });
 
+  testWidgets('寬螢幕主要入口用 Ink 當底色，水波紋不會被蓋住', (tester) async {
+    await pumpHome(tester, const Size(1400, 900), isWeb: true);
+
+    expect(find.descendant(of: find.byKey(const Key('homeWidePrimaryEntries')), matching: find.byType(Ink)), findsNWidgets(3));
+  });
+
+  testWidgets('寬螢幕主內容和右側欄的內容上緣對齊', (tester) async {
+    await pumpHome(tester, const Size(1400, 900), isWeb: true);
+
+    final sidebarTop = tester.getTopLeft(find.byKey(const Key('homeWideSidebar'))).dy;
+    expect(tester.getTopLeft(find.byType(TextField)).dy, sidebarTop + 16);
+  });
+
   testWidgets('寬螢幕頂部導覽的「個人」和底部導覽列一樣開訪客對話框', (tester) async {
     await pumpHome(tester, const Size(1400, 900), isWeb: true);
 

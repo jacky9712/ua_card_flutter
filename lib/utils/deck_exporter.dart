@@ -116,6 +116,7 @@ class DeckExporter {
   }
 
   static Future<void> _downloadPng(Uint8List imageBytes) async {
+    // 網頁版的下載檔名由 name 決定，saveTo 的路徑參數會被忽略
     await XFile.fromData(
       imageBytes,
       mimeType: 'image/png',
