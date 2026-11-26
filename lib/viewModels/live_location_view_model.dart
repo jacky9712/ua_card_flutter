@@ -40,6 +40,8 @@ class LiveLocationState {
 
 class LiveLocationViewModel extends Notifier<LiveLocationState> {
   Timer? _pingTimer;
+  Timer? _debounce;
+  Timer? _expiryTimer;
 
   @override
   LiveLocationState build() {
@@ -51,8 +53,45 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
     });
     // provider 被丟棄時（例如畫面關掉、狀態重置）順便把還在跑的 Timer 停掉，
     // 不然背景會一直嘗試更新一個沒人在看的分享狀態。
-    ref.onDispose(() => _pingTimer?.cancel());
+    // 別台裝置開始/停止分享時，即時反映在清單上（不然沒在分享的那台永遠不會重抓）。
+    final unsubscribe = ref.read(liveLocationRepositoryProvider).subscribeToChanges(_onRemoteChange);
+    // 分享「到期」不會產生資料庫事件，定期背景重抓把過期的人從清單拿掉。
+    _expiryTimer = Timer.periodic(const Duration(seconds: 60), (_) => _onRemoteChange());
+    ref.onDispose(() {
+      _pingTimer?.cancel();
+      _debounce?.cancel();
+      _expiryTimer?.cancel();
+      unsubscribe();
+    });
     return LiveLocationState();
+  }
+
+  /// 短時間內多筆變動（例如自己 upsert 也會觸發 realtime）合併成一次處理。
+  void _onRemoteChange() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      if (!ref.mounted) return;
+      await _syncMySharingFromServer();
+      if (!ref.mounted) return;
+      await fetchNearbyOthers(silent: true);
+    });
+  }
+
+  /// 同一個帳號在另一台裝置按了「停止分享」時，伺服器上的那筆已經被刪掉；
+  /// 這台要跟著切回未分享並停掉定時回報，不然下一次 ping 會把位置又寫回去。
+  /// 只改本地狀態，不呼叫 repo.stopSharing（伺服器上本來就沒了）。
+  Future<void> _syncMySharingFromServer() async {
+    if (!state.isSharing) return;
+    try {
+      final until = await ref.read(liveLocationRepositoryProvider).fetchMySharingUntil();
+      if (!ref.mounted) return;
+      if (until != null && DateTime.now().isBefore(until)) return;
+      _pingTimer?.cancel();
+      _pingTimer = null;
+      state = state.copyWith(isSharing: false, clearSharingUntil: true, error: state.error);
+    } catch (_) {
+      // 查詢失敗時維持現狀，下次變動或定時重抓再確認。
+    }
   }
 
   /// App 重開（或 provider 重建）時，伺服器上的位置在到期前都還是公開的；
@@ -71,9 +110,12 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
     }
   }
 
-  Future<void> fetchNearbyOthers() async {
+  /// [silent] 為 true 時是背景重抓（realtime / 定時），不切 isLoading、失敗也不跳錯誤，避免畫面閃轉圈。
+  Future<void> fetchNearbyOthers({bool silent = false}) async {
     if (!isLocationCapablePlatform) return;
-    state = state.copyWith(isLoading: true, error: state.error.clearedIf(AppErrorCode.loadNearbyFailed));
+    if (!silent) {
+      state = state.copyWith(isLoading: true, error: state.error.clearedIf(AppErrorCode.loadNearbyFailed));
+    }
     try {
       final repo = ref.read(liveLocationRepositoryProvider);
       final all = await repo.fetchActiveLiveLocations();
@@ -84,7 +126,7 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
         error: state.error.clearedIf(AppErrorCode.loadNearbyFailed),
       );
     } catch (e) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || silent) return;
       state = state.copyWith(isLoading: false, error: const AppError(AppErrorCode.loadNearbyFailed));
     }
   }
@@ -116,6 +158,9 @@ class LiveLocationViewModel extends Notifier<LiveLocationState> {
         await stopSharing();
         return;
       }
+      // realtime 沒收到（斷線、背景）時的保險：伺服器上的分享已被別台停掉就不要再寫回去。
+      await _syncMySharingFromServer();
+      if (!ref.mounted || !state.isSharing) return;
       await _pingOnce(until);
     });
   }
