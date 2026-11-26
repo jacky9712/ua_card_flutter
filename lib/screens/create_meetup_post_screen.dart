@@ -13,7 +13,10 @@ import '../widgets/wide_web_content.dart';
 const List<String> kDeckTiers = ['Tier1', 'Tier2', 'Tier3', 'Tier4', 'Tier5', 'Tier6'];
 
 class CreateMeetupPostScreen extends ConsumerStatefulWidget {
-  const CreateMeetupPostScreen({super.key});
+  /// 傳入既有貼文（meetup_posts 的一列）時進入編輯模式，欄位預先帶入原本的值。
+  final Map<String, dynamic>? existingPost;
+
+  const CreateMeetupPostScreen({super.key, this.existingPost});
 
   @override
   ConsumerState<CreateMeetupPostScreen> createState() => _CreateMeetupPostScreenState();
@@ -30,9 +33,22 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
   String? _selectedDeckName;
   String? _selectedTier;
 
+  bool get _isEditing => widget.existingPost != null;
+
   @override
   void initState() {
     super.initState();
+    final post = widget.existingPost;
+    if (post != null) {
+      _locationController.text = post['location_name'] ?? '';
+      _noteController.text = post['note'] ?? '';
+      _scheduledAt = DateTime.tryParse(post['scheduled_at'] ?? '')?.toLocal();
+      _lat = (post['lat'] as num?)?.toDouble();
+      _lng = (post['lng'] as num?)?.toDouble();
+      _selectedDeckId = post['deck_id'] as int?;
+      _selectedDeckName = post['deck_name_snapshot'] as String?;
+      _selectedTier = post['deck_tier'] as String?;
+    }
     // deckViewModelProvider 不會自動抓，沒逛過「我的牌組」畫面時 myDecks 會是空的。
     Future.microtask(() => ref.read(deckViewModelProvider.notifier).fetchMyDecks());
   }
@@ -86,7 +102,7 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.l10n.postMeetupTitle, style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(_isEditing ? context.l10n.editMeetupTitle : context.l10n.postMeetupTitle, style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -110,14 +126,30 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
               ),
             ),
             const SizedBox(height: 12),
-            if (isLocationCapablePlatform)
-              OutlinedButton.icon(
-                onPressed: _isFetchingLocation ? null : _useCurrentLocation,
-                icon: _isFetchingLocation
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Icon(_lat != null ? Icons.check_circle : Icons.my_location, size: 18),
-                label: Text(_lat != null ? context.l10n.coordsAttached : context.l10n.attachCoordsOptional),
-              ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (isLocationCapablePlatform)
+                  OutlinedButton.icon(
+                    onPressed: _isFetchingLocation ? null : _useCurrentLocation,
+                    icon: _isFetchingLocation
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                        : Icon(_lat != null ? Icons.check_circle : Icons.my_location, size: 18),
+                    label: Text(_lat != null ? context.l10n.coordsAttachedTapToRefresh : context.l10n.attachCoordsOptional),
+                  ),
+                if (_lat != null)
+                  TextButton.icon(
+                    onPressed: () => setState(() {
+                      _lat = null;
+                      _lng = null;
+                    }),
+                    icon: const Icon(Icons.close, size: 16),
+                    label: Text(context.l10n.removeCoords),
+                  ),
+              ],
+            ),
             const SizedBox(height: 20),
 
             Text(context.l10n.plannedDeckOptional, style: TextStyle(fontWeight: FontWeight.bold)),
@@ -131,7 +163,10 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
                 children: deckState.myDecks.map((d) {
                   final int id = d['id'];
                   final String name = d['name'] ?? context.l10n.unnamedDeck;
-                  final bool selected = _selectedDeckId == id;
+                  // 本地牌組（負數 id）存檔時 deck_id 是 null，編輯時改用快照名稱比對選取狀態
+                  final bool selected = _selectedDeckId != null
+                      ? _selectedDeckId == id
+                      : (_selectedDeckName != null && _selectedDeckName == name);
                   return ChoiceChip(
                     label: Text(name),
                     selected: selected,
@@ -206,21 +241,38 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
                         final navigator = Navigator.of(context);
                         final messenger = ScaffoldMessenger.of(context);
                         final l10n = context.l10n;
-                        final success = await ref.read(meetupViewModelProvider.notifier).createMeetupPost(
-                              locationName: name,
-                              lat: _lat,
-                              lng: _lng,
-                              note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
-                              scheduledAt: _scheduledAt,
-                              deckId: _selectedDeckId,
-                              deckNameSnapshot: _selectedDeckName,
-                              deckTier: _selectedTier,
-                            );
+                        final note = _noteController.text.trim().isEmpty ? null : _noteController.text.trim();
+                        final notifier = ref.read(meetupViewModelProvider.notifier);
+                        final success = _isEditing
+                            ? await notifier.updateMeetupPost(
+                                id: widget.existingPost!['id'] as int,
+                                locationName: name,
+                                lat: _lat,
+                                lng: _lng,
+                                note: note,
+                                scheduledAt: _scheduledAt,
+                                deckId: _selectedDeckId,
+                                deckNameSnapshot: _selectedDeckName,
+                                deckTier: _selectedTier,
+                              )
+                            : await notifier.createMeetupPost(
+                                locationName: name,
+                                lat: _lat,
+                                lng: _lng,
+                                note: note,
+                                scheduledAt: _scheduledAt,
+                                deckId: _selectedDeckId,
+                                deckNameSnapshot: _selectedDeckName,
+                                deckTier: _selectedTier,
+                              );
                         if (!mounted) return;
                         if (success) {
                           navigator.pop();
                           messenger.showSnackBar(
-                            SnackBar(content: Text(l10n.meetupPosted), backgroundColor: Colors.green),
+                            SnackBar(
+                              content: Text(_isEditing ? l10n.meetupUpdated : l10n.meetupPosted),
+                              backgroundColor: Colors.green,
+                            ),
                           );
                         }
                       },
@@ -231,7 +283,7 @@ class _CreateMeetupPostScreenState extends ConsumerState<CreateMeetupPostScreen>
                 ),
                 child: meetupState.isLoading
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(context.l10n.publish, style: TextStyle(fontWeight: FontWeight.bold)),
+                    : Text(_isEditing ? context.l10n.saveChanges : context.l10n.publish, style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],

@@ -12,6 +12,10 @@ class _FakeMeetupRepository implements MeetupRepository {
   bool failFetch = false;
   bool failCreate = false;
   bool failDelete = false;
+  bool failUpdate = false;
+  int subscribeCalls = 0;
+  int unsubscribeCalls = 0;
+  void Function()? onRemoteChange;
   int fetchCalls = 0;
   final posts = <Map<String, dynamic>>[
     {'id': 1, 'location_name': '台北'},
@@ -40,9 +44,35 @@ class _FakeMeetupRepository implements MeetupRepository {
   }
 
   @override
+  Future<void> updateMeetupPost({
+    required int id,
+    required String locationName,
+    double? lat,
+    double? lng,
+    String? note,
+    DateTime? scheduledAt,
+    int? deckId,
+    String? deckNameSnapshot,
+    String? deckTier,
+  }) async {
+    if (failUpdate) throw Exception('permission denied');
+    final post = posts.firstWhere((p) => p['id'] == id);
+    post['location_name'] = locationName;
+    post['lat'] = lat;
+    post['lng'] = lng;
+  }
+
+  @override
   Future<void> deleteMeetupPost(int id) async {
     if (failDelete) throw Exception('permission denied');
     posts.removeWhere((p) => p['id'] == id);
+  }
+
+  @override
+  void Function() subscribeToChanges(void Function() onChange) {
+    subscribeCalls++;
+    onRemoteChange = onChange;
+    return () => unsubscribeCalls++;
   }
 }
 
@@ -174,6 +204,50 @@ void main() {
     await notifier.setSortMode(MeetupSortMode.soonest);
     await notifier.setSortMode(MeetupSortMode.nearest);
     expect(positionCalls, 1);
+  });
+
+  test('編輯成功後重抓清單並反映新地點', () async {
+    final container = makeContainer();
+    final notifier = container.read(meetupViewModelProvider.notifier);
+
+    final ok = await notifier.updateMeetupPost(id: 1, locationName: '高雄', lat: 22.6, lng: 120.3);
+
+    expect(ok, isTrue);
+    final state = container.read(meetupViewModelProvider);
+    expect(state.posts.single['location_name'], '高雄');
+    expect(state.isLoading, isFalse);
+    expect(state.error, isNull);
+  });
+
+  test('編輯失敗記錄 updateFailed', () async {
+    repo.failUpdate = true;
+    final container = makeContainer();
+
+    final ok = await container.read(meetupViewModelProvider.notifier).updateMeetupPost(id: 1, locationName: '高雄');
+
+    expect(ok, isFalse);
+    final state = container.read(meetupViewModelProvider);
+    expect(state.error?.code, AppErrorCode.updateFailed);
+    expect(state.isLoading, isFalse);
+  });
+
+  test('收到 realtime 變動會（合併後）重抓一次清單，dispose 時取消訂閱', () async {
+    final container = ProviderContainer(overrides: [meetupRepositoryProvider.overrideWithValue(repo)]);
+    container.read(meetupViewModelProvider);
+    await pumpEventQueue();
+    expect(repo.subscribeCalls, 1);
+    final callsBefore = repo.fetchCalls;
+
+    repo.posts.add({'id': 2, 'location_name': '台中'});
+    repo.onRemoteChange!();
+    repo.onRemoteChange!();
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+
+    expect(repo.fetchCalls, callsBefore + 1);
+    expect(container.read(meetupViewModelProvider).posts.map((p) => p['id']), [1, 2]);
+
+    container.dispose();
+    expect(repo.unsubscribeCalls, 1);
   });
 
   group('MeetupState.sortedPosts', () {

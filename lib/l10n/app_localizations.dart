@@ -610,6 +610,42 @@ abstract class AppLocalizations {
   /// **'發布'**
   String get publish;
 
+  /// No description provided for @editMeetupTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'編輯約戰地點'**
+  String get editMeetupTitle;
+
+  /// No description provided for @coordsAttachedTapToRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'已附上座標（點擊改用目前位置）'**
+  String get coordsAttachedTapToRefresh;
+
+  /// No description provided for @removeCoords.
+  ///
+  /// In zh, this message translates to:
+  /// **'移除座標'**
+  String get removeCoords;
+
+  /// No description provided for @meetupUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'✅ 約戰貼文已更新'**
+  String get meetupUpdated;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In zh, this message translates to:
+  /// **'儲存變更'**
+  String get saveChanges;
+
+  /// No description provided for @editPost.
+  ///
+  /// In zh, this message translates to:
+  /// **'編輯貼文'**
+  String get editPost;
+
   /// No description provided for @saveToMyDecks.
   ///
   /// In zh, this message translates to:
@@ -1633,6 +1669,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'發布失敗'**
   String get errPublishFailed;
+
+  /// No description provided for @errUpdateFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新失敗'**
+  String get errUpdateFailed;
 
   /// No description provided for @errLoadOpponentsFailed.
   ///

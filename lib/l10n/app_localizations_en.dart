@@ -276,6 +276,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get publish => 'Post';
 
   @override
+  String get editMeetupTitle => 'Edit Meetup';
+
+  @override
+  String get coordsAttachedTapToRefresh =>
+      'Location attached (tap to use current location)';
+
+  @override
+  String get removeCoords => 'Remove location';
+
+  @override
+  String get meetupUpdated => '✅ Meetup updated';
+
+  @override
+  String get saveChanges => 'Save changes';
+
+  @override
+  String get editPost => 'Edit post';
+
+  @override
   String get saveToMyDecks => 'Save to My Decks (done editing)';
 
   @override
@@ -853,6 +872,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errPublishFailed => 'Failed to post';
+
+  @override
+  String get errUpdateFailed => 'Failed to update';
 
   @override
   String get errLoadOpponentsFailed => 'Failed to load opponents';

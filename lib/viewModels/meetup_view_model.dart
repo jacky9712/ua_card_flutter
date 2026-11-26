@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../repositories/providers.dart';
@@ -55,10 +56,32 @@ class MeetupState {
 }
 
 class MeetupViewModel extends Notifier<MeetupState> {
+  Timer? _debounce;
+
+  /// 短時間內多筆變動（例如自己剛發布、又觸發 realtime）合併成一次重抓。
+  void _onRemoteChange() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), _refreshSilently);
+  }
+
+  /// 背景重抓：不切 isLoading（避免清單閃轉圈）、失敗也不蓋掉畫面上的錯誤訊息。
+  Future<void> _refreshSilently() async {
+    try {
+      final posts = await ref.read(meetupRepositoryProvider).fetchOpenMeetupPosts();
+      state = state.copyWith(posts: posts, error: state.error);
+    } catch (_) {}
+  }
+
   @override
   MeetupState build() {
     // 🔥 build() 不能同步呼叫會馬上改 state 的 async function，見 profile_view_model.dart 的註解。
     Future.microtask(fetchOpenMeetupPosts);
+    // 別人新增/修改/取消貼文時即時反映在清單上，不用手動下拉重新整理。
+    final unsubscribe = ref.read(meetupRepositoryProvider).subscribeToChanges(_onRemoteChange);
+    ref.onDispose(() {
+      _debounce?.cancel();
+      unsubscribe();
+    });
     return MeetupState();
   }
 
@@ -117,6 +140,39 @@ class MeetupViewModel extends Notifier<MeetupState> {
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: AppError(AppErrorCode.publishFailed, detail: '$e'));
+      return false;
+    }
+  }
+
+  Future<bool> updateMeetupPost({
+    required int id,
+    required String locationName,
+    double? lat,
+    double? lng,
+    String? note,
+    DateTime? scheduledAt,
+    int? deckId,
+    String? deckNameSnapshot,
+    String? deckTier,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final repo = ref.read(meetupRepositoryProvider);
+      await repo.updateMeetupPost(
+        id: id,
+        locationName: locationName,
+        lat: lat,
+        lng: lng,
+        note: note,
+        scheduledAt: scheduledAt,
+        deckId: deckId,
+        deckNameSnapshot: deckNameSnapshot,
+        deckTier: deckTier,
+      );
+      await fetchOpenMeetupPosts();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: AppError(AppErrorCode.updateFailed, detail: '$e'));
       return false;
     }
   }

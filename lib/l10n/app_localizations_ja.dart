@@ -274,6 +274,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get publish => '投稿';
 
   @override
+  String get editMeetupTitle => '対戦場所を編集';
+
+  @override
+  String get coordsAttachedTapToRefresh => '座標を添付済み（タップで現在地に更新）';
+
+  @override
+  String get removeCoords => '座標を削除';
+
+  @override
+  String get meetupUpdated => '✅ 対戦募集を更新しました';
+
+  @override
+  String get saveChanges => '変更を保存';
+
+  @override
+  String get editPost => '投稿を編集';
+
+  @override
   String get saveToMyDecks => 'マイデッキに保存（編集完了）';
 
   @override
@@ -839,6 +857,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errPublishFailed => '投稿に失敗しました';
+
+  @override
+  String get errUpdateFailed => '更新に失敗しました';
 
   @override
   String get errLoadOpponentsFailed => '対戦相手リストの読み込みに失敗しました';
