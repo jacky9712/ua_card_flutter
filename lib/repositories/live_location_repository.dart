@@ -10,6 +10,9 @@ abstract class LiveLocationRepository {
 
   /// 目前有效分享中的其他人位置（RLS 已限制 expires_at > now()，這裡不用再篩）。
   Future<List<Map<String, dynamic>>> fetchActiveLiveLocations();
+
+  /// 訂閱 live_locations 的新增/更新/刪除，有變動就呼叫 [onChange]。回傳取消訂閱的函式。
+  void Function() subscribeToChanges(void Function() onChange);
 }
 
 class SupabaseLiveLocationRepository implements LiveLocationRepository {
@@ -48,5 +51,20 @@ class SupabaseLiveLocationRepository implements LiveLocationRepository {
   Future<List<Map<String, dynamic>>> fetchActiveLiveLocations() async {
     final response = await _supabase.from('live_locations').select('*, profiles(display_name)');
     return List<Map<String, dynamic>>.from(response);
+  }
+
+  @override
+  void Function() subscribeToChanges(void Function() onChange) {
+    // 跟約戰貼文一樣：payload 沒有 profiles 的 join、DELETE 只帶主鍵，收到變動就整包重抓。
+    final channel = _supabase
+        .channel('public:live_locations')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'live_locations',
+          callback: (_) => onChange(),
+        )
+        .subscribe();
+    return () => _supabase.removeChannel(channel);
   }
 }

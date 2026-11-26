@@ -17,7 +17,12 @@ class _FakeLiveLocationRepository implements LiveLocationRepository {
   Future<DateTime?> fetchMySharingUntil() async => mySharingUntil;
 
   @override
-  Future<List<Map<String, dynamic>>> fetchActiveLiveLocations() async => [];
+  Future<List<Map<String, dynamic>>> fetchActiveLiveLocations() async {
+    fetchActiveCalls++;
+    return List.of(activeLocations);
+  }
+
+  List<Map<String, dynamic>> activeLocations = [];
 
   final upserts = <(double, double)>[];
 
@@ -26,8 +31,23 @@ class _FakeLiveLocationRepository implements LiveLocationRepository {
     upserts.add((lat, lng));
   }
 
+  int stopSharingCalls = 0;
+
   @override
-  Future<void> stopSharing() async => mySharingUntil = null;
+  Future<void> stopSharing() async {
+    stopSharingCalls++;
+    mySharingUntil = null;
+  }
+
+  int fetchActiveCalls = 0;
+  int unsubscribeCalls = 0;
+  void Function()? onRemoteChange;
+
+  @override
+  void Function() subscribeToChanges(void Function() onChange) {
+    onRemoteChange = onChange;
+    return () => unsubscribeCalls++;
+  }
 }
 
 void main() {
@@ -124,5 +144,51 @@ void main() {
 
     // 有沒有檢查 ref.mounted 的差別：沒檢查的話這裡會冒出「Ref 已 dispose」的未捕捉例外，測試失敗。
     await pumpEventQueue();
+  });
+
+  test('收到 realtime 變動：背景重抓清單，別人停止分享後就從清單消失', () async {
+    final repo = _FakeLiveLocationRepository()
+      ..activeLocations = [
+        {'user_id': 'other', 'lat': 25.0, 'lng': 121.5},
+      ];
+    final container = await makeSettledContainer(repo, () async => null);
+    expect(container.read(liveLocationViewModelProvider).nearbyOthers, hasLength(1));
+
+    repo.activeLocations = [];
+    repo.onRemoteChange!();
+    repo.onRemoteChange!();
+    final callsBefore = repo.fetchActiveCalls;
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+
+    expect(repo.fetchActiveCalls, callsBefore + 1);
+    final state = container.read(liveLocationViewModelProvider);
+    expect(state.nearbyOthers, isEmpty);
+    expect(state.isLoading, isFalse);
+  });
+
+  test('同帳號另一台停止分享：這台切回未分享，且不再呼叫 stopSharing', () async {
+    final repo = _FakeLiveLocationRepository(mySharingUntil: DateTime.now().add(const Duration(minutes: 30)));
+    final container = await makeSettledContainer(repo, () async => null);
+    expect(container.read(liveLocationViewModelProvider).isSharing, isTrue);
+
+    repo.mySharingUntil = null; // 另一台把伺服器上的那筆刪掉了
+    repo.onRemoteChange!();
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+
+    final state = container.read(liveLocationViewModelProvider);
+    expect(state.isSharing, isFalse);
+    expect(state.sharingUntil, isNull);
+    expect(repo.stopSharingCalls, 0);
+  });
+
+  test('dispose 時取消 realtime 訂閱', () async {
+    final repo = _FakeLiveLocationRepository();
+    final container = ProviderContainer(overrides: [liveLocationRepositoryProvider.overrideWithValue(repo)]);
+    container.read(liveLocationViewModelProvider);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    container.dispose();
+    expect(repo.unsubscribeCalls, 1);
   });
 }
