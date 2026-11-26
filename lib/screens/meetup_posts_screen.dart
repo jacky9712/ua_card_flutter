@@ -167,6 +167,17 @@ class MeetupPostsScreen extends ConsumerWidget {
                                     ),
                                     if (isOwner)
                                       IconButton(
+                                        icon: const Icon(Icons.edit_outlined),
+                                        tooltip: context.l10n.editPost,
+                                        onPressed: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => CreateMeetupPostScreen(existingPost: post),
+                                          ),
+                                        ),
+                                      ),
+                                    if (isOwner)
+                                      IconButton(
                                         icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                                         tooltip: context.l10n.cancelPost,
                                         onPressed: () => _confirmDelete(

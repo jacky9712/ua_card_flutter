@@ -272,6 +272,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get publish => '發布';
 
   @override
+  String get editMeetupTitle => '編輯約戰地點';
+
+  @override
+  String get coordsAttachedTapToRefresh => '已附上座標（點擊改用目前位置）';
+
+  @override
+  String get removeCoords => '移除座標';
+
+  @override
+  String get meetupUpdated => '✅ 約戰貼文已更新';
+
+  @override
+  String get saveChanges => '儲存變更';
+
+  @override
+  String get editPost => '編輯貼文';
+
+  @override
   String get saveToMyDecks => '儲存至我的牌組 (完成編輯)';
 
   @override
@@ -836,6 +854,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errPublishFailed => '發布失敗';
+
+  @override
+  String get errUpdateFailed => '更新失敗';
 
   @override
   String get errLoadOpponentsFailed => '載入對手清單失敗';
